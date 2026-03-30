@@ -904,11 +904,7 @@
         const extensionServerItem = document.getElementById("extensionServerItem");
 
         function getApiUrl(path) {
-          const isDeployed = window.location.protocol.startsWith("http");
-          if (isDeployed) return path;
-          const ip = localStorage.getItem("extension_server_ip");
-          if (!ip) { console.error("Extension IP not found."); return null; }
-          return `http://${ip}:7275${path}`;
+          return "";
         }
 
         async function initialize() {

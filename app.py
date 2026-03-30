@@ -892,7 +892,7 @@ async def download_manga_chapter_as_pdf_full(source: str, manga_id: str, chapter
     total_h = 0
     width = 595
     for u in urls:
-        full_u = u if u.startswith("http") else f"http://localhost:7275{u}"
+        full_u = u if u.startswith("http") else f"https://localhost{u}"
         res = await tunnel_request("GET", full_u)
         img = Image.open(io.BytesIO(base64.b64decode(res["body"]))).convert("RGB")
         new_h = int(width * (img.height / img.width))

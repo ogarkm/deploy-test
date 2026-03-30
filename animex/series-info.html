@@ -1139,7 +1139,7 @@
     <script>
       let currentMalId = new URLSearchParams(window.location.search).get("id");
       const extensionIp = localStorage.getItem("extension_server_ip") || "localhost";
-      let serverUrl = `http://${extensionIp}:7275`;
+      let serverUrl = ``;
       
       // Assumes the Python backend is available at port 7275 on the extension server or localhost.
       const THEMES_API = serverUrl + "/api/themes";

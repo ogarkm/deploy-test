@@ -2306,7 +2306,7 @@
       async function checkServerStatus(ip, isDeployed = false) {
         statusIndicator.textContent = "Connecting...";
         statusIndicator.className = "status-indicator connecting";
-        const url = isDeployed ? "/identify" : `http://{ip}:7275/identify`;
+        const url = isDeployed ? "/identify" : `https://{ip}:7275/identify`;
 
         try {
           const response = await fetch(url, {
