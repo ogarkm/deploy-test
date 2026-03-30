@@ -1,0 +1,540 @@
+/* =========================================
+   1. VARIABLES & RESET
+   ========================================= */
+:root {
+    /* Brand & Palette */
+    --brand-accent: #ff9500;
+    --brand-accent-hover: #ffae40;
+    --background-primary: #0a0a0a;
+    --background-secondary: #161616;
+    --background-tertiary: #202020;
+    
+    /* Text Colors */
+    --text-primary: #eaeaea;
+    --text-secondary: #999999;
+    --text-muted: #666666;
+    
+    /* UI Elements */
+    --border-color: #2a2a2a;
+    --shadow-color: rgba(0, 0, 0, 0.6);
+    --brand-glow: rgba(255, 149, 0, 0.5);
+    
+    /* Dimensions & Animation */
+    --transition-duration: 0.3s;
+    --border-radius: 8px;
+    --nav-height: 60px;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+html {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    scroll-behavior: smooth;
+}
+
+body {
+    background-color: var(--background-primary);
+    color: var(--text-primary);
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    line-height: 1.6;
+    overflow-x: hidden;
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+::-webkit-scrollbar-track {
+    background: var(--background-secondary);
+}
+::-webkit-scrollbar-thumb {
+    background: #444;
+    border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+    background: #555;
+}
+
+/* =========================================
+   2. APP STRUCTURE & HERO SECTION
+   ========================================= */
+.app-container {
+    width: 100%;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Hero Section */
+.series-hero-section {
+    position: relative;
+    height: 70vh;
+    min-height: 550px;
+    background-size: cover;
+    background-position: center 20%;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    padding: 0 5% 4rem; 
+    transition: background-image var(--transition-duration) ease-in-out;
+}
+
+.hero-overlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+        to top,
+        var(--background-primary) 15%,
+        rgba(10, 10, 10, 0.9) 50%,
+        rgba(10, 10, 10, 0.4) 80%,
+        rgba(0,0,0,0.3) 100%
+    );
+    z-index: 1;
+    pointer-events: none;
+}
+
+.series-hero-content {
+    position: relative;
+    z-index: 2;
+    width: 100%;
+    max-width: 1600px;
+    margin: 0 auto;
+    display: flex;
+    align-items: flex-end;
+    gap: 3rem;
+    animation: fadeInUp 0.6s cubic-bezier(0.19, 1, 0.22, 1);
+}
+
+/* Desktop Poster in Hero */
+.hero-poster-container {
+    display: none; /* Hidden on mobile */
+    width: 280px;
+    flex-shrink: 0;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+    border: 1px solid rgba(255,255,255,0.1);
+}
+.hero-poster-img {
+    width: 100%;
+    height: auto;
+    display: block;
+}
+
+.hero-text-content {
+    flex: 1;
+}
+
+@keyframes fadeInUp {
+    from { opacity: 0; transform: translateY(30px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.series-title-text {
+    font-size: clamp(2rem, 5vw, 3.8rem);
+    font-weight: 800;
+    color: var(--text-primary);
+    text-shadow: 2px 2px 15px rgba(0, 0, 0, 0.9);
+    line-height: 1.1;
+    margin-bottom: 0.5rem; 
+    letter-spacing: -0.02em;
+}
+
+/* Hero Sub-metadata (Rating, Studio) */
+.hero-sub-meta {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    margin-bottom: 1.5rem;
+    font-size: 0.95rem;
+    color: #ccc;
+    font-weight: 500;
+}
+.hero-rating-badge {
+    background: rgba(255,255,255,0.1);
+    padding: 2px 8px;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    border: 1px solid rgba(255,255,255,0.2);
+}
+.hero-rating-badge i { color: var(--brand-accent); font-size: 0.8em; }
+
+/* --- HERO ACTIONS --- */
+.hero-actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 12px;
+    margin-top: 1.5rem;
+}
+
+/* Primary Watch Button */
+.hero-watch-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    background-color: var(--brand-accent);
+    color: #000;
+    padding: 12px 28px; 
+    border-radius: 4px;
+    border: none;
+    font-size: 1rem; 
+    font-weight: 700;
+    cursor: pointer;
+    box-shadow: 0 4px 15px rgba(255, 149, 0, 0.3);
+    transition: all 0.2s ease;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.hero-watch-btn:hover {
+    background-color: var(--brand-accent-hover);
+    transform: translateY(-2px) scale(1.02);
+    box-shadow: 0 6px 25px rgba(255, 149, 0, 0.5);
+}
+
+/* Secondary Action Buttons */
+.hero-action-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: var(--text-primary);
+    padding: 0 20px; 
+    height: 48px; 
+    border-radius: 4px;
+    font-size: 0.95rem; 
+    font-weight: 600;
+    cursor: pointer;
+    backdrop-filter: blur(5px);
+    transition: all 0.2s ease;
+}
+
+.hero-action-btn:hover {
+    background-color: rgba(255, 255, 255, 0.2);
+    border-color: var(--text-primary);
+}
+
+.back-btn {
+    position: absolute;
+    top: 25px;
+    left: 25px;
+    z-index: 10;
+    background: rgba(0, 0, 0, 0.5);
+    border: none;
+    color: var(--text-primary);
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    font-size: 1.2rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+}
+.back-btn:hover { background-color: rgba(255,255,255,0.2); }
+
+/* =========================================
+   3. MAIN CONTENT
+   ========================================= */
+.main-content {
+    position: relative;
+    padding: 0 5% 4rem;
+    background-color: var(--background-primary);
+    z-index: 3;
+    max-width: 1600px;
+    margin: 0 auto;
+}
+
+.series-details-section {
+    margin-bottom: 3rem;
+    border-bottom: 1px solid var(--border-color);
+    padding-bottom: 2rem;
+}
+
+.series-meta-info {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px 16px;
+    margin-bottom: 1.5rem;
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+}
+.series-meta-info span:not(:last-child)::after {
+    content: "•";
+    margin-left: 16px;
+    color: var(--border-color);
+}
+#series-score { color: var(--brand-accent); font-weight: 700; }
+
+.details-grid {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 3rem;
+}
+#series-synopsis {
+    font-size: 1rem;
+    line-height: 1.7;
+    color: #ccc;
+}
+#series-info-additional p {
+    margin-bottom: 0.5rem;
+    color: var(--text-muted);
+    font-size: 0.9rem;
+}
+#series-info-additional strong { color: #fff; }
+
+/* Genres/Studios */
+.series-genres span, .series-studios span {
+    display: inline-block;
+    margin: 5px 5px 0 0;
+    padding: 4px 10px;
+    background: var(--background-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    font-size: 0.8rem;
+    color: #aaa;
+}
+
+/* =========================================
+   4. TABS & SECTIONS LAYOUT
+   ========================================= */
+.tabs-section { margin-top: 2rem; }
+
+/* Desktop: Hide Tabs, Stack Panels */
+@media (min-width: 769px) {
+    .tabs-container { display: none; }
+    .tab-panel { 
+        display: block !important; 
+        margin-bottom: 4rem;
+        opacity: 1 !important;
+    }
+    
+    /* Section Headings for Desktop Stacking */
+    .tab-panel::before {
+        content: attr(data-label);
+        display: block;
+        font-size: 1.5rem;
+        font-weight: 700;
+        margin-bottom: 1.5rem;
+        color: var(--text-primary);
+        border-left: 4px solid var(--brand-accent);
+        padding-left: 12px;
+    }
+}
+
+/* Mobile: Show Tabs */
+@media (max-width: 768px) {
+    .tabs-container {
+        display: flex;
+        overflow-x: auto;
+        gap: 1.5rem;
+        border-bottom: 1px solid var(--border-color);
+        margin-bottom: 1.5rem;
+        padding-bottom: 0.5rem;
+    }
+    .tab-btn {
+        background: none;
+        border: none;
+        color: var(--text-secondary);
+        font-size: 1rem;
+        font-weight: 600;
+        white-space: nowrap;
+        padding: 0.5rem 0;
+        cursor: pointer;
+        position: relative;
+    }
+    .tab-btn.active { color: var(--text-primary); }
+    .tab-btn.active::after {
+        content: '';
+        position: absolute;
+        bottom: -0.5rem;
+        left: 0; right: 0;
+        height: 2px;
+        background: var(--brand-accent);
+    }
+    .tab-panel { display: none; }
+    .tab-panel.active { display: block; animation: fadeIn 0.3s; }
+}
+
+/* =========================================
+   5. EPISODES
+   ========================================= */
+.section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+    gap: 1rem;
+}
+.season-selector {
+    padding: 8px 12px;
+    border-radius: 4px;
+    background: var(--background-secondary);
+    color: var(--text-primary);
+    border: 1px solid var(--border-color);
+    outline: none;
+    font-weight: 600;
+}
+
+.episode-list { display: flex; flex-direction: column; gap: 8px; }
+
+.episode-item {
+    display: flex;
+    align-items: center;
+    background: var(--background-secondary);
+    border-radius: 4px;
+    overflow: hidden;
+    cursor: pointer;
+    transition: background 0.2s;
+    height: 90px;
+    padding-right: 15px;
+}
+.episode-item:hover { background: var(--background-tertiary); }
+.episode-item.watched .episode-title { color: var(--text-muted); }
+.episode-item.watched { border-left: 3px solid var(--brand-accent); }
+
+.episode-thumbnail {
+    width: 150px;
+    height: 100%;
+    position: relative;
+    margin-right: 15px;
+    flex-shrink: 0;
+}
+.episode-thumbnail img { width: 100%; height: 100%; object-fit: cover; }
+
+.episode-info { flex: 1; min-width: 0; }
+.episode-title { font-weight: 600; font-size: 1rem; margin-bottom: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.episode-title-romanji { font-size: 0.85rem; color: var(--text-secondary); }
+
+.episode-action-icon {
+    background: none; border: none; color: var(--text-secondary);
+    width: 36px; height: 36px; border-radius: 50%;
+    cursor: pointer; margin-left: 5px;
+    display: flex; align-items: center; justify-content: center;
+}
+.episode-action-icon:hover { background: rgba(255,255,255,0.1); color: var(--brand-accent); }
+
+/* =========================================
+   6. HORIZONTAL SCROLL LISTS (Chars, Rel, Rec)
+   ========================================= */
+.horizontal-scroll-container {
+    display: flex;
+    gap: 15px;
+    overflow-x: auto;
+    padding-bottom: 15px;
+    scroll-snap-type: x mandatory;
+}
+
+/* Character Card */
+.character-card {
+    flex: 0 0 280px;
+    background: var(--background-secondary);
+    border-radius: 6px;
+    display: flex;
+    overflow: hidden;
+    scroll-snap-align: start;
+    border: 1px solid var(--border-color);
+}
+.char-image-box, .va-image-box {
+    width: 70px;
+    height: 100px;
+    flex-shrink: 0;
+}
+.char-image-box img, .va-image-box img {
+    width: 100%; height: 100%; object-fit: cover;
+}
+.char-info {
+    flex: 1;
+    padding: 10px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    font-size: 0.85rem;
+}
+.char-name { font-weight: 700; color: var(--text-primary); line-height: 1.2; }
+.char-role { font-size: 0.75rem; color: var(--text-muted); }
+.va-name { text-align: right; font-size: 0.8rem; color: var(--text-primary); }
+.va-lang { text-align: right; font-size: 0.7rem; color: var(--text-muted); }
+
+/* Language Tabs for Characters */
+.char-lang-tabs {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 15px;
+}
+.lang-tab {
+    background: var(--background-secondary);
+    border: 1px solid var(--border-color);
+    color: var(--text-secondary);
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    cursor: pointer;
+}
+.lang-tab.active {
+    background: var(--text-primary);
+    color: #000;
+    border-color: var(--text-primary);
+    font-weight: 600;
+}
+
+/* Related & Rec Cards (Horizontal Style) */
+.scroll-card {
+    flex: 0 0 160px;
+    scroll-snap-align: start;
+    text-decoration: none;
+    color: var(--text-primary);
+}
+.scroll-card-img {
+    width: 100%;
+    aspect-ratio: 2/3;
+    border-radius: 6px;
+    object-fit: cover;
+    margin-bottom: 8px;
+    transition: transform 0.2s;
+}
+.scroll-card:hover .scroll-card-img { transform: scale(1.05); }
+.scroll-card-title {
+    font-size: 0.9rem;
+    font-weight: 600;
+    line-height: 1.3;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+.scroll-card-meta { font-size: 0.8rem; color: var(--text-secondary); }
+
+/* =========================================
+   7. RESPONSIVE MEDIA QUERIES
+   ========================================= */
+@media (min-width: 769px) {
+    /* Show poster on Desktop */
+    .hero-poster-container { display: block; }
+    
+    /* Make relations/recs grid on desktop? Or keep scroll? 
+       Prompt said "Relations (scrollable horizontal list)" & "Recommendations (scrollable)" */
+}
+
+@media (max-width: 768px) {
+    .series-hero-section { height: auto; min-height: auto; padding-top: 250px; background-position: center top; }
+    .series-hero-content { display: block; }
+    .series-title-text { font-size: 2rem; margin-top: 0; }
+    .hero-actions { display: grid; grid-template-columns: 1fr 1fr; }
+    .hero-watch-btn { grid-column: span 2; width: 100%; }
+    .details-grid { grid-template-columns: 1fr; gap: 1rem; }
+}

@@ -1,0 +1,1410 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover" />
+    <title>Settings - Media App</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Bitcount+Grid+Single:wght@100..900&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+    <style>
+      :root {
+        --font-sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        --background-primary: #121212;
+        --background-secondary: #1e1e1e;
+        --background-tertiary-hover: #2a2a2a;
+        --background-modal: #1c1c1e;
+        --foreground-primary: #e6e6e6;
+        --foreground-secondary: #a0a0a0;
+        --foreground-tertiary: #505050;
+        --border-color: #2c2c2c;
+        --input-border-color: #3a3a3c;
+        --accent-primary: #ff9500;
+        --accent-primary-rgb: 255, 149, 0;
+        --accent-primary-hover: #e68600;
+        --destructive: #ff453a;
+        --radius-sm: 10px;
+        --radius-md: 18px;
+        /* Profile-only accent — only avatar ring + glow */
+        --profile-accent: #ff9500;
+        --profile-accent-rgb: 255, 149, 0;
+      }
+
+      body[data-theme="light"] {
+        --background-primary: #f2f2f7;
+        --background-secondary: #ffffff;
+        --background-tertiary-hover: #f1f1f1;
+        --background-modal: #ffffff;
+        --foreground-primary: #1c1c1e;
+        --foreground-secondary: #636366;
+        --foreground-tertiary: #aeaeb2;
+        --border-color: #e5e5e5;
+        --input-border-color: #c7c7cc;
+      }
+
+      *, *::before, *::after { box-sizing: border-box; }
+
+      html, body {
+        font-family: var(--font-sans);
+        background-color: var(--background-primary);
+        color: var(--foreground-primary);
+        margin: 0;
+        padding: 0;
+        -webkit-font-smoothing: antialiased;
+        min-height: 100vh;
+      }
+
+      .app-container {
+        max-width: 840px;
+        margin: 0 auto;
+        padding: 0rem 0rem 5rem;
+      }
+
+      /* =====================
+         PROFILE HERO
+      ===================== */
+      .profile-hero {
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding: 4rem 1rem 2.5rem;
+        overflow: visible;
+      }
+
+      .profile-hero-bg {
+        position: fixed;
+        top: 0;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 180vw;
+        max-width: 100%;
+        min-width: 650px;
+        height: 500px;
+        pointer-events: none;
+        transition: background 0.6s ease;
+        z-index: 0;
+        background: radial-gradient(ellipse 50% 60% at 50% 0%, rgba(var(--profile-accent-rgb), 0.28) 0%, transparent 70%);
+      }
+
+      .avatar-wrapper {
+        position: relative;
+        width: 104px;
+        height: 104px;
+        margin-bottom: 1.25rem;
+        z-index: 1;
+      }
+
+      /* Soft glow halo behind avatar */
+      .avatar-wrapper::before {
+        content: '';
+        position: absolute;
+        inset: -8px;
+        border-radius: 50%;
+        background: var(--profile-accent);
+        opacity: 0.45;
+        filter: blur(16px);
+        transition: background 0.6s ease;
+        z-index: 0;
+      }
+
+      #userAvatar {
+        width: 104px;
+        height: 104px;
+        border-radius: 50%;
+        object-fit: cover;
+        border: 3px solid var(--profile-accent);
+        position: relative;
+        z-index: 1;
+        transition: border-color 0.5s ease;
+        cursor: pointer;
+        display: block;
+      }
+
+      .avatar-edit-badge {
+        position: absolute;
+        bottom: 2px;
+        right: 2px;
+        width: 30px;
+        height: 30px;
+        border-radius: 50%;
+        background: #ffffff;
+        border: none;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.45);
+        z-index: 2;
+        transition: transform 0.15s ease;
+        -webkit-tap-highlight-color: transparent;
+      }
+      .avatar-edit-badge:active { transform: scale(0.88); }
+      .avatar-edit-badge i { font-size: 0.65rem; color: #1c1c1e; }
+
+      .profile-hero .username {
+        font-size: 1.75rem;
+        font-weight: 700;
+        margin: 0 0 0.5rem;
+        position: relative;
+        z-index: 1;
+      }
+
+      .edit-profile-link {
+        color: var(--foreground-secondary);
+        text-decoration: none;
+        font-size: 0.8125rem;
+        font-weight: 500;
+        position: relative;
+        z-index: 1;
+        letter-spacing: 0.01em;
+      }
+      .edit-profile-link i { margin-right: 4px; font-size: 0.7rem; }
+
+      /* =====================
+         SETTINGS LAYOUT
+      ===================== */
+      .settings-sections {
+        display: flex;
+        flex-direction: column;
+        padding: 0 1rem;
+      }
+
+      .section-label {
+        font-size: 0.6875rem;
+        font-weight: 600;
+        letter-spacing: 0.07em;
+        color: var(--foreground-tertiary);
+        text-transform: uppercase;
+        padding: 1.5rem 0.25rem 0.5rem;
+      }
+
+      .settings-group {
+        background-color: var(--background-secondary);
+        border-radius: var(--radius-md);
+        overflow: visible;
+      }
+
+      .settings-item {
+        display: flex;
+        align-items: center;
+        gap: 0.875rem;
+        padding: 0.8125rem 1rem;
+        cursor: pointer;
+        border-bottom: 1px solid var(--border-color);
+        transition: background-color 0.12s ease, transform 0.1s ease;
+        -webkit-tap-highlight-color: transparent;
+        user-select: none;
+      }
+      .settings-group .settings-item:last-child { border-bottom: none; }
+      .settings-item:active:not(.no-hover) {
+        background-color: var(--background-tertiary-hover);
+        transform: scale(0.992);
+      }
+      .settings-item.no-hover { cursor: default; }
+
+      .item-text {
+        flex-grow: 1;
+        font-weight: 500;
+        font-size: 0.9375rem;
+      }
+      .item-action {
+        color: var(--foreground-secondary);
+        font-size: 0.8125rem;
+      }
+
+      /* =====================
+         ICON SQUARES
+      ===================== */
+      .icon-sq {
+        width: 30px;
+        height: 30px;
+        min-width: 30px;
+        border-radius: 7px;
+        background-color: transparent;
+        border: 1px solid var(--border-color);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .icon-sq i { color: var(--foreground-secondary); font-size: 0.78rem; }
+
+      /* =====================
+         ACCENT COLOR SWATCHES
+      ===================== */
+      .accent-swatches {
+        display: flex;
+        gap: 7px;
+        align-items: center;
+      }
+      .swatch {
+        width: 24px;
+        height: 24px;
+        border-radius: 50%;
+        border: 2.5px solid transparent;
+        cursor: pointer;
+        padding: 0;
+        outline: none;
+        transition: transform 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+        -webkit-tap-highlight-color: transparent;
+      }
+      .swatch:hover { transform: scale(1.18); }
+      .swatch:active { transform: scale(0.88); }
+      .swatch.active {
+        border-color: var(--foreground-primary);
+        box-shadow: 0 0 0 1px var(--foreground-primary);
+      }
+
+      /* =====================
+         TOGGLE SWITCH
+      ===================== */
+      .toggle-switch {
+        position: relative;
+        display: inline-block;
+        width: 51px;
+        height: 31px;
+        flex-shrink: 0;
+      }
+      .toggle-switch input { opacity: 0; width: 0; height: 0; }
+      .slider {
+        position: absolute;
+        cursor: pointer;
+        inset: 0;
+        background-color: var(--foreground-tertiary);
+        transition: background-color 0.28s, box-shadow 0.28s;
+        border-radius: 34px;
+      }
+      .slider:before {
+        position: absolute;
+        content: "";
+        height: 27px;
+        width: 27px;
+        left: 2px;
+        bottom: 2px;
+        background-color: white;
+        transition: transform 0.28s cubic-bezier(0.34, 1.56, 0.64, 1);
+        border-radius: 50%;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+      }
+      input:checked + .slider {
+        background-color: var(--accent-primary);
+        box-shadow: 0 0 10px rgba(var(--accent-primary-rgb), 0.35);
+      }
+      input:checked + .slider:before { transform: translateX(20px); }
+
+      /* =====================
+         CUSTOM DROPDOWN
+      ===================== */
+      .custom-dropdown-wrapper { position: relative; min-width: 130px; }
+      .custom-dropdown-btn {
+        width: 100%;
+        background: none;
+        border: none;
+        color: var(--foreground-secondary);
+        font-size: 0.9rem;
+        padding: 0.25rem 0.25rem 0.25rem 0.5rem;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        justify-content: flex-end;
+        font-family: var(--font-sans);
+      }
+      .custom-dropdown-list {
+        display: none;
+        position: absolute;
+        top: 110%;
+        right: 0;
+        min-width: 165px;
+        background: var(--background-secondary);
+        border-radius: var(--radius-sm);
+        z-index: 10010;
+        border: 1px solid var(--border-color);
+        list-style: none;
+        padding: 0.25rem 0;
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.35);
+        margin: 0;
+      }
+      .custom-dropdown-wrapper.is-open .custom-dropdown-list { display: block; }
+      .custom-dropdown-list li { padding: 0.75rem 1rem; cursor: pointer; font-size: 0.9rem; }
+      .custom-dropdown-list li:hover,
+      .custom-dropdown-list li.selected { background: var(--accent-primary); color: #fff; }
+
+      /* =====================
+         SKELETON LOADING
+      ===================== */
+      #loadingScreen { max-width: 640px; margin: 0 auto; }
+
+      .skeleton-hero {
+        height: 230px;
+        background: linear-gradient(180deg, rgba(30,30,30,0.9) 0%, var(--background-primary) 100%);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: flex-end;
+        padding-bottom: 2.25rem;
+        gap: 0.75rem;
+      }
+      .skeleton-circle {
+        width: 104px;
+        height: 104px;
+        border-radius: 50%;
+        background: var(--border-color);
+        animation: shimmer 1.6s ease-in-out infinite;
+      }
+      .skeleton-line {
+        height: 11px;
+        border-radius: 6px;
+        background: var(--border-color);
+        animation: shimmer 1.6s ease-in-out infinite;
+      }
+      .skeleton-group {
+        background: var(--background-secondary);
+        border-radius: var(--radius-md);
+        overflow: hidden;
+        margin: 0 1rem;
+      }
+      .skeleton-row {
+        display: flex;
+        align-items: center;
+        gap: 0.875rem;
+        padding: 0.8125rem 1rem;
+        border-bottom: 1px solid var(--border-color);
+      }
+      .skeleton-row:last-child { border-bottom: none; }
+      .skeleton-sq {
+        width: 30px;
+        height: 30px;
+        min-width: 30px;
+        border-radius: 7px;
+        background: var(--border-color);
+        animation: shimmer 1.6s ease-in-out infinite;
+      }
+      .skeleton-label {
+        height: 8px;
+        width: 80px;
+        border-radius: 4px;
+        background: var(--border-color);
+        margin: 1.25rem 1.25rem 0.5rem;
+        animation: shimmer 1.6s ease-in-out infinite;
+      }
+      @keyframes shimmer {
+        0%, 100% { opacity: 0.5; }
+        50% { opacity: 1; }
+      }
+
+      /* =====================
+         BOTTOM SHEET MODALS
+      ===================== */
+      .modal-backdrop {
+        position: fixed;
+        inset: 0;
+        background-color: rgba(0, 0, 0, 0.55);
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        display: flex;
+        align-items: flex-end;
+        justify-content: center;
+        z-index: 1000;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.28s ease;
+      }
+      .modal-backdrop.active {
+        opacity: 1;
+        pointer-events: all;
+      }
+      .modal-content {
+        background-color: var(--background-modal);
+        border-radius: 22px 22px 0 0;
+        width: 100%;
+        max-width: 640px;
+        max-height: 86vh;
+        overflow-y: auto;
+        position: relative;
+        transform: translateY(100%);
+        transition: transform 0.38s cubic-bezier(0.32, 0.72, 0, 1);
+        padding-bottom: env(safe-area-inset-bottom, 1.5rem);
+      }
+      .modal-backdrop.active .modal-content { transform: translateY(0); }
+
+      @media (min-width: 768px) {
+        .app-container {
+          max-width: 900px;
+          padding: 0rem 1.5rem 5rem;
+        }
+        .profile-hero {
+          padding: 5rem 2rem 3rem;
+        }
+        .settings-sections {
+          padding: 0 2rem;
+        }
+        .modal-backdrop {
+          align-items: center;
+          padding: 2rem;
+        }
+        .modal-content {
+          max-width: 600px;
+          border-radius: 24px;
+          transform: translateY(0);
+        }
+        .modal-backdrop .modal-content {
+          box-shadow: 0 40px 120px rgba(0, 0, 0, 0.18);
+        }
+      }
+
+      @media (max-width: 767px) {
+        .modal-backdrop {
+          padding-bottom: 3.5rem;
+        }
+        .modal-content {
+          margin-bottom: calc(env(safe-area-inset-bottom, 0) + 2rem);
+        }
+      }
+
+      .modal-handle {
+        width: 38px;
+        height: 4px;
+        border-radius: 2px;
+        background: var(--border-color);
+        margin: 12px auto 0;
+      }
+      .modal-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 1.25rem 1.25rem 0;
+      }
+      .modal-title {
+        font-size: 1.2rem;
+        font-weight: 700;
+        margin: 0;
+      }
+      .modal-close-x {
+        width: 28px;
+        height: 28px;
+        border-radius: 50%;
+        background: var(--background-tertiary-hover);
+        border: none;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--foreground-secondary);
+        font-size: 0.8rem;
+        flex-shrink: 0;
+        transition: background 0.15s ease;
+        -webkit-tap-highlight-color: transparent;
+      }
+      .modal-close-x:hover { background: var(--border-color); }
+      .modal-close-x:active { transform: scale(0.9); }
+
+      .modal-body { padding: 0.875rem 1.25rem 0; }
+      .modal-subtitle {
+        color: var(--foreground-secondary);
+        font-size: 0.875rem;
+        margin: 0.375rem 0 1rem;
+        line-height: 1.45;
+      }
+      .modal-footer {
+        display: flex;
+        gap: 0.75rem;
+        padding: 1.25rem 1.25rem 0;
+      }
+      .modal-footer.col { flex-direction: column; gap: 0.5rem; }
+
+      /* Backward compat for old modal-close-btn (About modal) */
+      .modal-close-btn {
+        position: absolute;
+        top: 0.75rem;
+        right: 0.75rem;
+        background: rgba(0,0,0,0.45);
+        border: none;
+        color: white;
+        cursor: pointer;
+        width: 30px;
+        height: 30px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.125rem;
+        z-index: 10;
+      }
+
+      /* Module/Addon modals need more height */
+      #moduleManagementModal .modal-content,
+      #addOnManagementModal .modal-content { max-height: 91vh; }
+
+      /* About modal — iframe fills */
+      #aboutModal .modal-content {
+        padding: 0;
+        overflow: hidden;
+        background-color: transparent;
+        border-radius: 22px 22px 0 0;
+        height: 80vh;
+        max-height: 80vh;
+      }
+      #aboutIframe {
+        width: 100%;
+        height: 100%;
+        border: none;
+        border-radius: 22px 22px 0 0;
+      }
+
+      /* Module management inner lists */
+      .module-list { list-style: none; padding: 0; margin: 0; }
+      .module-list .settings-item { padding: 0.75rem 1rem; }
+      .module-reorder-controls { display: flex; flex-direction: column; gap: 2px; margin-left: 0.5rem; }
+      .module-reorder-controls i { cursor: pointer; color: var(--foreground-secondary); padding: 4px; border-radius: 4px; }
+      .module-reorder-controls i:hover { background-color: var(--background-tertiary-hover); }
+      #moduleCategoriesContainer, #addOnCategoriesContainer { display: flex; flex-direction: column; gap: 1rem; }
+
+      /* =====================
+         BUTTONS
+      ===================== */
+      .primary-button {
+        flex: 1;
+        padding: 0.875rem;
+        font-size: 0.9375rem;
+        font-weight: 600;
+        border-radius: var(--radius-sm);
+        cursor: pointer;
+        border: none;
+        background-color: var(--accent-primary);
+        color: white;
+        font-family: var(--font-sans);
+        transition: background 0.15s ease, transform 0.1s ease;
+        -webkit-tap-highlight-color: transparent;
+      }
+      .primary-button:active { transform: scale(0.97); }
+      .primary-button:disabled { opacity: 0.45; cursor: not-allowed; transform: none; }
+
+      .secondary-button {
+        flex: 1;
+        padding: 0.875rem;
+        font-size: 0.9375rem;
+        font-weight: 600;
+        border-radius: var(--radius-sm);
+        cursor: pointer;
+        border: 1px solid var(--border-color);
+        background-color: transparent;
+        color: var(--foreground-primary);
+        font-family: var(--font-sans);
+        transition: background 0.15s ease, transform 0.1s ease;
+        -webkit-tap-highlight-color: transparent;
+      }
+      .secondary-button:active { transform: scale(0.97); }
+
+      /* =====================
+         FORM INPUTS
+      ===================== */
+      .ip-input {
+        width: 100%;
+        background: var(--background-primary);
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius-sm);
+        padding: 0.875rem 1rem;
+        font-size: 1rem;
+        color: var(--foreground-primary);
+        outline: none;
+        transition: box-shadow 0.2s, border-color 0.2s;
+        font-family: var(--font-sans);
+      }
+      .ip-input:focus {
+        border-color: var(--accent-primary);
+        box-shadow: 0 0 0 3px rgba(var(--accent-primary-rgb), 0.18);
+      }
+      .status-indicator { margin-top: 0.75rem; font-size: 0.875rem; min-height: 1.25rem; color: var(--foreground-secondary); }
+      .status-indicator.connected { color: #34c759; }
+      .status-indicator.error { color: #ff3b30; }
+    </style>
+  </head>
+
+  <body data-theme="dark">
+
+    <!-- ===== SKELETON LOADING ===== -->
+    <div id="loadingScreen">
+      <div class="skeleton-hero">
+        <div class="skeleton-circle"></div>
+        <div class="skeleton-line" style="width:110px"></div>
+        <div class="skeleton-line" style="width:70px;height:8px;opacity:0.6"></div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:0.25rem;margin-top:0.5rem">
+        <div class="skeleton-label"></div>
+        <div class="skeleton-group">
+          <div class="skeleton-row"><div class="skeleton-sq"></div><div class="skeleton-line" style="flex:1;max-width:60%"></div></div>
+        </div>
+        <div class="skeleton-label" style="margin-top:1.25rem"></div>
+        <div class="skeleton-group">
+          <div class="skeleton-row"><div class="skeleton-sq"></div><div class="skeleton-line" style="flex:1;max-width:55%"></div></div>
+          <div class="skeleton-row"><div class="skeleton-sq"></div><div class="skeleton-line" style="flex:1;max-width:65%"></div></div>
+        </div>
+        <div class="skeleton-label" style="margin-top:1.25rem"></div>
+        <div class="skeleton-group">
+          <div class="skeleton-row"><div class="skeleton-sq"></div><div class="skeleton-line" style="flex:1;max-width:50%"></div></div>
+          <div class="skeleton-row"><div class="skeleton-sq"></div><div class="skeleton-line" style="flex:1;max-width:70%"></div></div>
+          <div class="skeleton-row"><div class="skeleton-sq"></div><div class="skeleton-line" style="flex:1;max-width:60%"></div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== MAIN SETTINGS ===== -->
+    <div class="app-container" id="settingsContainer" style="display:none">
+
+      <!-- PROFILE HERO -->
+      <header class="profile-hero">
+        <div class="profile-hero-bg" id="profileHeroBg"></div>
+        <div class="avatar-wrapper">
+          <img id="userAvatar" src="https://placehold.co/104/1e1e1e/a0a0a0?text=?" alt="User Avatar" />
+          <button class="avatar-edit-badge" id="avatarEditBadge" aria-label="Change avatar">
+            <i class="fas fa-pencil-alt"></i>
+          </button>
+          <input type="file" id="avatarUpload" accept="image/*" style="display:none" />
+        </div>
+        <h1 class="username" id="usernameDisplay">Profile</h1>
+        <a href="#" id="editUsernameBtn" class="edit-profile-link">
+          <i class="fas fa-pencil-alt"></i>Edit Profile
+        </a>
+      </header>
+
+      <div class="settings-sections">
+
+        <!-- PERSONAL FLAIR -->
+        <div class="section-label">Personal Flair</div>
+        <div class="settings-group">
+          <div class="settings-item no-hover">
+            <div class="icon-sq" style="--sq-color:#af52de"><i class="fas fa-palette"></i></div>
+            <span class="item-text">Accent Color</span>
+            <div class="accent-swatches" id="accentSwatches">
+              <button class="swatch" data-color="#ff9500" data-rgb="255,149,0" style="background:#ff9500" title="Amber" aria-label="Amber"></button>
+              <button class="swatch" data-color="#007aff" data-rgb="0,122,255" style="background:#007aff" title="Blue" aria-label="Blue"></button>
+              <button class="swatch" data-color="#af52de" data-rgb="175,82,222" style="background:#af52de" title="Purple" aria-label="Purple"></button>
+              <button class="swatch" data-color="#34c759" data-rgb="52,199,89" style="background:#34c759" title="Green" aria-label="Green"></button>
+              <button class="swatch" data-color="#ff453a" data-rgb="255,69,58" style="background:#ff453a" title="Red" aria-label="Red"></button>
+              <button class="swatch" data-color="#ff375f" data-rgb="255,55,95" style="background:#ff375f" title="Pink" aria-label="Pink"></button>
+            </div>
+          </div>
+        </div>
+
+        <!-- PROFILE -->
+        <div class="section-label">Profile</div>
+        <div class="settings-group">
+          <div class="settings-item" id="switchProfileItem">
+            <div class="icon-sq" style="--sq-color:#007aff"><i class="fas fa-users"></i></div>
+            <span class="item-text">Change Profile</span>
+            <i class="item-action fas fa-chevron-right"></i>
+          </div>
+        </div>
+
+        <!-- APPEARANCE & NOTIFICATIONS -->
+        <div class="section-label">Appearance & Notifications</div>
+        <div class="settings-group">
+          <div class="settings-item">
+            <div class="icon-sq" style="--sq-color:#6e6e73"><i class="fas fa-moon"></i></div>
+            <span class="item-text">Light Mode</span>
+            <div class="item-action">
+              <label class="toggle-switch"><input type="checkbox" id="themeToggle" /><span class="slider"></span></label>
+            </div>
+          </div>
+          <div class="settings-item">
+            <div class="icon-sq" style="--sq-color:#ff3b30"><i class="fas fa-bell"></i></div>
+            <span class="item-text">Push Notifications</span>
+            <div class="item-action">
+              <label class="toggle-switch"><input type="checkbox" id="pushNotificationsToggle" /><span class="slider"></span></label>
+            </div>
+          </div>
+        </div>
+
+        <!-- PLAYBACK -->
+        <div class="section-label">Playback</div>
+        <div class="settings-group">
+          <div class="settings-item">
+            <div class="icon-sq" style="--sq-color:#32ade6"><i class="fas fa-download"></i></div>
+            <span class="item-text">Download Quality</span>
+            <div class="item-action custom-dropdown-wrapper" id="customDropdownWrapper">
+              <button type="button" class="custom-dropdown-btn" id="customDropdownBtn">
+                <span id="customDropdownSelected">1080p</span>
+                <i class="fas fa-chevron-down" style="font-size:0.65rem"></i>
+              </button>
+              <ul class="custom-dropdown-list" id="customDropdownList">
+                <li data-value="1080p">1080p (Best)</li>
+                <li data-value="720p">720p (Good)</li>
+                <li data-value="360p">360p (Data Saver)</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+
+        <!-- EXTENSIONS & POWER -->
+        <div class="section-label">Extensions & Power</div>
+        <div class="settings-group">
+          <div class="settings-item" id="extensionServerItem">
+            <div class="icon-sq" style="--sq-color:#34c759"><i class="fas fa-server"></i></div>
+            <span class="item-text">Extension Server</span>
+            <i class="item-action fas fa-chevron-right"></i>
+          </div>
+          <div class="settings-item" id="moduleManagementItem">
+            <div class="icon-sq" style="--sq-color:#ff9500"><i class="fas fa-puzzle-piece"></i></div>
+            <span class="item-text">Module Management</span>
+            <i class="item-action fas fa-chevron-right"></i>
+          </div>
+          <div class="settings-item" id="addOnManagementItem">
+            <div class="icon-sq" style="--sq-color:#c8870a"><i class="fas fa-puzzle-piece"></i></div>
+            <span class="item-text">Add-on Management</span>
+            <i class="item-action fas fa-chevron-right"></i>
+          </div>
+        </div>
+
+        <!-- SYSTEM -->
+        <div class="section-label">System</div>
+        <div class="settings-group">
+          <div class="settings-item" id="clearCacheItem">
+            <div class="icon-sq" style="--sq-color:#ff453a"><i class="fas fa-broom"></i></div>
+            <span class="item-text">Clear Cache</span>
+            <i class="item-action fas fa-chevron-right"></i>
+          </div>
+          <div class="settings-item" id="aboutItem">
+            <div class="icon-sq" style="--sq-color:#6e6e73"><i class="fas fa-info-circle"></i></div>
+            <span class="item-text">About</span>
+            <i class="item-action fas fa-chevron-right"></i>
+          </div>
+        </div>
+
+      </div><!-- /settings-sections -->
+    </div><!-- /app-container -->
+
+
+    <!-- ===========================
+         MODALS (Bottom Sheets)
+    =========================== -->
+
+    <!-- About Modal (iframe) -->
+    <div id="aboutModal" class="modal-backdrop">
+      <div class="modal-content">
+        <iframe id="aboutIframe" src="about.html" title="About the developer"></iframe>
+      </div>
+      <button id="closeAboutModalBtn" class="modal-close-btn">×</button>
+    </div>
+
+    <!-- Extension Server Modal -->
+    <div id="extensionServerModal" class="modal-backdrop">
+      <div class="modal-content">
+        <div class="modal-handle"></div>
+        <div class="modal-header">
+          <h2 class="modal-title">Extension Server</h2>
+          <button class="modal-close-x" id="closeModalBtn"><i class="fas fa-times"></i></button>
+        </div>
+        <div class="modal-body">
+          <p class="modal-subtitle">Enter the IP address of your extension server.</p>
+          <input type="text" id="ip-input" class="ip-input" placeholder="e.g., 192.168.1.100" />
+          <div id="status-indicator" class="status-indicator"></div>
+        </div>
+        <div class="modal-footer">
+          <button id="checkConnectionBtn" class="secondary-button">Check Connection</button>
+          <button id="saveConnectionBtn" class="primary-button" disabled>Save</button>
+        </div>
+        <!-- spacer -->
+        <div style="height:1rem"></div>
+      </div>
+    </div>
+
+    <!-- Edit Profile Modal -->
+    <div id="editProfileModal" class="modal-backdrop">
+      <div class="modal-content">
+        <div class="modal-handle"></div>
+        <div class="modal-header">
+          <h2 class="modal-title">Edit Profile</h2>
+          <button class="modal-close-x" id="closeEditProfileModalBtn"><i class="fas fa-times"></i></button>
+        </div>
+        <div class="modal-body">
+          <p class="modal-subtitle">Enter your new username.</p>
+          <input type="text" id="username-input" class="ip-input" placeholder="New username" />
+        </div>
+        <div class="modal-footer">
+          <button id="saveUsernameBtn" class="primary-button">Save</button>
+        </div>
+        <div style="height:1rem"></div>
+      </div>
+    </div>
+
+    <!-- Module Management Modal -->
+    <div id="moduleManagementModal" class="modal-backdrop">
+      <div class="modal-content">
+        <div class="modal-handle"></div>
+        <div class="modal-header">
+          <h2 class="modal-title">Module Management</h2>
+          <button class="modal-close-x" id="closeModuleModalBtn"><i class="fas fa-times"></i></button>
+        </div>
+        <div class="modal-body">
+          <p class="modal-subtitle">Enable/disable modules and set their preferred order.</p>
+          <div id="moduleCategoriesContainer"></div>
+        </div>
+        <div class="modal-footer">
+          <button id="saveModulePreferencesBtn" class="primary-button">Save Preferences</button>
+        </div>
+        <div style="height:1rem"></div>
+      </div>
+    </div>
+
+    <!-- Add-on Management Modal -->
+    <div id="addOnManagementModal" class="modal-backdrop">
+      <div class="modal-content">
+        <div class="modal-handle"></div>
+        <div class="modal-header">
+          <h2 class="modal-title">Add-on Management</h2>
+          <button class="modal-close-x" id="closeAddOnModalBtn"><i class="fas fa-times"></i></button>
+        </div>
+        <div class="modal-body">
+          <p class="modal-subtitle">Configure your installed add-ons.</p>
+          <div id="addOnCategoriesContainer"></div>
+        </div>
+        <div class="modal-footer">
+          <button id="saveAddOnPreferencesBtn" class="primary-button" style="display:none">Save Preferences</button>
+        </div>
+        <div style="height:1rem"></div>
+      </div>
+    </div>
+
+    <!-- Clear Cache Modal -->
+    <div id="clearCacheModal" class="modal-backdrop">
+      <div class="modal-content">
+        <div class="modal-handle"></div>
+        <div class="modal-header">
+          <h2 class="modal-title">Clear Cache</h2>
+          <button class="modal-close-x" id="closeCacheModalBtnCross"><i class="fas fa-times"></i></button>
+        </div>
+        <div class="modal-body">
+          <p class="modal-subtitle">This can help resolve display issues or problems with outdated content.</p>
+        </div>
+        <div class="modal-footer col">
+          <button id="clearPagesBtn" class="secondary-button">Clear Cached Pages &amp; Resources</button>
+          <button id="clearAllBtn" class="primary-button" style="background-color:var(--destructive)">Clear All Site Data (Logout)</button>
+          <button id="closeCacheModalBtn" class="secondary-button">Cancel</button>
+        </div>
+        <div style="height:0.5rem"></div>
+      </div>
+    </div>
+
+
+    <!-- ===========================
+         JAVASCRIPT
+    =========================== -->
+    <script>
+      document.addEventListener("DOMContentLoaded", () => {
+        let currentProfile = null;
+        const loadingScreen = document.getElementById("loadingScreen");
+        const settingsContainer = document.getElementById("settingsContainer");
+        const userAvatar = document.getElementById("userAvatar");
+        const avatarUpload = document.getElementById("avatarUpload");
+        const usernameDisplay = document.getElementById("usernameDisplay");
+        const switchProfileItem = document.getElementById("switchProfileItem");
+        const extensionServerItem = document.getElementById("extensionServerItem");
+
+        function getApiUrl(path) {
+          const isDeployed = window.location.protocol.startsWith("http");
+          if (isDeployed) return path;
+          const ip = localStorage.getItem("extension_server_ip");
+          if (!ip) { console.error("Extension IP not found."); return null; }
+          return `http://${ip}:7275${path}`;
+        }
+
+        async function initialize() {
+          const profileId = localStorage.getItem("currentProfileId");
+          if (!profileId) { window.location.href = "login.html"; return; }
+          try {
+            const url = getApiUrl(`/profiles/${profileId}`);
+            if (!url) return;
+            const response = await fetch(url);
+            if (!response.ok) throw new Error("Profile not found");
+            currentProfile = await response.json();
+            renderSettingsForProfile();
+            setupEventListeners();
+            loadingScreen.style.display = "none";
+            settingsContainer.style.display = "block";
+          } catch (error) {
+            console.error("Error during initialization:", error);
+            window.parent.showToast("Failed to load profile. Please log in again.");
+          }
+        }
+
+        function renderSettingsForProfile() {
+          if (!currentProfile) return;
+          userAvatar.src = currentProfile.avatar_url;
+          usernameDisplay.textContent = currentProfile.name;
+          const { settings } = currentProfile;
+          document.body.dataset.theme = settings.theme;
+          document.getElementById("themeToggle").checked = settings.theme === "light";
+          document.getElementById("pushNotificationsToggle").checked = settings.pushNotifications;
+          updateDropdownSelection(settings.downloadQuality);
+        }
+
+        async function updateSetting(key, value) {
+          if (!currentProfile) return;
+          currentProfile.settings[key] = value;
+          if (key === "theme") document.body.dataset.theme = value;
+          try {
+            const url = getApiUrl(`/profiles/${currentProfile.id}`);
+            if (!url) return;
+            await fetch(url, {
+              method: "PUT",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(currentProfile),
+            });
+          } catch (error) {
+            console.error("Failed to save settings:", error);
+            window.parent.showToast("Could not sync settings with the server.");
+          }
+        }
+
+        async function uploadAvatar(file) {
+          const formData = new FormData();
+          formData.append("avatar", file);
+          try {
+            const url = getApiUrl(`/profiles/${currentProfile.id}/avatar`);
+            if (!url) return;
+            const response = await fetch(url, { method: "POST", body: formData });
+            if (!response.ok) throw new Error("Avatar upload failed");
+            const updatedProfile = await response.json();
+            currentProfile.avatar_url = updatedProfile.avatar_url;
+            userAvatar.src = currentProfile.avatar_url;
+          } catch (error) {
+            console.error("Failed to upload avatar:", error);
+            window.parent.showToast("Could not upload new avatar.");
+          }
+        }
+
+        function setupEventListeners() {
+          document.getElementById("avatarEditBadge").addEventListener("click", () => avatarUpload.click());
+          userAvatar.addEventListener("click", () => avatarUpload.click());
+          avatarUpload.addEventListener("change", (e) => {
+            if (e.target.files && e.target.files[0]) uploadAvatar(e.target.files[0]);
+          });
+          switchProfileItem.addEventListener("click", () => {
+            window.parent.postMessage({ action: "switchProfile" }, "*");
+          });
+          document.getElementById("themeToggle").addEventListener("change", (e) => {
+            updateSetting("theme", e.target.checked ? "light" : "dark");
+          });
+          document.getElementById("pushNotificationsToggle").addEventListener("change", (e) => {
+            updateSetting("pushNotifications", e.target.checked);
+          });
+
+          setupAccentColorPicker();
+          setupCustomDropdown();
+          setupExtensionServerModal();
+          setupEditProfileModal();
+          setupModuleManagementModal();
+          setupAddOnManagementModal();
+          setupCacheModal();
+          setupAboutModal();
+        }
+
+        /* ── ACCENT COLOR PICKER ─────────────────────── */
+        function applyProfileAccent(color, rgb) {
+          document.documentElement.style.setProperty("--profile-accent", color);
+          document.documentElement.style.setProperty("--profile-accent-rgb", rgb);
+          const heroBg = document.getElementById("profileHeroBg");
+          if (heroBg) {
+            heroBg.style.background = `radial-gradient(ellipse 90% 70% at 50% 0%, rgba(${rgb}, 0.28) 0%, transparent 68%)`;
+          }
+        }
+
+        function setupAccentColorPicker() {
+          const swatches = document.querySelectorAll("#accentSwatches .swatch");
+          const savedColor = localStorage.getItem("profile_accent_color") || "#ff9500";
+          const savedRgb   = localStorage.getItem("profile_accent_rgb")   || "255,149,0";
+          applyProfileAccent(savedColor, savedRgb);
+          swatches.forEach(s => s.classList.toggle("active", s.dataset.color === savedColor));
+
+          swatches.forEach(swatch => {
+            swatch.addEventListener("click", () => {
+              const color = swatch.dataset.color;
+              const rgb   = swatch.dataset.rgb;
+              applyProfileAccent(color, rgb);
+              localStorage.setItem("profile_accent_color", color);
+              localStorage.setItem("profile_accent_rgb", rgb);
+              swatches.forEach(s => s.classList.remove("active"));
+              swatch.classList.add("active");
+            });
+          });
+        }
+
+        /* ── ABOUT MODAL ─────────────────────────────── */
+        function setupAboutModal() {
+          const aboutItem    = document.getElementById("aboutItem");
+          const aboutModal   = document.getElementById("aboutModal");
+          const closeAboutBtn = document.getElementById("closeAboutModalBtn");
+          let tapCount = 0, tapTimer = null;
+          const TAP_WINDOW_MS = 500, REQUIRED_TAPS = 3;
+
+          function resetTapAndOpenAbout() {
+            tapCount = 0;
+            if (tapTimer) { clearTimeout(tapTimer); tapTimer = null; }
+            aboutModal.classList.add("active");
+          }
+
+          aboutItem.addEventListener("click", () => {
+            tapCount++;
+            if (tapTimer) clearTimeout(tapTimer);
+            if (tapCount === REQUIRED_TAPS) {
+              tapCount = 0; tapTimer = null;
+              if (window.parent && window.parent.openPopup) window.parent.openPopup("/portal.html");
+              else aboutModal.classList.add("active");
+            } else {
+              tapTimer = setTimeout(resetTapAndOpenAbout, TAP_WINDOW_MS);
+            }
+          });
+
+          const closeAboutModal = () => aboutModal.classList.remove("active");
+          closeAboutBtn.addEventListener("click", closeAboutModal);
+          aboutModal.addEventListener("click", (e) => { if (e.target === aboutModal) closeAboutModal(); });
+        }
+
+        /* ── CACHE MODAL ─────────────────────────────── */
+        function setupCacheModal() {
+          const modal = document.getElementById("clearCacheModal");
+          if (!modal) return;
+          const clearCacheItem  = document.getElementById("clearCacheItem");
+          const clearPagesBtn   = document.getElementById("clearPagesBtn");
+          const clearAllBtn     = document.getElementById("clearAllBtn");
+          const closeBtn        = document.getElementById("closeCacheModalBtn");
+          const closeBtnCross   = document.getElementById("closeCacheModalBtnCross");
+
+          clearCacheItem.addEventListener("click", () => modal.classList.add("active"));
+          const closeModal = () => modal.classList.remove("active");
+          closeBtn.addEventListener("click", closeModal);
+          closeBtnCross.addEventListener("click", closeModal);
+          modal.addEventListener("click", (e) => { if (e.target === modal) closeModal(); });
+
+          clearPagesBtn.addEventListener("click", () => {
+            if (confirm("This will clear cached pages and resources, forcing them to be re-downloaded. Are you sure?")) {
+              window.parent.postMessage({ action: "clearPageCache" }, "*");
+              closeModal();
+            }
+          });
+          clearAllBtn.addEventListener("click", () => {
+            if (confirm("WARNING: This will delete ALL site data, including your login sessions, settings, and all cached content. You will be logged out. Are you sure?")) {
+              window.parent.postMessage({ action: "clearAllData" }, "*");
+              closeModal();
+            }
+          });
+        }
+
+        /* ── CUSTOM DROPDOWN ─────────────────────────── */
+        function setupCustomDropdown() {
+          const wrapper = document.getElementById("customDropdownWrapper");
+          const btn     = document.getElementById("customDropdownBtn");
+          const list    = document.getElementById("customDropdownList");
+
+          btn.addEventListener("click", () => wrapper.classList.toggle("is-open"));
+          list.querySelectorAll("li").forEach((opt) => {
+            opt.addEventListener("click", () => {
+              updateSetting("downloadQuality", opt.dataset.value);
+              updateDropdownSelection(opt.dataset.value);
+              wrapper.classList.remove("is-open");
+            });
+          });
+          document.addEventListener("click", (e) => {
+            if (!wrapper.contains(e.target)) wrapper.classList.remove("is-open");
+          });
+        }
+
+        /* ── EXTENSION SERVER MODAL ──────────────────── */
+        function setupExtensionServerModal() {
+          const modal           = document.getElementById("extensionServerModal");
+          const ipInput         = document.getElementById("ip-input");
+          const checkBtn        = document.getElementById("checkConnectionBtn");
+          const saveBtn         = document.getElementById("saveConnectionBtn");
+          const closeBtn        = document.getElementById("closeModalBtn");
+          const statusIndicator = document.getElementById("status-indicator");
+
+          extensionServerItem.addEventListener("click", () => {
+            ipInput.value = localStorage.getItem("extension_server_ip") || "";
+            statusIndicator.textContent = "";
+            statusIndicator.className = "status-indicator";
+            saveBtn.disabled = true;
+            modal.classList.add("active");
+          });
+          closeBtn.addEventListener("click", () => modal.classList.remove("active"));
+
+          checkBtn.addEventListener("click", async () => {
+            const ip = ipInput.value.trim();
+            if (!ip) return;
+            statusIndicator.textContent = "Connecting...";
+            statusIndicator.className = "status-indicator";
+            saveBtn.disabled = true;
+            try {
+              const response = await fetch(`http://${ip}:7275/identify`, { signal: AbortSignal.timeout(5000) });
+              if (response.ok) {
+                const data = await response.json();
+                if ("Animex Extension API" === data.app) {
+                  statusIndicator.textContent = "Connection successful!";
+                  statusIndicator.className = "status-indicator connected";
+                  localStorage.setItem("extension_server_ip", ip);
+                  saveBtn.disabled = false;
+                } else throw new Error("Not a valid server.");
+              } else throw new Error("Connection failed.");
+            } catch (error) {
+              statusIndicator.textContent = "Connection failed. Check IP and server status.";
+              statusIndicator.className = "status-indicator error";
+            }
+          });
+          saveBtn.addEventListener("click", () => modal.classList.remove("active"));
+        }
+
+        /* ── EDIT PROFILE MODAL ──────────────────────── */
+        function setupEditProfileModal() {
+          const modal          = document.getElementById("editProfileModal");
+          const editUsernameBtn = document.getElementById("editUsernameBtn");
+          const usernameInput  = document.getElementById("username-input");
+          const saveBtn        = document.getElementById("saveUsernameBtn");
+          const closeBtn       = document.getElementById("closeEditProfileModalBtn");
+
+          editUsernameBtn.addEventListener("click", (e) => {
+            e.preventDefault();
+            usernameInput.value = currentProfile.name;
+            modal.classList.add("active");
+          });
+          closeBtn.addEventListener("click", () => modal.classList.remove("active"));
+
+          saveBtn.addEventListener("click", async () => {
+            const newName = usernameInput.value.trim();
+            if (newName && newName !== currentProfile.name) {
+              try {
+                const url = getApiUrl(`/profiles/${currentProfile.id}`);
+                if (!url) return;
+                const response = await fetch(url, {
+                  method: "PATCH",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({ name: newName }),
+                });
+                if (!response.ok) throw new Error("Failed to update username");
+                const updatedProfile = await response.json();
+                currentProfile.name = updatedProfile.name;
+                usernameDisplay.textContent = currentProfile.name;
+                modal.classList.remove("active");
+              } catch (error) {
+                console.error("Failed to update username:", error);
+                window.parent.showToast("Could not update username.");
+              }
+            } else modal.classList.remove("active");
+          });
+        }
+
+        /* ── MODULE MANAGEMENT MODAL ─────────────────── */
+        async function setupModuleManagementModal() {
+          const modal                   = document.getElementById("moduleManagementModal");
+          const moduleManagementItem    = document.getElementById("moduleManagementItem");
+          const closeBtn                = document.getElementById("closeModuleModalBtn");
+          const moduleCategoriesContainer = document.getElementById("moduleCategoriesContainer");
+          const saveModulePreferencesBtn  = document.getElementById("saveModulePreferencesBtn");
+
+          moduleManagementItem.addEventListener("click", async () => {
+            modal.classList.add("active");
+            await renderModules();
+          });
+          closeBtn.addEventListener("click", () => modal.classList.remove("active"));
+
+          saveModulePreferencesBtn.addEventListener("click", async () => {
+            try {
+              const url = getApiUrl(`/profiles/${currentProfile.id}/module-preferences`);
+              if (!url) return;
+              const response = await fetch(url, {
+                method: "PATCH",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(currentProfile.settings.module_preferences),
+              });
+              if (!response.ok) throw new Error("Failed to save module preferences");
+              window.parent.showToast("Module preferences saved successfully!", "success");
+            } catch (error) {
+              console.error("Error saving module preferences:", error);
+              window.parent.showToast("Could not save module preferences.", "error");
+            }
+            modal.classList.remove("active");
+          });
+
+          async function renderModules() {
+            moduleCategoriesContainer.innerHTML = "Loading modules...";
+            try {
+              const url = getApiUrl("/modules");
+              if (!url) return;
+              const response = await fetch(url);
+              if (!response.ok) throw new Error("Failed to fetch modules");
+              const allModules = await response.json();
+              const categorizedModules = {
+                "Anime Streaming": [], "Anime Downloading": [], "Manga": [],
+                "Hentai (Anime) Streaming": [], "Hentai (Anime) Downloading": [],
+                "Hentai (Manga)": [], "Generic": [],
+              };
+              allModules.forEach((mod) => {
+                const modTypes = [].concat(mod.type || []);
+                let categorized = false;
+                if (modTypes.includes("ANIME_STREAMER")) {
+                  mod.nsfw ? categorizedModules["Hentai (Anime) Streaming"].push(mod) : categorizedModules["Anime Streaming"].push(mod);
+                  categorized = true;
+                }
+                if (modTypes.includes("ANIME_DOWNLOADER")) {
+                  mod.nsfw ? categorizedModules["Hentai (Anime) Downloading"].push(mod) : categorizedModules["Anime Downloading"].push(mod);
+                  categorized = true;
+                }
+                if (modTypes.includes("MANGA_READER")) {
+                  mod.nsfw ? categorizedModules["Hentai (Manga)"].push(mod) : categorizedModules["Manga"].push(mod);
+                  categorized = true;
+                }
+                if (!categorized) categorizedModules["Generic"].push(mod);
+              });
+
+              moduleCategoriesContainer.innerHTML = "";
+              for (const category in categorizedModules) {
+                if (categorizedModules[category].length === 0) continue;
+                (() => {
+                  const preferredOrder = currentProfile.settings.module_preferences[category] || [];
+                  categorizedModules[category].sort((a, b) => {
+                    const iA = preferredOrder.indexOf(a.id), iB = preferredOrder.indexOf(b.id);
+                    return iA === -1 && iB === -1 ? 0 : iA === -1 ? 1 : iB === -1 ? -1 : iA - iB;
+                  });
+                  const categoryDiv = document.createElement("div");
+                  categoryDiv.classList.add("settings-group");
+                  categoryDiv.innerHTML = `<h3 style="padding:.875rem 1rem;margin:0;border-bottom:1px solid var(--border-color);font-size:.85rem;font-weight:600;">${category}</h3><ul class="module-list" data-category-key="${category}"></ul>`;
+                  moduleCategoriesContainer.appendChild(categoryDiv);
+                  const moduleList = categoryDiv.querySelector(".module-list");
+                  categorizedModules[category].forEach((mod) => {
+                    const moduleItem = document.createElement("li");
+                    moduleItem.classList.add("settings-item");
+                    moduleItem.dataset.moduleId = mod.id;
+                    moduleItem.innerHTML = `<span class="item-text">${mod.name}</span><div class="item-action"><label class="toggle-switch"><input type="checkbox" data-module-id="${mod.id}" ${mod.enabled ? "checked" : ""}><span class="slider"></span></label></div><div class="module-reorder-controls"><i class="fas fa-chevron-up reorder-up" data-module-id="${mod.id}"></i><i class="fas fa-chevron-down reorder-down" data-module-id="${mod.id}"></i></div>`;
+                    moduleList.appendChild(moduleItem);
+                    const toggle = moduleItem.querySelector('input[type="checkbox"]');
+                    toggle.addEventListener("change", async (e) => {
+                      const moduleId = e.target.dataset.moduleId, enable = e.target.checked;
+                      try {
+                        const url = getApiUrl(`/modules/toggle/${moduleId}/${enable}`);
+                        if (!url) return;
+                        const res = await fetch(url);
+                        if (!res.ok) throw new Error("Failed to toggle module");
+                        const um = allModules.find(m => m.id === moduleId);
+                        if (um) um.enabled = enable;
+                      } catch (err) {
+                        console.error(`Error toggling module ${moduleId}:`, err);
+                        window.parent.showToast(`Could not toggle module ${moduleId}.`);
+                        e.target.checked = !enable;
+                      }
+                    });
+                    moduleItem.querySelector(".reorder-up").addEventListener("click", () => reorderModule(mod.id, category, "up"));
+                    moduleItem.querySelector(".reorder-down").addEventListener("click", () => reorderModule(mod.id, category, "down"));
+                  });
+                })();
+              }
+            } catch (error) {
+              console.error("Error fetching modules:", error);
+              moduleCategoriesContainer.innerHTML = '<p style="color:var(--destructive)">Failed to load modules. Please check server connection.</p>';
+            }
+          }
+
+          function reorderModule(moduleId, category, direction) {
+            const moduleListEl = moduleCategoriesContainer.querySelector(`.module-list[data-category-key="${category}"]`);
+            if (!moduleListEl) return;
+            const items = Array.from(moduleListEl.children);
+            const index = items.findIndex(item => item.dataset.moduleId === moduleId);
+            if (index === -1) return;
+            let newIndex = index;
+            if (direction === "up" && index > 0) newIndex = index - 1;
+            else if (direction === "down" && index < items.length - 1) newIndex = index + 1;
+            else return;
+            const [moved] = items.splice(index, 1);
+            items.splice(newIndex, 0, moved);
+            moduleListEl.innerHTML = "";
+            items.forEach(item => moduleListEl.appendChild(item));
+            currentProfile.settings.module_preferences[category] = items.map(item => item.dataset.moduleId);
+          }
+        }
+
+        /* ── ADD-ON MANAGEMENT MODAL ─────────────────── */
+        async function setupAddOnManagementModal() {
+          const modal                  = document.getElementById("addOnManagementModal");
+          const addOnManagementItem    = document.getElementById("addOnManagementItem");
+          const closeBtn               = document.getElementById("closeAddOnModalBtn");
+          const addOnCategoriesContainer = document.getElementById("addOnCategoriesContainer");
+          const saveAddOnPreferencesBtn  = document.getElementById("saveAddOnPreferencesBtn");
+
+          saveAddOnPreferencesBtn.style.display = "none";
+          addOnManagementItem.addEventListener("click", async () => {
+            modal.classList.add("active");
+            await renderAddOns();
+          });
+          closeBtn.addEventListener("click", () => modal.classList.remove("active"));
+
+          async function renderAddOns() {
+            addOnCategoriesContainer.innerHTML = "Loading add-ons...";
+            try {
+              const url = getApiUrl("/settings/add-ons");
+              if (!url) return;
+              const response = await fetch(url);
+              if (!response.ok) throw new Error("Failed to fetch add-ons");
+              const allAddOnsSettings = await response.json();
+              addOnCategoriesContainer.innerHTML = "";
+              if (allAddOnsSettings.length === 0) {
+                addOnCategoriesContainer.innerHTML = "<p>No add-ons with settings found.</p>";
+                return;
+              }
+              const groupedSettings = allAddOnsSettings.reduce((acc, setting) => {
+                const extId = setting.extension_id;
+                if (!acc[extId]) acc[extId] = { title: extId, settings: [] };
+                acc[extId].settings.push(setting);
+                return acc;
+              }, {});
+
+              for (const extensionId in groupedSettings) {
+                const { title, settings } = groupedSettings[extensionId];
+                const addOnGroupDiv = document.createElement("div");
+                addOnGroupDiv.classList.add("settings-group");
+                const settingsList = document.createElement("div");
+                settingsList.classList.add("add-on-settings-list");
+                settings.forEach((setting) => {
+                  const settingItem = document.createElement("div");
+                  settingItem.classList.add("settings-item");
+                  settingItem.innerHTML = `<i class="item-icon ${setting.icon || "fas fa-cog"}" style="color:var(--foreground-secondary);width:24px;text-align:center"></i><span class="item-text">${setting.text}</span><div class="item-action"><label class="toggle-switch"><input type="checkbox" id="addon-${extensionId}-${setting.id}" data-setting-id="${setting.id}"><span class="slider"></span></label></div>`;
+                  settingsList.appendChild(settingItem);
+                });
+                addOnGroupDiv.innerHTML = `<h3 style="padding:.875rem 1rem;margin:0;border-bottom:1px solid var(--border-color);font-size:.85rem;font-weight:600;">${title}</h3>`;
+                addOnGroupDiv.appendChild(settingsList);
+                addOnCategoriesContainer.appendChild(addOnGroupDiv);
+                settings.forEach((setting) => {
+                  const toggle = document.getElementById(`addon-${extensionId}-${setting.id}`);
+                  if (toggle) {
+                    if (currentProfile && currentProfile.settings) toggle.checked = !!currentProfile.settings[setting.id];
+                    toggle.addEventListener("change", (e) => updateSetting(e.target.dataset.settingId, e.target.checked));
+                  }
+                });
+              }
+            } catch (error) {
+              console.error("Error fetching add-ons:", error);
+              addOnCategoriesContainer.innerHTML = '<p style="color:var(--destructive)">Failed to load add-ons. Please check server connection.</p>';
+            }
+          }
+        }
+
+        /* ── DROPDOWN SELECTION ──────────────────────── */
+        function updateDropdownSelection(value) {
+          const list = document.getElementById("customDropdownList");
+          const selectedSpan = document.getElementById("customDropdownSelected");
+          let found = false;
+          list.querySelectorAll("li").forEach((opt) => {
+            const isSelected = opt.dataset.value === value;
+            opt.classList.toggle("selected", isSelected);
+            if (isSelected) { selectedSpan.textContent = opt.textContent; found = true; }
+          });
+          if (!found) {
+            const firstOpt = list.querySelector("li");
+            if (firstOpt) { firstOpt.classList.add("selected"); selectedSpan.textContent = firstOpt.textContent; }
+          }
+        }
+
+        initialize();
+      });
+    </script>
+  </body>
+</html>

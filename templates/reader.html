@@ -1,0 +1,785 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, user-scalable=no"
+    />
+    <title>Animex Reader</title>
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"
+    />
+    <style>
+      :root {
+        --background-color: #121212;
+        --text-color: #eaeaea;
+        --accent-color: #ff9500;
+        --accent-hover: #ffaa33;
+        --header-bg: rgba(18, 18, 18, 0.85);
+        --footer-bg: rgba(18, 18, 18, 0.9);
+        --border-color: rgba(255, 255, 255, 0.1);
+      }
+      body {
+        margin: 0;
+        background-color: var(--background-color);
+        color: var(--text-color);
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+          Helvetica, Arial, sans-serif;
+        overflow: hidden;
+      }
+
+      /* Scrollbar Styling */
+      ::-webkit-scrollbar {
+        width: 8px;
+        height: 8px;
+      }
+      ::-webkit-scrollbar-track {
+        background: #1a1a1a;
+      }
+      ::-webkit-scrollbar-thumb {
+        background: #444;
+        border-radius: 4px;
+      }
+      ::-webkit-scrollbar-thumb:hover {
+        background: #666;
+      }
+
+      /* Header */
+      #reader-header {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        z-index: 100;
+        background-color: var(--header-bg);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        border-bottom: 1px solid var(--border-color);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        height: 60px;
+        padding: 0 20px;
+        transition: transform 0.3s ease-in-out;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+      }
+      #reader-header.hidden {
+        transform: translateY(-100%);
+      }
+
+      .header-left,
+      .header-center,
+      .header-right {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+      }
+      
+      .header-center {
+        flex-direction: column;
+        align-items: flex-start;
+        justify-content: center;
+        max-width: 40vw;
+      }
+      
+      .header-center h1 {
+        font-size: 16px;
+        margin: 0;
+        font-weight: 600;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        width: 100%;
+      }
+      .header-center p {
+        font-size: 12px;
+        margin: 2px 0 0 0;
+        color: #aaa;
+      }
+
+      /* Controls */
+      button {
+        transition: all 0.2s ease;
+      }
+      #back-btn {
+        background: none;
+        border: none;
+        color: var(--text-color);
+        font-size: 20px;
+        cursor: pointer;
+        padding: 8px;
+        border-radius: 50%;
+      }
+      #back-btn:hover {
+        background: rgba(255,255,255,0.1);
+      }
+
+      #next-chapter-btn {
+        background: var(--accent-color);
+        color: white;
+        border: none;
+        padding: 8px 16px;
+        border-radius: 6px;
+        font-weight: 600;
+        font-size: 13px;
+        cursor: pointer;
+        display: none;
+        box-shadow: 0 2px 8px rgba(255, 149, 0, 0.3);
+      }
+      #next-chapter-btn:hover {
+        background: var(--accent-hover);
+        transform: translateY(-1px);
+      }
+
+      .mode-switcher {
+        background: rgba(255, 255, 255, 0.08);
+        border-radius: 8px;
+        padding: 4px;
+        display: flex;
+        border: 1px solid rgba(255,255,255,0.05);
+      }
+      .mode-switcher button {
+        background: transparent;
+        border: none;
+        color: #bbb;
+        padding: 6px 12px;
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 13px;
+        font-weight: 500;
+      }
+      .mode-switcher button:hover {
+        color: #fff;
+      }
+      .mode-switcher button.active {
+        background: rgba(255,255,255,0.15);
+        color: white;
+        font-weight: 600;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+      }
+
+      /* Loader */
+      #loader {
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        width: 40px;
+        height: 40px;
+        border: 4px solid #333;
+        border-top-color: var(--accent-color);
+        border-radius: 50%;
+        animation: spin 0.8s linear infinite;
+        z-index: 50;
+      }
+      @keyframes spin {
+        to { transform: translate(-50%, -50%) rotate(360deg); }
+      }
+
+      /* Main Viewer */
+      #image-container {
+        height: 100vh;
+        width: 100vw;
+        overflow: hidden;
+        scroll-behavior: auto; /* Managed by JS for precision */
+        background-color: #000;
+      }
+
+      /* Webtoon Mode */
+      .view-webtoon #image-container {
+        overflow-y: scroll;
+        -webkit-overflow-scrolling: touch;
+      }
+      .view-webtoon img {
+        display: block;
+        width: 100%;
+        max-width: 900px; /* Wider max-width for Desktop */
+        margin: 0 auto;
+        height: auto;
+      }
+
+      /* Pagination Mode */
+      .view-pagination #image-container {
+        display: flex;
+        overflow-x: hidden;
+      }
+      .view-pagination img {
+        width: 100vw;
+        height: 100vh;
+        object-fit: contain;
+        flex-shrink: 0;
+        user-select: none;
+      }
+
+      /* Navigation Overlay (Click Zones) */
+      .nav-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        height: 100%;
+        width: 100%;
+        z-index: 50;
+        display: none;
+      }
+      .view-pagination .nav-overlay {
+        display: block;
+      }
+      #nav-left {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 30%;
+        height: 100%;
+        cursor: w-resize;
+      }
+      #nav-right {
+        position: absolute;
+        right: 0;
+        top: 0;
+        width: 30%;
+        height: 100%;
+        cursor: e-resize;
+      }
+      #nav-center {
+        position: absolute;
+        left: 30%;
+        top: 0;
+        width: 40%;
+        height: 100%;
+        cursor: pointer;
+      }
+
+      /* Footer */
+      #reader-footer {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        z-index: 100;
+        background-color: var(--footer-bg);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        border-top: 1px solid var(--border-color);
+        height: 50px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0 20px;
+        gap: 20px;
+        transition: transform 0.3s ease-in-out;
+      }
+      #reader-footer.hidden {
+        transform: translateY(100%);
+      }
+
+      #page-progress {
+        flex-grow: 1;
+        max-width: 600px;
+        height: 6px;
+        border-radius: 3px;
+        cursor: pointer;
+        -webkit-appearance: none;
+      }
+      #page-progress::-webkit-progress-bar {
+        background-color: rgba(255, 255, 255, 0.15);
+        border-radius: 3px;
+      }
+      #page-progress::-webkit-progress-value {
+        background-color: var(--accent-color);
+        border-radius: 3px;
+        transition: width 0.1s linear;
+      }
+
+      #page-indicator {
+        font-size: 14px;
+        color: #ddd;
+        font-variant-numeric: tabular-nums;
+        font-weight: 500;
+        min-width: 70px;
+        text-align: center;
+      }
+
+      /* Desktop Specific Tweaks */
+      @media (min-width: 768px) {
+        .header-center h1 { font-size: 18px; }
+        .header-center p { font-size: 13px; }
+        #page-progress { height: 8px; }
+      }
+    </style>
+  </head>
+  <body class="view-pagination">
+    <header id="reader-header">
+      <div class="header-left">
+        <button id="back-btn" aria-label="Go back">
+          <i class="fa fa-arrow-left"></i>
+        </button>
+        <div class="header-center">
+          <h1 id="manga-title">Loading Series...</h1>
+          <p id="chapter-details">Loading Chapter...</p>
+        </div>
+      </div>
+      <div class="header-right">
+        <div class="mode-switcher">
+          <button id="mode-pagination" class="active"><i class="fa fa-book-open"></i> Paged</button>
+          <button id="mode-webtoon"><i class="fa fa-scroll"></i> Scroll</button>
+        </div>
+        <button id="next-chapter-btn">
+          Next <i class="fa fa-chevron-right" style="margin-left:5px;"></i>
+        </button>
+      </div>
+    </header>
+
+    <div id="loader"></div>
+
+    <main id="image-container"></main>
+
+    <div class="nav-overlay">
+      <div id="nav-left" title="Previous Page"></div>
+      <div id="nav-center" title="Toggle Menu"></div>
+      <div id="nav-right" title="Next Page"></div>
+    </div>
+
+    <footer id="reader-footer">
+      <span id="page-indicator">0 / 0</span>
+      <progress id="page-progress" value="0" max="100"></progress>
+    </footer>
+
+    <script>
+      document.addEventListener("DOMContentLoaded", () => {
+        // --- Elements ---
+        const container = document.getElementById("image-container");
+        const loader = document.getElementById("loader");
+        const header = document.getElementById("reader-header");
+        const footer = document.getElementById("reader-footer");
+        const mangaTitleEl = document.getElementById("manga-title");
+        const chapterDetailsEl = document.getElementById("chapter-details");
+        const modePaginationBtn = document.getElementById("mode-pagination");
+        const modeWebtoonBtn = document.getElementById("mode-webtoon");
+        const backBtn = document.getElementById("back-btn");
+        const nextChapterBtn = document.getElementById("next-chapter-btn");
+        const pageProgress = document.getElementById("page-progress");
+        const pageIndicator = document.getElementById("page-indicator");
+
+        // --- State ---
+        let imageLinks = [];
+        let currentPage = 0;
+        let source, mangaId, chapterId;
+        let chapterData = null; 
+        const serverIp = localStorage.getItem("extension_server_ip") || "localhost";
+        const serverUrl = `http://${serverIp}:7275`;
+        const READER_MODE_KEY = "reader_view_mode";
+        const HISTORY_KEY = "reading_history";
+
+        // --- Initialization ---
+        function init() {
+          const pathParts = window.location.pathname.split("/");
+          // URL Structure expected: /read/{source}/{mangaId}/{chapterId}
+          if (pathParts.length >= 5) {
+            source = pathParts[2];
+            mangaId = pathParts[3];
+            chapterId = pathParts[4];
+          } else {
+            console.error("Invalid URL structure");
+            return;
+          }
+
+          // Load View Preference
+          const savedMode = localStorage.getItem(READER_MODE_KEY);
+          if (savedMode) {
+            setMode(savedMode, true);
+          }
+
+          fetchMangaTitle();
+          fetchImages(); // This triggers history restore after loading
+          fetchChapterDetails();
+          setupControls();
+        }
+
+        // --- History Management ---
+
+        /**
+         * Structure of Reading History (LocalStorage):
+         * [
+         *   {
+         *     mangaId: "123",
+         *     source: "mangadex",
+         *     chapters: {
+         *       "chapter-uuid": {
+         *         state: "ongoing" | "finished",
+         *         page: 4,
+         *         timestamp: 123456789,
+         *         source: "mangadex"
+         *       }
+         *     }
+         *   }
+         * ]
+         */
+
+        function getHistory() {
+          try {
+            return JSON.parse(localStorage.getItem(HISTORY_KEY)) || [];
+          } catch (e) {
+            return [];
+          }
+        }
+
+        function saveHistory(history) {
+          localStorage.setItem(HISTORY_KEY, JSON.stringify(history));
+        }
+
+        function restoreReadingProgress() {
+          const history = getHistory();
+          const seriesEntry = history.find(h => h.mangaId === mangaId && h.source === source);
+
+          if (seriesEntry && seriesEntry.chapters && seriesEntry.chapters[chapterId]) {
+            const record = seriesEntry.chapters[chapterId];
+            if (record.page && record.page < imageLinks.length) {
+              console.log("Restoring to page:", record.page);
+              currentPage = record.page;
+              
+              // Apply UI updates immediately
+              if (document.body.classList.contains("view-pagination")) {
+                 updatePagination();
+              } else {
+                 // For webtoon, we need to wait until images render to scroll accurately
+                 // This is handled in setMode or post-load logic
+                 setTimeout(() => {
+                   const imgs = container.getElementsByTagName("img");
+                   if(imgs[currentPage]) imgs[currentPage].scrollIntoView({ block: "start" });
+                 }, 200);
+              }
+              updateFooter();
+            }
+          }
+        }
+
+        function updateHistory() {
+          if (imageLinks.length === 0) return;
+
+          let history = getHistory();
+          
+          // 1. Find or Create Series Entry
+          let seriesEntry = history.find(h => h.mangaId === mangaId && h.source === source);
+          if (!seriesEntry) {
+            seriesEntry = {
+              mangaId: mangaId,
+              source: source,
+              chapters: {}
+            };
+            history.push(seriesEntry);
+          }
+
+          // 2. Determine State
+          // If we are on the last page (or close to end in scroll), mark finished
+          const isFinished = currentPage >= imageLinks.length - 1;
+
+          // 3. Create/Update Chapter Object
+          seriesEntry.chapters[chapterId] = {
+            state: isFinished ? "finished" : "ongoing",
+            page: currentPage,
+            timestamp: Date.now(),
+            source: source
+          };
+
+          // 4. Save
+          saveHistory(history);
+        }
+
+        // --- Fetching Logic ---
+
+        async function fetchChapterDetails() {
+           // (Logic unchanged from provided example, but ensured robust error handling)
+           if (source !== "mangadex") {
+            chapterDetailsEl.textContent = `Chapter ${chapterId}`;
+            fetchLegacyChapterNav();
+            return;
+          }
+
+          try {
+            const url = `${serverUrl}/mangadex/manga/${mangaId}/chapter-nav-details/${chapterId}`;
+            const response = await fetch(url);
+            if (!response.ok) throw new Error("Nav fetch failed");
+
+            const navData = await response.json();
+            chapterData = navData.current_chapter;
+
+            if (chapterData?.attributes) {
+              const chNum = chapterData.attributes.chapter;
+              const title = chapterData.attributes.title;
+              chapterDetailsEl.textContent = `Chapter ${chNum}${title ? ': ' + title : ''}`;
+            } else {
+              chapterDetailsEl.textContent = `Chapter ${chapterId}`;
+            }
+
+            if (navData.next_chapter_id) {
+              nextChapterBtn.style.display = "block";
+              nextChapterBtn.onclick = () => {
+                window.location.href = `/read/${source}/${mangaId}/${navData.next_chapter_id}`;
+              };
+            }
+          } catch (error) {
+            console.warn("Nav details error:", error);
+            chapterDetailsEl.textContent = `Chapter ${chapterId}`;
+            fetchLegacyChapterNav();
+          }
+        }
+
+        async function fetchMangaTitle() {
+          // (Logic unchanged)
+          let url = source === "mangadex" 
+            ? `${serverUrl}/mangadex/manga/${mangaId}`
+            : `https://api.jikan.moe/v4/manga/${mangaId}`;
+
+          try {
+            const res = await fetch(url);
+            const data = await res.json();
+            if (source === "mangadex") {
+              mangaTitleEl.textContent = data.attributes.title.en || Object.values(data.attributes.title)[0];
+            } else {
+              mangaTitleEl.textContent = data.data?.title || "Unknown Title";
+            }
+          } catch (e) {
+            mangaTitleEl.textContent = "Reader";
+          }
+        }
+
+        async function fetchLegacyChapterNav() {
+          const url = source === "mangadex" 
+             ? `${serverUrl}/mangadex/manga/${mangaId}/chapters`
+             : `${serverUrl}/chapters/${mangaId}`;
+          
+          try {
+             const resp = await fetch(url);
+             if(!resp.ok) return;
+             const data = await resp.json();
+             const chapters = data.chapters;
+             const idx = chapters.findIndex(c => c.id == chapterId || c.chapter_number == chapterId);
+             
+             if(idx !== -1 && idx + 1 < chapters.length) {
+               const next = chapters[idx+1];
+               nextChapterBtn.style.display = "block";
+               nextChapterBtn.onclick = () => {
+                  window.location.href = `/read/${source}/${mangaId}/${next.id || next.chapter_number}`;
+               };
+             }
+          } catch(e) { console.error(e); }
+        }
+
+        async function fetchImages() {
+          let url = source === "mangadex" 
+            ? `${serverUrl}/mangadex/chapter/${chapterId}`
+            : `${serverUrl}/retrieve/${mangaId}/${chapterId}`;
+
+          try {
+            const response = await fetch(url);
+            if (!response.ok) throw new Error("Image fetch failed");
+            imageLinks = await response.json();
+
+            if (!imageLinks || imageLinks.length === 0) throw new Error("No images found");
+
+            await preloadInitialImages();
+          } catch (error) {
+            console.error(error);
+            loader.style.borderColor = "red";
+            chapterDetailsEl.textContent = "Error loading images.";
+          }
+        }
+
+        async function preloadInitialImages() {
+          // Create all IMG elements first (lazy loading structure)
+          imageLinks.forEach((src) => {
+            const img = document.createElement("img");
+            // Set a dummy transparent pixel or nothing initially to prevent broken icons
+            img.loading = "lazy"; // Native lazy loading
+            container.appendChild(img);
+          });
+
+          // Preload first few
+          const images = container.getElementsByTagName("img");
+          const toPreload = Array.from(images).slice(0, 4);
+
+          // Detect Aspect Ratio on first image for Auto-Webtoon Mode
+          if (toPreload[0]) {
+             const tempImg = new Image();
+             tempImg.src = imageLinks[0];
+             await new Promise(r => {
+                tempImg.onload = () => {
+                   // If height is significantly larger than width (2x), assume Webtoon
+                   const isTall = tempImg.height > tempImg.width * 2;
+                   const userHasSetMode = localStorage.getItem(READER_MODE_KEY);
+                   
+                   if (isTall && !userHasSetMode) {
+                      setMode("webtoon", true);
+                   }
+                   r();
+                };
+                tempImg.onerror = r;
+             });
+          }
+
+          // Actually load sources for first few
+          const promises = toPreload.map((img, index) => {
+            return new Promise((resolve) => {
+              img.onload = resolve;
+              img.onerror = resolve;
+              img.src = imageLinks[index];
+            });
+          });
+
+          await Promise.all(promises);
+          
+          loader.style.display = "none";
+          
+          // Restore progress AFTER images exist
+          restoreReadingProgress();
+          
+          // Load the rest in background
+          loadRemainingImages();
+        }
+
+        function loadRemainingImages() {
+          const images = container.getElementsByTagName("img");
+          Array.from(images).slice(4).forEach((img, index) => {
+              img.src = imageLinks[index + 4];
+          });
+        }
+
+        // --- View & Navigation Logic ---
+
+        function updatePagination() {
+          // Horizontal translate for pagination
+          container.scrollLeft = currentPage * window.innerWidth;
+          updateHistory(); // Save progress
+        }
+
+        function updateFooter() {
+          if (imageLinks.length > 0) {
+            if (document.body.classList.contains("view-pagination")) {
+              pageIndicator.textContent = `${currentPage + 1} / ${imageLinks.length}`;
+              pageProgress.value = currentPage + 1;
+              pageProgress.max = imageLinks.length;
+            } else {
+              // Webtoon logic is handled in scroll listener
+            }
+          }
+        }
+
+        function updateWebtoonProgress() {
+          if (imageLinks.length === 0) return;
+
+          // Update Progress Bar
+          const scrollableHeight = container.scrollHeight - container.clientHeight;
+          const progress = scrollableHeight > 0 ? (container.scrollTop / scrollableHeight) * 100 : 0;
+          pageProgress.value = progress;
+          pageProgress.max = 100;
+
+          // Determine Current Page Index based on visibility
+          const images = container.getElementsByTagName("img");
+          let visiblePage = currentPage; // default to current
+          
+          // Scan images to find which one is mostly visible
+          for (let i = 0; i < images.length; i++) {
+            const rect = images[i].getBoundingClientRect();
+            // If the top of the image is within the viewport (with some buffer)
+            // Or if the image takes up the whole screen
+            if (rect.bottom > 0 && rect.top < window.innerHeight / 2) {
+              visiblePage = i;
+            }
+          }
+          
+          if (visiblePage !== currentPage) {
+             currentPage = visiblePage;
+             pageIndicator.textContent = `${currentPage + 1} / ${imageLinks.length}`;
+             updateHistory(); // Save progress on page change
+          }
+        }
+
+        function changePage(direction) {
+          const newPage = currentPage + direction;
+          if (newPage >= 0 && newPage < imageLinks.length) {
+            currentPage = newPage;
+            updatePagination();
+            updateFooter();
+          }
+        }
+
+        function toggleUI() {
+          header.classList.toggle("hidden");
+          footer.classList.toggle("hidden");
+        }
+
+        function setMode(mode, isInitial = false) {
+          if (mode === "pagination") {
+            document.body.classList.remove("view-webtoon");
+            document.body.classList.add("view-pagination");
+            modePaginationBtn.classList.add("active");
+            modeWebtoonBtn.classList.remove("active");
+            
+            // Fix layout
+            container.scrollLeft = currentPage * window.innerWidth;
+            updatePagination();
+          } else {
+            document.body.classList.remove("view-pagination");
+            document.body.classList.add("view-webtoon");
+            modeWebtoonBtn.classList.add("active");
+            modePaginationBtn.classList.remove("active");
+            
+            // Scroll to current page in vertical mode
+            if (!isInitial) {
+              const imgs = container.getElementsByTagName("img");
+              if (imgs[currentPage]) {
+                imgs[currentPage].scrollIntoView({ behavior: "auto", block: "start" });
+              }
+            }
+          }
+          
+          if (!isInitial) {
+             localStorage.setItem(READER_MODE_KEY, mode);
+          }
+          updateFooter();
+        }
+
+        // --- Controls Setup ---
+
+        function setupControls() {
+          modePaginationBtn.addEventListener("click", () => setMode("pagination"));
+          modeWebtoonBtn.addEventListener("click", () => setMode("webtoon"));
+
+          // Scroll Listener (Throttled slightly for performance if needed, but modern browsers handle this okay)
+          container.addEventListener("scroll", () => {
+            if (document.body.classList.contains("view-webtoon")) {
+              updateWebtoonProgress();
+            }
+          });
+
+          // Keyboard Support
+          document.addEventListener("keydown", (e) => {
+            if(document.body.classList.contains("view-pagination")) {
+               if(e.key === "ArrowRight") changePage(1);
+               if(e.key === "ArrowLeft") changePage(-1);
+            }
+          });
+
+          document.getElementById("nav-left").addEventListener("click", () => changePage(-1));
+          document.getElementById("nav-right").addEventListener("click", () => changePage(1));
+          document.getElementById("nav-center").addEventListener("click", toggleUI);
+
+          backBtn.addEventListener("click", () => {
+            // Try to communicate with parent if iframe, else go back
+            if (window.parent && window.parent !== window) {
+              window.parent.postMessage("close-reader-modal", "*");
+            } else if (window.history.length > 1) {
+              window.history.back();
+            } else {
+               window.location.href = "/"; // Fallback home
+            }
+          });
+        }
+
+        init();
+      });
+    </script>
+  </body>
+</html>

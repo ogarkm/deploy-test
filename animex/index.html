@@ -1,0 +1,2628 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, user-scalable=no, maximum-scale=1.0"
+    />
+    <title>Animex</title>
+
+    <!-- External Fonts and Icons -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Bitcount+Grid+Single:wght@100..900&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"
+    />
+
+    <!-- Alpine.js for Player Logic -->
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.13.3/dist/cdn.min.js"></script>
+
+    <!-- Meta Tags for Mobile Web App -->
+    <meta name="mobile-web-app-capable" content="yes" />
+    <link rel="manifest" href="Resources/manifest.json/" />
+    <meta name="theme-color" content="#0b0b0b" />
+
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta
+      name="apple-mobile-web-app-status-bar-style"
+      content="black-translucent"
+    />
+
+    <link rel="icon" href="Resources/favicon.png" type="image/png" />
+    <link rel="apple-touch-icon" href="/Resources/favicon.png" />
+    
+    <style>
+      :root {
+        /* Palette */
+        --color-bg-overlay: rgba(0, 0, 0, 0.75);
+        --color-bg-modal: #1c1c1e;
+        --color-bg-input: #2f2f31;
+        --color-border: rgba(255, 255, 255, 0.12);
+
+        --text-primary: #ffffff;
+        --text-secondary: #b3b3b5;
+
+        --accent: #ff9500;
+        --accent-light: #ffac33; /* hover */
+        --accent-fade: rgba(255, 149, 0, 0.3);
+
+        --status-ok: #34c759;
+        --status-error: #ff3b30;
+
+        /* Dimensions */
+        --radius: 0.5rem;
+        --spacing-sm: 0.75rem;
+        --spacing: 1rem;
+        --spacing-lg: 1.5rem;
+        --transition-fast: 0.2s ease;
+        --transition-medium: 0.3s ease;
+        
+        /* Player Specific */
+        --player-bar-height: 70px;
+      }
+      
+      [x-cloak] { display: none !important; }
+
+      /* --- GLOBAL MODERN SCROLLBARS --- */
+      ::-webkit-scrollbar {
+        width: 6px;
+        height: 6px;
+      }
+      ::-webkit-scrollbar-track {
+        background: transparent;
+      }
+      ::-webkit-scrollbar-thumb {
+        background: rgba(255, 255, 255, 0.2);
+        border-radius: 10px;
+      }
+      ::-webkit-scrollbar-thumb:hover {
+        background: rgba(255, 255, 255, 0.4);
+      }
+      * {
+        scrollbar-width: thin;
+        scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
+      }
+
+      /* --- GENERAL LAYOUT STYLES --- */
+      body,
+      html {
+        height: 100%;
+        overflow: hidden;
+        margin: 0;
+        font-family: "Inter", sans-serif;
+        background: #050505; 
+        color: #e5e5e5;
+      }
+
+      .app-container {
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+        position: relative; 
+        opacity: 0; 
+        transition: opacity 0.5s ease-out;
+      }
+
+      .app-container.visible {
+        opacity: 1;
+      }
+
+      /* The iframe is now a background layer on mobile */
+      #contentFrame {
+        flex-grow: 1;
+        width: 100%;
+        border: none;
+        display: block;
+      }
+
+      /* --- MUSIC PLAYER: MINI WIDGET (INDICATOR) --- */
+      #mini-music-widget {
+        position: fixed;
+        top: 0;
+        right: 0;
+        width: 60px;
+        height: 50px;
+        background: var(--accent);
+        z-index: 10001; 
+        /* Right Trapezoid */
+        clip-path: polygon(25% 100%, 100% 100%, 100% 0%, 0% 0%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease;
+        box-shadow: -5px 5px 15px rgba(0,0,0,0.5);
+      }
+      
+      #mini-music-widget.inactive,
+      #mini-music-widget.bar-open {
+        transform: translateY(-100%);
+        opacity: 0;
+        pointer-events: none;
+      }
+
+      .eq-bar {
+        width: 3px;
+        background: #000;
+        margin: 0 1px;
+        animation: eq 1s infinite ease-in-out;
+        border-radius: 2px;
+        transform-origin: bottom;
+      }
+      .eq-bar.paused {
+        animation-play-state: paused;
+        height: 3px !important;
+        transition: height 0.3s ease;
+      }
+      .eq-bar:nth-child(1) { height: 10px; animation-delay: 0.1s; }
+      .eq-bar:nth-child(2) { height: 16px; animation-delay: 0.2s; }
+      .eq-bar:nth-child(3) { height: 8px; animation-delay: 0.4s; }
+      
+      @keyframes eq {
+        0%, 100% { transform: scaleY(1); }
+        50% { transform: scaleY(0.4); }
+      }
+
+      /* --- MUSIC PLAYER: TOP BAR --- */
+      #music-player-bar {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: var(--player-bar-height);
+        background: rgba(10, 10, 10, 0.95);
+        backdrop-filter: blur(24px);
+        -webkit-backdrop-filter: blur(24px);
+        border-bottom: 1px solid rgba(255,255,255,0.1);
+        z-index: 10000;
+        display: flex;
+        flex-direction: column;
+        transform: translateY(-100%);
+        transition: transform 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
+        box-shadow: 0 4px 30px rgba(0,0,0,0.5);
+        /* overflow removed to allow shadow/glow of seek strip */
+      }
+
+      #music-player-bar.expanded {
+        transform: translateY(0);
+      }
+
+      /* Progress Bar at Bottom of Header */
+      .player-seek-strip {
+        width: 100%;
+        height: 3px;
+        background: rgba(255,255,255,0.1);
+        cursor: pointer;
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        z-index: 20;
+        transition: opacity 0.3s ease;
+      }
+      /* Hide strip when bar is closed to prevent ghost artifacts */
+      #music-player-bar:not(.expanded) .player-seek-strip {
+        opacity: 0;
+      }
+
+      .player-seek-fill {
+        height: 100%;
+        background: var(--accent);
+        width: 0%;
+        transition: width 0.1s linear;
+        position: relative;
+      }
+      .player-seek-fill::after {
+        content: '';
+        position: absolute;
+        right: 0;
+        top: -3px;
+        bottom: -3px;
+        width: 6px;
+        background: #fff;
+        border-radius: 3px;
+        box-shadow: 0 0 10px var(--accent);
+      }
+
+      .player-main-row {
+        flex: 1;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0 12px;
+        gap: 8px;
+        width: 100%;
+        max-width: 1200px;
+        margin: 0 auto;
+      }
+
+      .player-info-grp {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        flex: 1;
+        min-width: 0;
+        cursor: pointer;
+        transition: opacity 0.2s;
+      }
+      .player-info-grp:active { opacity: 0.7; }
+      
+      .player-art {
+        width: 42px;
+        height: 42px;
+        border-radius: 6px;
+        background: #333;
+        object-fit: cover;
+        flex-shrink: 0;
+      }
+      .player-text {
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+        justify-content: center;
+      }
+      .player-title {
+        color: #fff;
+        font-weight: 700;
+        font-size: 0.9rem;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        line-height: 1.2;
+      }
+      .player-meta {
+        color: var(--text-secondary);
+        font-size: 0.75rem;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+
+      .player-ctrls {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        flex-shrink: 0;
+      }
+      .p-btn {
+        background: none;
+        border: none;
+        color: #fff;
+        font-size: 1.1rem;
+        cursor: pointer;
+        transition: color 0.2s, transform 0.1s;
+        padding: 0;
+      }
+      .p-btn:hover { color: var(--accent); }
+      .p-btn:active { transform: scale(0.9); }
+      
+      .p-btn-play {
+        width: 32px;
+        height: 32px;
+        background: #fff;
+        color: #000;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.9rem;
+      }
+      .p-btn-play:hover { background: var(--accent); color: #000; }
+
+      .player-actions {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        flex-shrink: 0;
+        /* Padding to ensure close button is visible */
+        padding-right: 4px; 
+      }
+      .video-toggle {
+        font-size: 10px;
+        width: 28px;
+        height: 28px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border: 1px solid #444;
+        border-radius: 6px;
+        color: #888;
+        cursor: pointer;
+        transition: 0.2s;
+        background: transparent;
+      }
+      /* Hide video toggle on mobile */
+      @media (max-width: 699px) {
+          .video-toggle { display: none !important; }
+      }
+
+      .video-toggle.active {
+        border-color: var(--accent);
+        background: var(--accent);
+        color: #000;
+      }
+      
+      .close-bar-btn {
+        color: #666;
+        font-size: 1.1rem;
+        width: 32px;
+        height: 32px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: none;
+        border: none;
+        cursor: pointer;
+        padding: 0;
+      }
+      .close-bar-btn:hover { color: #fff; }
+
+      /* --- EXPANDED PLAYER BACKDROP (Desktop Dimming) --- */
+      #expanded-player-backdrop {
+        display: none;
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.65);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        z-index: 10045; /* Just below the modal */
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.4s ease;
+      }
+
+      /* --- EXPANDED PLAYER OVERLAY --- */
+      #expanded-player-overlay {
+        position: fixed;
+        z-index: 10050;
+        background: transparent;
+        display: flex;
+        flex-direction: column;
+        transition: all 0.4s cubic-bezier(0.32, 0.72, 0, 1);
+        overflow: hidden;
+      }
+
+      /* Mobile Styles (Full Screen Sheet) */
+      @media (max-width: 899px) {
+          #expanded-player-overlay {
+            inset: 0;
+            /* Gradient allows Hero Video to show through */
+            background: linear-gradient(to bottom, rgba(0,0,0,0.3) 0%, rgba(0,0,0,0.85) 50%, #000 100%);
+            transform: translateY(100%);
+          }
+          #expanded-player-overlay.open {
+            transform: translateY(0);
+          }
+          .expanded-header {
+             height: 60px;
+             display: flex;
+             align-items: center;
+             justify-content: center;
+             position: relative;
+             z-index: 20;
+          }
+          .drag-pill {
+              width: 40px;
+              height: 5px;
+              background: rgba(255,255,255,0.3);
+              border-radius: 10px;
+          }
+          .desktop-close-btn { display: none; }
+          .expanded-content {
+              flex-direction: column;
+              overflow-y: auto;
+          }
+          .ex-left-col {
+              display: flex;
+              flex-direction: column;
+              align-items: center;
+              width: 100%;
+          }
+          .ex-volume-ctrl { display: none; }
+      }
+
+      /* Desktop Styles (Horizontal Centered Modal) */
+      @media (min-width: 900px) {
+          #expanded-player-backdrop {
+              display: block; /* Enable backdrop dimming for desktop */
+          }
+          #expanded-player-backdrop.open {
+              opacity: 1;
+              pointer-events: auto;
+          }
+
+          #expanded-player-overlay {
+              top: 50%;
+              left: 50%;
+              width: 720px;
+              height: 600px;
+              transform: translate(-50%, -50%) scale(0.9) translateY(20px);
+              opacity: 0;
+              border-radius: 20px;
+              box-shadow: 0 30px 60px rgba(0,0,0,0.7), 0 0 0 1px rgba(255,255,255,0.05);
+              border: 1px solid rgba(255,255,255,0.08);
+              /* Solid elegant dark background to prevent bleed-through */
+              background: #18181b;
+              pointer-events: none;
+              flex-direction: column;
+          }
+          #expanded-player-overlay.open {
+              transform: translate(-50%, -50%) scale(1) translateY(0);
+              opacity: 1;
+              pointer-events: auto;
+          }
+          .expanded-header {
+              height: 40px;
+              display: flex;
+              align-items: center;
+              justify-content: flex-end;
+              padding: 10px 16px 0;
+              z-index: 20;
+          }
+          .drag-pill { display: none; }
+          .desktop-close-btn {
+              background: rgba(255,255,255,0.1);
+              width: 30px;
+              height: 30px;
+              border-radius: 50%;
+              border: none;
+              color: #fff;
+              cursor: pointer;
+              transition: 0.2s;
+          }
+          .desktop-close-btn:hover { background: rgba(255,255,255,0.3); }
+
+          /* Splitting the content horizontally */
+          .expanded-content {
+              flex-direction: row;
+              padding: 0px 30px 30px 30px;
+              gap: 40px;
+              overflow: hidden; /* Prevent master scroll on desktop */
+          }
+          
+          .ex-left-col {
+              flex: 1.1;
+              display: flex;
+              flex-direction: column;
+              justify-content: flex-start;
+              align-items: stretch;
+          }
+
+          .ex-visuals {
+              margin-top: 15px;
+          }
+
+          .ex-queue {
+              flex: 1;
+              margin-top: 0;
+              padding-top: 0;
+              border-top: none;
+              border-left: 1px solid rgba(255,255,255,0.1); /* Divider */
+              padding-left: 24px;
+              background: transparent;
+              display: flex;
+              flex-direction: column;
+              overflow: hidden;
+              border-radius: 0;
+          }
+
+          .ex-queue-title {
+              flex-shrink: 0;
+          }
+
+          .ex-queue-list {
+              flex: 1;
+              overflow-y: auto;
+              padding-right: 8px; /* Room for custom scrollbar */
+          }
+
+          .ex-art {
+              width: 210px !important;
+              height: 210px !important;
+              margin-bottom: 24px !important;
+          }
+
+          .ex-controls {
+              margin: 15px 0 10px 0 !important;
+          }
+
+          /* Show desktop volume slider */
+          .ex-volume-ctrl {
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              gap: 12px;
+              margin-top: 10px;
+              color: #888;
+              font-size: 0.85rem;
+          }
+          .vol-slider {
+              width: 120px;
+              -webkit-appearance: none;
+              height: 4px;
+              background: rgba(255,255,255,0.2);
+              border-radius: 2px;
+              outline: none;
+              cursor: pointer;
+          }
+          .vol-slider::-webkit-slider-thumb {
+              -webkit-appearance: none;
+              width: 12px;
+              height: 12px;
+              background: #fff;
+              border-radius: 50%;
+              box-shadow: 0 0 10px rgba(255,255,255,0.5);
+              transition: transform 0.1s;
+          }
+          .vol-slider::-webkit-slider-thumb:hover {
+              transform: scale(1.3);
+          }
+          
+          /* Scrubber hover enhancements */
+          .ex-scrubber {
+              transition: height 0.2s, background 0.2s;
+              overflow: visible;
+              margin: 30px 0 18px;
+              min-height: 8px;
+              background: rgba(255,255,255,0.18);
+              box-shadow: inset 0 0 0 1px rgba(255,255,255,0.08);
+          }
+          .ex-scrubber:hover {
+              height: 10px; /* Grow slightly taller */
+              background: rgba(255,255,255,0.3);
+          }
+          .ex-fill {
+              background: var(--accent);
+              box-shadow: inset 0 0 8px rgba(255,149,0,0.35);
+          }
+          .ex-fill::after {
+              opacity: 0;
+              transition: opacity 0.2s, transform 0.2s;
+          }
+          .ex-scrubber:hover .ex-fill::after {
+              opacity: 1;
+              transform: translateY(-50%) scale(1.1);
+          }
+      }
+      
+      /* Content Layout General */
+      .expanded-content {
+        position: relative;
+        z-index: 10;
+        flex: 1;
+        display: flex;
+        padding: 24px;
+        padding-top: 0;
+        overflow: visible;
+        padding-bottom: 36px;
+      }
+
+      /* The visual container */
+      .ex-visuals {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          margin-bottom: 30px;
+          margin-top: 20px;
+      }
+      
+      .ex-art {
+          width: 220px;
+          height: 220px;
+          border-radius: 12px;
+          /* Modern mixed drop shadow + colored glow */
+          box-shadow: 0 15px 35px rgba(0,0,0,0.6), 0 0 40px rgba(255, 149, 0, 0.15);
+          border: 1px solid rgba(255,255,255,0.05);
+          object-fit: cover;
+          margin-bottom: 24px;
+          z-index: 10;
+          transition: transform 0.3s ease, box-shadow 0.3s ease;
+      }
+      @media (min-width: 700px) {
+          .ex-art:hover {
+              transform: scale(1.03);
+              box-shadow: 0 20px 45px rgba(0,0,0,0.7), 0 0 55px rgba(255, 149, 0, 0.25);
+          }
+      }
+      
+      .ex-text-center {
+          text-align: center;
+          width: 100%;
+          z-index: 10;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+      }
+      
+      /* Truncation as requested */
+      .ex-title {
+        font-size: 1.4rem;
+        font-weight: 700;
+        color: #fff;
+        line-height: 1.3;
+        margin-bottom: 6px;
+        text-shadow: 0 2px 10px rgba(0,0,0,0.8);
+        
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        max-width: 85%;
+      }
+      .ex-meta {
+        font-size: 1rem;
+        color: var(--accent);
+        font-weight: 500;
+        text-shadow: 0 2px 10px rgba(0,0,0,0.8);
+        
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        max-width: 50%;
+      }
+
+      .ex-scrubber {
+        width: 100%;
+        height: 5px; /* Thicker base */
+        background: rgba(255,255,255,0.15); /* More prominent track */
+        border-radius: 3px;
+        margin: 20px 0 12px 0; /* Extra top margin so it doesn't get lost near text */
+        position: relative;
+        cursor: pointer;
+        z-index: 100; /* High z-index to ensure clickable on desktop */
+      }
+      .ex-fill {
+        height: 100%;
+        background: #fff;
+        border-radius: 3px;
+        position: relative;
+      }
+      .ex-fill::after {
+        content:'';
+        position: absolute;
+        right: -7px;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 14px;
+        height: 14px;
+        background: #fff;
+        border-radius: 50%;
+        box-shadow: 0 0 10px rgba(255,255,255,0.5);
+      }
+      .ex-timers {
+        display: flex;
+        justify-content: space-between;
+        font-size: 0.75rem;
+        color: rgba(255,255,255,0.6);
+        font-variant-numeric: tabular-nums;
+        z-index: 10;
+        width: 100%;
+      }
+
+      .ex-controls {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 40px;
+        margin: 20px 0 30px 0;
+        z-index: 10;
+      }
+      .ex-btn {
+        background: none;
+        border: none;
+        color: #fff;
+        font-size: 2rem;
+        cursor: pointer;
+        filter: drop-shadow(0 2px 5px rgba(0,0,0,0.5));
+        transition: transform 0.1s, color 0.2s;
+      }
+      .ex-btn:hover { color: #ccc; }
+      .ex-btn:active { transform: scale(0.9); }
+      
+      .ex-btn-play {
+        width: 70px;
+        height: 70px;
+        background: #fff;
+        color: #000;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 2rem;
+        box-shadow: 0 5px 20px rgba(0,0,0,0.3);
+        transition: transform 0.2s, box-shadow 0.2s;
+      }
+      .ex-btn-play:hover {
+          transform: scale(1.05);
+          box-shadow: 0 5px 25px rgba(255,255,255,0.4);
+      }
+      .ex-btn-play:active { transform: scale(0.95); }
+
+      /* Queue Section */
+      .ex-queue {
+        margin-top: 10px;
+        padding-top: 20px;
+        border-top: 1px solid rgba(255,255,255,0.1);
+        z-index: 10;
+        background: rgba(0,0,0,0.3);
+        border-radius: 12px;
+        padding: 16px;
+      }
+      .ex-queue-title {
+        font-size: 0.8rem;
+        font-weight: 700;
+        color: rgba(255,255,255,0.5);
+        margin-bottom: 12px;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+      }
+      .ex-queue-list {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+      }
+      .ex-queue-item {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 8px;
+        border-radius: 8px;
+        background: rgba(255,255,255,0.05);
+        cursor: pointer;
+        transition: background 0.2s, transform 0.2s;
+      }
+      .ex-queue-item:hover { 
+          background: rgba(255,255,255,0.1); 
+          transform: translateX(4px);
+      }
+      
+      .ex-q-img {
+        width: 36px;
+        height: 36px;
+        border-radius: 4px;
+        object-fit: cover;
+      }
+      .ex-q-info { flex: 1; min-width: 0; }
+      .ex-q-title { font-size: 0.9rem; font-weight: 600; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+      .ex-q-meta { font-size: 0.75rem; color: #aaa; }
+
+      /* --- Empty Queue State --- */
+      .ex-empty-msg {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        color: rgba(255, 255, 255, 0.3);
+        gap: 12px;
+        font-size: 0.9rem;
+        padding-bottom: 20px; /* Optical centering */
+      }
+      .ex-empty-msg i {
+        font-size: 2.5rem;
+        opacity: 0.4;
+      }
+
+      /* --- Clever Queue Hover Actions --- */
+      .ex-q-actions {
+        position: relative;
+        width: 28px;
+        height: 28px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+      }
+      .ex-q-actions .play-icon {
+        font-size: 0.75rem;
+        opacity: 0.5;
+        transition: opacity 0.2s;
+      }
+      .ex-q-remove {
+        position: absolute;
+        inset: 0;
+        background: rgba(255, 59, 48, 0.9);
+        border: none;
+        border-radius: 50%;
+        color: #fff;
+        font-size: 0.85rem;
+        cursor: pointer;
+        opacity: 0;
+        transform: scale(0.6);
+        transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      /* Reveal X, hide play icon on hover */
+      .ex-queue-item:hover .ex-q-remove {
+        opacity: 1;
+        transform: scale(1);
+      }
+      .ex-queue-item:hover .play-icon {
+        opacity: 0;
+      }
+      .ex-q-remove:hover {
+        background: #ff3b30; /* Brighten slightly when hovering over the X */
+      }
+
+      /* --- VIDEO CONTAINER LOGIC --- */
+      #music-video-pip {
+        position: fixed;
+        bottom: 100px;
+        right: 16px;
+        width: 140px;
+        aspect-ratio: 16/9;
+        background: #000;
+        border: 1px solid var(--color-border);
+        border-radius: 8px;
+        box-shadow: 0 10px 40px rgba(0,0,0,0.8);
+        z-index: 600;
+        transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+        overflow: hidden;
+        transform-origin: bottom right;
+      }
+      @media(min-width: 700px) { #music-video-pip { width: 280px; } }
+
+      #music-video-pip.hidden-video {
+        opacity: 0;
+        transform: scale(0) translateY(50px);
+        pointer-events: none;
+      }
+
+      /* FULLSCREEN HERO STATE (When Expanded) */
+      #music-video-pip.fullscreen-hero {
+        width: 100vw !important;
+        height: 100vh !important;
+        bottom: 0 !important;
+        right: 0 !important;
+        border-radius: 0 !important;
+        border: none !important;
+        z-index: 10040 !important; /* Behind Expanded Overlay (10050) */
+        opacity: 1;
+        background-color: #000 !important;
+        transform: none !important;
+        pointer-events: none;
+      }
+      
+      #music-video-pip video {
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+        background: #000;
+        transition: object-fit 0.5s;
+      }
+      
+      #music-video-pip.fullscreen-hero video {
+        object-fit: cover;
+      }
+      
+      /* --- MOBILE BOTTOM NAVIGATION --- */
+      .bottom-nav {
+        display: flex;
+        justify-content: space-around;
+        align-items: center;
+        background: rgba(10, 10, 10, 0.95);
+        backdrop-filter: blur(20px);
+        border-top: 1px solid rgba(255, 255, 255, 0.1);
+        color: #ccc;
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        height: 70px;
+        box-shadow: 0 -5px 20px rgba(0, 0, 0, 0.3);
+        z-index: 100;
+        padding-bottom: 20px;
+      }
+      .nav-item {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        text-decoration: none;
+        color: #8e8e93;
+        font-size: 10px;
+        font-weight: 500;
+        flex-grow: 1;
+        height: 100%;
+        padding: 8px 4px;
+        box-sizing: border-box;
+        transition: all 0.2s ease;
+        position: relative;
+        overflow: hidden;
+      }
+      .nav-item::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 50%;
+        width: 0;
+        height: 2px;
+        background: var(--accent);
+        transition: all 0.3s ease;
+        transform: translateX(-50%);
+      }
+      .nav-item .nav-icon {
+        font-size: 22px;
+        margin-bottom: 4px;
+        transition: color 0.2s ease;
+      }
+      .nav-item.active {
+        color: var(--accent);
+      }
+      .nav-item.active::before {
+        width: 40px;
+      }
+      .nav-item:hover:not(.active) {
+        color: #ffffff;
+      }
+
+      /* --- SPLASH SCREEN --- */
+      #splash-screen {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        background: #050505;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        z-index: 20000;
+        transition: opacity 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+        opacity: 1;
+        overflow: hidden;
+      }
+      .splash-flash {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        width: 300vw;
+        height: 300vw;
+        background: radial-gradient(
+          ellipse at center,
+          #ffb37a 0%,
+          #de541e 30%,
+          transparent 70%
+        );
+        opacity: 0;
+        pointer-events: none;
+        transform: translate(-50%, -50%) scale(0.7);
+        animation: flashBang 0.7s cubic-bezier(0.7, 0, 0.3, 1) 0.7s forwards;
+      }
+      @keyframes flashBang {
+        0% { opacity: 0; transform: translate(-50%, -50%) scale(0.7); }
+        40% { opacity: 0.7; transform: translate(-50%, -50%) scale(1.1); }
+        60% { opacity: 0.5; transform: translate(-50%, -50%) scale(1.2); }
+        100% { opacity: 0; transform: translate(-50%, -50%) scale(1.5); }
+      }
+      .logo-anim-container {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        width: 100vw;
+        margin-bottom: 36px;
+        z-index: 2;
+      }
+      #splash-logo {
+        width: 120px;
+        height: 120px;
+        display: block;
+        opacity: 0;
+        transform: scale(0.7);
+        filter: drop-shadow(0 0 0 #de541e);
+        animation: logoZoomIn 0.7s cubic-bezier(0.7, 0, 0.3, 1) 0.1s forwards,
+          logoFlashGlow 1.2s 0.7s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+      }
+      @keyframes logoZoomIn {
+        0% { opacity: 0; transform: scale(0.7); }
+        60% { opacity: 1; transform: scale(1.18); }
+        100% { opacity: 1; transform: scale(1); }
+      }
+      @keyframes logoFlashGlow {
+        0% { filter: drop-shadow(0 0 0 #de541e); }
+        40% { filter: drop-shadow(0 0 48px #ffb37a); }
+        60% { filter: drop-shadow(0 0 32px #de541ecc); }
+        100% { filter: drop-shadow(0 0 12px #de541eaa); }
+      }
+      .splash-spinner {
+        width: 38px;
+        height: 38px;
+        border: 4px solid #222;
+        border-top: 4px solid #de541e;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+        margin: 0 auto;
+        box-shadow: 0 2px 12px #0008;
+        opacity: 0;
+        animation-delay: 1.5s;
+        animation-name: spinnerFadeIn, spin;
+        animation-duration: 0.4s, 1s;
+        animation-timing-function: cubic-bezier(0.4, 0, 0.2, 1), linear;
+        animation-fill-mode: forwards, infinite;
+      }
+      @keyframes spinnerFadeIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
+      }
+      @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+      }
+      .splash-hide {
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+      }
+
+      /* --- STARTUP STATUS Box --- */
+      #startup-status {
+        position: fixed;
+        bottom: 24px;
+        right: 24px;
+        background: rgba(28, 28, 30, 0.85);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        padding: 10px 20px;
+        border-radius: 20px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        z-index: 1001; 
+        opacity: 0;
+        transform: translateY(20px);
+        transition: opacity 0.4s ease, transform 0.4s ease;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+      }
+      #startup-status.visible {
+        opacity: 1;
+        transform: translateY(0);
+      }
+      #startup-status .status-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: #ff9500;
+        box-shadow: 0 0 10px #ff9500;
+      }
+      #startup-status .status-dot.active {
+        animation: blink 1s infinite;
+      }
+      #startup-status .status-dot.success {
+        background: #34c759;
+        box-shadow: 0 0 10px #34c759;
+        animation: none;
+      }
+      #startup-status span {
+        color: #fff;
+        font-size: 0.85rem;
+        font-weight: 500;
+        letter-spacing: 0.02em;
+      }
+      @keyframes blink {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.4; }
+      }
+
+      /* --- UPDATED: Ambient U-Glow --- */
+      #ambient-glow-u {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        pointer-events: none;
+        z-index: 1000;
+        opacity: 0;
+        transition: opacity 0.8s ease;
+        background: radial-gradient(
+          circle at 50% -80%,
+          transparent 65%,
+          rgba(232, 119, 46, 0.05) 85%,
+          rgba(232, 119, 46, 0.3) 100%
+        );
+        mix-blend-mode: screen;
+      }
+      #ambient-glow-u.visible {
+        opacity: 1;
+      }
+
+      /* PWA Banner */
+      #pwa-install-banner {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        background: rgba(25, 25, 25, 0.95);
+        backdrop-filter: blur(20px);
+        padding: 12px 16px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.5);
+        z-index: 200;
+        transform: translateY(100%);
+        transition: transform 0.3s ease-out;
+      }
+      #pwa-install-banner.show {
+        transform: translateY(0);
+      }
+      #pwa-install-banner .banner-content {
+        max-width: 480px;
+        width: 100%;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        color: #ccc;
+        font-family: "Inter", sans-serif;
+      }
+      #pwa-install-banner .banner-text {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 14px;
+      }
+      #pwa-install-banner .banner-text i {
+        font-size: 18px;
+        color: #e8772e;
+      }
+      #pwa-install-banner .banner-actions button {
+        background: #e8772e;
+        border: none;
+        color: white;
+        padding: 6px 12px;
+        margin-left: 8px;
+        font-size: 14px;
+        border-radius: 4px;
+        cursor: pointer;
+        transition: opacity 0.2s;
+      }
+      #pwa-install-banner .banner-actions button#pwa-install-close {
+        background: transparent;
+        color: #888;
+        font-size: 18px;
+        margin-left: 4px;
+      }
+      #pwa-install-banner .banner-actions button:hover {
+        opacity: 0.8;
+      }
+      #pwa-install-banner.hidden {
+        display: none;
+      }
+      @media (max-width: 900px) and (orientation: landscape) {
+        .bottom-nav {
+          transform: translateY(100%);
+          opacity: 0;
+          pointer-events: none;
+          transition: transform 0.3s ease, opacity 0.3s ease;
+        }
+        #contentFrame {
+          height: 100vh;
+          padding-bottom: 0;
+        }
+      }
+
+      /* Ensure navbar shows again when returning to portrait */
+      @media (max-width: 699px) and (orientation: portrait) {
+        .bottom-nav {
+          transform: translateY(0);
+          opacity: 1;
+          pointer-events: auto;
+          transition: transform 0.3s ease, opacity 0.3s ease;
+        }
+      }
+
+      /* DESKTOP REWORK (min-width: 700px) - Simplified as requested */
+      @media (min-width: 700px) {
+        #contentFrame {
+          position: fixed;
+          top: 0;
+          left: 0;
+          width: 100vw;
+          height: 100vh;
+          z-index: 1; 
+        }
+        .bottom-nav {
+          position: fixed;
+          left: 50%;
+          bottom: 24px;
+          transform: translateX(-50%);
+          width: auto;
+          min-width: 320px;
+          height: 60px;
+          padding: 0 20px;
+          z-index: 1000;
+          display: flex;
+          align-items: center;
+          gap: 16px;
+          background: rgba(28, 28, 30, 0.85);
+          border-radius: 30px;
+          border: 1px solid rgba(255, 255, 255, 0.1);
+          backdrop-filter: blur(24px) saturate(1.8);
+          box-shadow: 0 12px 32px rgba(0, 0, 0, 0.4);
+          padding-bottom: 0;
+        }
+        .nav-item {
+          flex-direction: row;
+          gap: 8px;
+          height: 100%;
+          padding: 0 12px;
+          border-radius: 0;
+        }
+        .nav-item::before { display: none; }
+        .nav-item .nav-text {
+          display: inline-block;
+          font-size: 0.8rem;
+          font-weight: 600;
+        }
+        .nav-item .nav-icon {
+          font-size: 1.1rem;
+          margin-bottom: 0;
+        }
+        .nav-item.active {
+          color: var(--accent);
+          transform: none;
+        }
+        .nav-item:hover:not(.active) {
+          transform: translateY(-2px);
+          color: #fff;
+        }
+        #music-video-pip.fullscreen-hero {
+          opacity: 0.8;
+          backdrop-filter: blur(8px) brightness(30%);
+        }
+      }
+      @media (max-width: 699px) {
+        #contentFrame {
+          height: calc(100vh - 70px) !important;
+          padding-bottom: 0;
+        }
+        .app-container {
+          height: 100vh;
+          overflow: hidden;
+        }
+      }
+
+      /* Desktop iframe adjustments */
+      @media (min-width: 700px) {
+        #contentFrame {
+          height: 100vh;
+          padding-bottom: 0;
+        }
+      }
+
+      /* Landscape mode adjustments for mobile */
+      @media (max-width: 900px) and (orientation: landscape) {
+        #contentFrame {
+          height: 100vh !important;
+          padding-bottom: 0;
+        }
+      }
+
+      .modal-overlay {
+        position: fixed;
+        inset: 0;
+        background: var(--color-bg-overlay);
+        backdrop-filter: blur(8px);
+        display: flex;
+        place-items: center;
+        justify-content: center;
+        padding: var(--spacing-lg);
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity var(--transition-medium);
+        z-index: 10002;
+      }
+      .modal-overlay.active {
+        opacity: 1;
+        pointer-events: auto;
+      }
+      .modal-content {
+        background: var(--color-bg-modal);
+        padding: var(--spacing-lg) var(--spacing-lg);
+        border-radius: var(--radius);
+        border: 1px solid var(--color-border);
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+        text-align: center;
+        max-width: 28rem;
+        width: 100%;
+        transform: scale(0.95);
+        transition: transform var(--transition-medium);
+      }
+      .modal-overlay.active .modal-content {
+        transform: scale(1);
+      }
+      .modal-content h2 {
+        margin-bottom: var(--spacing);
+        font-size: 1.75rem;
+        font-weight: 400;
+        color: var(--text-primary);
+        font-family: "Bitcount Grid Single";
+      }
+      .modal-content p {
+        margin-bottom: var(--spacing-lg);
+        font-size: 1rem;
+        line-height: 1.6;
+        color: var(--text-secondary);
+        font-family: Tahoma;
+      }
+      .modal-content a {
+        color: var(--accent);
+        font-weight: 600;
+        text-decoration: none;
+        transition: color var(--transition-fast);
+      }
+      .modal-content a:hover,
+      .modal-content a:focus {
+        color: var(--accent-light);
+        outline: none;
+      }
+
+      .ip-input-container { margin-bottom: var(--spacing-lg); }
+      .ip-input {
+        width: 90%;
+        background: var(--color-bg-input);
+        border: 1px solid var(--color-border);
+        border-radius: var(--radius);
+        padding: var(--spacing) calc(var(--spacing) * 1.25);
+        font-size: 1.1rem;
+        color: var(--text-primary);
+        text-align: center;
+        outline: none;
+        transition: box-shadow var(--transition-fast), border-color var(--transition-fast);
+      }
+      .ip-input:focus {
+        border-color: var(--accent);
+        box-shadow: 0 0 0 0.25rem var(--accent-fade);
+      }
+
+      .connect-button {
+        display: block;
+        width: 100%;
+        padding: var(--spacing) 0;
+        background: var(--accent);
+        border: none;
+        border-radius: var(--radius);
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: #fff;
+        cursor: pointer;
+        transition: background var(--transition-fast), box-shadow var(--transition-fast);
+      }
+      .connect-button:hover { background: var(--accent-light); }
+      .connect-button:focus { outline: none; box-shadow: 0 0 0 0.25rem var(--accent-fade); }
+
+      .status-indicator {
+        margin-top: var(--spacing-sm);
+        font-size: 0.9rem;
+        min-height: 1.25rem;
+        color: var(--text-secondary);
+        transition: color var(--transition-fast);
+      }
+      .status-indicator.connecting { color: var(--text-secondary); }
+      .status-indicator.connected { color: var(--status-ok); }
+      .status-indicator.error { color: var(--status-error); }
+
+      /* --- IFRAME POPUP STYLES --- */
+      #iframe-popup-overlay {
+        position: fixed;
+        inset: 0;
+        background-color: rgba(0, 0, 0, 0.5);
+        z-index: 15000;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+      }
+      #iframe-popup-overlay.visible {
+        opacity: 1;
+        pointer-events: auto;
+      }
+      #iframe-popup-overlay .popup-content-wrapper {
+        width: 100%;
+        height: 100%;
+        position: relative;
+        background: #111;
+        border: none;
+        transform: translateY(30px);
+        opacity: 0;
+        transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+      }
+      #iframe-popup-overlay.visible .popup-content-wrapper {
+        transform: translateY(0);
+        opacity: 1;
+      }
+      .popup-header {
+        flex-shrink: 0;
+        height: 44px;
+        background-color: #1c1c1e;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+        padding: 0 10px;
+        position: relative;
+        z-index: 20;
+      }
+      #iframe-popup-overlay #popup-iframe {
+        width: 100%;
+        flex-grow: 1;
+        border: none;
+      }
+      #iframe-popup-overlay .popup-close {
+        position: static;
+        width: auto;
+        height: auto;
+        margin: 0;
+        padding: 5px 10px;
+        border-radius: 6px;
+        border: none;
+        background: transparent;
+        color: #8e8e93;
+        font-size: 24px;
+        line-height: 1;
+        cursor: pointer;
+        transition: background-color 0.2s ease, color 0.2s ease;
+        font-family: "Inter", sans-serif;
+        font-weight: 500;
+        -webkit-tap-highlight-color: transparent;
+      }
+      #iframe-popup-overlay .popup-close:hover {
+        background-color: rgba(255, 255, 255, 0.1);
+        color: white;
+      }
+
+      /* --- LIST MANAGER POPUP STYLES --- */
+      #list-manager-overlay {
+        position: fixed;
+        inset: 0;
+        background-color: rgba(0, 0, 0, 0.5);
+        z-index: 16000;
+        display: flex;
+        justify-content: center;
+        align-items: flex-end;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      }
+      #list-manager-overlay.visible {
+        opacity: 1;
+        pointer-events: auto;
+      }
+      #list-manager-overlay .list-manager-wrapper {
+        width: 100%;
+        max-width: 500px;
+        height: 75vh;
+        max-height: 800px;
+        background: #18181b;
+        border-top-left-radius: 16px;
+        border-top-right-radius: 16px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        box-shadow: 0 -8px 32px rgba(0, 0, 0, 0.4);
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+        transform: translateY(100%);
+        transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+      }
+      #list-manager-overlay.visible .list-manager-wrapper {
+        transform: translateY(0);
+      }
+      #list-manager-iframe {
+        width: 100%;
+        height: 100%;
+        border: none;
+      }
+
+      /* --- TOAST --- */
+      #toast-container {
+        position: fixed;
+        top: 80px; /* moved down slightly because of top bar */
+        left: 50%;
+        transform: translateX(-50%);
+        z-index: 20000;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 10px;
+        pointer-events: none;
+      }
+      .toast-message {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        min-width: 280px;
+        max-width: 400px;
+        padding: 12px 16px;
+        border-radius: 14px;
+        font-size: 0.95rem;
+        font-weight: 500;
+        color: rgba(255, 255, 255, 0.9);
+        background: rgba(40, 40, 40, 0.7);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(16px) saturate(1.8);
+        -webkit-backdrop-filter: blur(16px) saturate(1.8);
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+        opacity: 0;
+        transform: translateY(-20px) scale(0.95);
+        animation: toast-in 0.4s cubic-bezier(0.215, 0.61, 0.355, 1) forwards;
+      }
+      .toast-message.hiding {
+        animation: toast-out 0.4s cubic-bezier(0.55, 0.055, 0.675, 0.19) forwards;
+      }
+      @keyframes toast-in {
+        to { opacity: 1; transform: translateY(0) scale(1); }
+      }
+      @keyframes toast-out {
+        from { opacity: 1; transform: translateY(0) scale(1); }
+        to { opacity: 0; transform: translateY(-20px) scale(0.95); }
+      }
+      .toast-message .toast-icon { font-size: 1.2rem; }
+      .toast-message.success .toast-icon { color: #34c759; }
+      .toast-message.error .toast-icon { color: #ff3b30; }
+      .toast-message.info .toast-icon { color: #007aff; }
+    </style>
+  </head>
+  <!-- Initialize Alpine Global Player State -->
+  <body x-data="musicPlayer()">
+
+    <!-- MUSIC PLAYER BAR (TOP) -->
+    <!-- Toggled visible by the widget. -->
+    <div id="music-player-bar" 
+         :class="{ 'expanded': showBar }">
+         
+         <div class="player-main-row">
+             <!-- Album Art & Title -->
+             <!-- Clicking this opens the expanded player -->
+             <div class="player-info-grp" @click="openExpanded()">
+                 <img :src="currentTrack.image || 'https://placehold.co/40x40/333/666'" class="player-art" />
+                 <div class="player-text">
+                     <div class="player-title" x-text="currentTrack.title"></div>
+                     <div class="player-meta" x-text="currentTrack.anime"></div>
+                 </div>
+             </div>
+
+             <!-- Controls -->
+             <div class="player-ctrls">
+                 <button class="p-btn" @click="prevTrack"><i class="fas fa-backward-step"></i></button>
+                 <button class="p-btn p-btn-play" @click="togglePlay">
+                     <i class="fas" :class="isPlaying ? 'fa-pause' : 'fa-play pl-0.5'"></i>
+                 </button>
+                 <button class="p-btn" @click="nextTrack"><i class="fas fa-forward-step"></i></button>
+             </div>
+
+             <!-- Actions (Video Toggle & Close) -->
+             <div class="player-actions">
+                 <button class="video-toggle" 
+                         @click="videoMode = !videoMode"
+                         :class="{ 'active': videoMode }">
+                     <i class="fas" :class="videoMode ? 'fa-video-slash' : 'fa-video'"></i>
+                 </button>
+                 <button class="close-bar-btn" @click="toggleBar"><i class="fas fa-times"></i></button>
+             </div>
+         </div>
+
+         <!-- Progress Line at Bottom of Header -->
+         <div class="player-seek-strip" @click="seek($event)">
+             <div class="player-seek-fill" :style="`width: ${progress}%`"></div>
+         </div>
+    </div>
+
+    <!-- MINI MUSIC WIDGET (TOP RIGHT INDICATOR) -->
+    <!-- Only visible when bar is hidden and music is active -->
+    <div id="mini-music-widget" 
+         :class="{ 'inactive': !hasTrack, 'bar-open': showBar }" 
+         @click="toggleBar">
+        <!-- Animated EQ Bars -->
+        <div class="eq-bar" :class="{ 'paused': !isPlaying }"></div>
+        <div class="eq-bar" :class="{ 'paused': !isPlaying }"></div>
+        <div class="eq-bar" :class="{ 'paused': !isPlaying }"></div>
+    </div>
+
+    <!-- VIDEO CONTAINER -->
+    <!-- Acts as PIP in normal mode. Acts as Fullscreen Background in Expanded mode -->
+    <div id="music-video-pip" 
+         :class="{ 
+            'hidden-video': !hasTrack || (!videoMode && !isExpanded), 
+            'fullscreen-hero': isExpanded 
+         }">
+        <!-- Added seeked event and preload for caching and smooth seeking -->
+        <video x-ref="audioPlayer" 
+               :src="currentTrack.url" 
+               @timeupdate="onTimeUpdate" 
+               @ended="onEnded" 
+               @loadedmetadata="onMeta" 
+               @seeked="isSeeking = false"
+               preload="auto"
+               playsinline>
+        </video>
+    </div>
+
+    <!-- EXPANDED PLAYER BACKDROP (Desktop Dimming) -->
+    <div id="expanded-player-backdrop" 
+         :class="{ 'open': isExpanded }" 
+         @click="closeExpanded()"></div>
+
+    <!-- EXPANDED PLAYER OVERLAY (Spotify/Apple Style) -->
+    <!-- Draggable area logic attached to header -->
+    <div id="expanded-player-overlay" 
+         :class="{ 'open': isExpanded }">
+        
+        <!-- Header (Draggable on Mobile) -->
+        <div class="expanded-header" 
+             @touchstart="dragStart" 
+             @touchmove="dragMove" 
+             @touchend="dragEnd">
+             
+             <!-- Mobile Pill -->
+             <div class="drag-pill"></div>
+             
+             <!-- Desktop Close X -->
+             <button class="desktop-close-btn" @click="closeExpanded()"><i class="fas fa-times"></i></button>
+        </div>
+
+        <div class="expanded-content">
+             <!-- Left Column (Visuals and Controls) -->
+             <div class="ex-left-col">
+                 <!-- Visuals: Art & Text -->
+                 <div class="ex-visuals">
+                     <img :src="currentTrack.image || 'https://placehold.co/200x200/333/666'" class="ex-art">
+                     
+                     <div class="ex-text-center">
+                         <div class="ex-title" x-text="currentTrack.title"></div>
+                         <div class="ex-meta" x-text="currentTrack.anime"></div>
+                     </div>
+                 </div>
+
+                 <!-- Scrubber -->
+                 <div class="ex-scrubber" @click="seek($event)">
+                      <div class="ex-fill" :style="`width: ${progress}%`"></div>
+                 </div>
+                 <div class="ex-timers">
+                      <span x-text="formatTime(currentTime)">0:00</span>
+                      <span x-text="formatTime(duration)">0:00</span>
+                 </div>
+
+                 <!-- Big Controls -->
+                 <div class="ex-controls">
+                      <button class="ex-btn" @click="prevTrack"><i class="fas fa-backward-step"></i></button>
+                      <button class="ex-btn-play" @click="togglePlay">
+                           <i class="fas" :class="isPlaying ? 'fa-pause' : 'fa-play pl-1'"></i>
+                      </button>
+                      <button class="ex-btn" @click="nextTrack"><i class="fas fa-forward-step"></i></button>
+                 </div>
+
+                 <!-- Volume Control (Desktop Only) -->
+                 <div class="ex-volume-ctrl" x-show="isExpanded">
+                      <i class="fas fa-volume-down"></i>
+                      <input type="range" min="0" max="1" step="0.01" x-model="volume" @input="$refs.audioPlayer.volume = volume" class="vol-slider">
+                      <i class="fas fa-volume-up"></i>
+                 </div>
+             </div>
+
+             <!-- Right Column (Queue List) -->
+             <div class="ex-queue">
+                  <div class="ex-queue-title">Up Next</div>
+                  
+                  <!-- Populated Queue List -->
+                  <div class="ex-queue-list" x-show="queue.length > 0">
+                      <template x-for="(track, idx) in queue" :key="idx">
+                           <div class="ex-queue-item" @click="playQueueItem(idx)">
+                                <img :src="track.image || 'https://placehold.co/40x40/333/666'" class="ex-q-img">
+                                <div class="ex-q-info">
+                                     <div class="ex-q-title" x-text="track.title"></div>
+                                     <div class="ex-q-meta" x-text="track.anime"></div>
+                                </div>
+                                
+                                <!-- Play icon / Clever Remove Button -->
+                                <div class="ex-q-actions">
+                                    <i class="fas fa-play play-icon"></i>
+                                    <button class="ex-q-remove" @click.stop="removeFromQueue(idx)" title="Remove from queue">
+                                        <i class="fas fa-times"></i>
+                                    </button>
+                                </div>
+                           </div>
+                      </template>
+                  </div>
+
+                  <!-- Empty State (Fills dead space gracefully) -->
+                  <div class="ex-empty-msg" x-show="queue.length === 0" x-cloak>
+                       <i class="fas fa-record-vinyl"></i>
+                       <p>Nothing playing next</p>
+                  </div>
+             </div>
+        </div>
+    </div>
+
+    <!-- SPLASH SCREEN WITH LOGO AND CINEMATIC ANIMATION -->
+    <div id="splash-screen">
+      <div class="splash-flash"></div>
+      <div class="logo-anim-container">
+        <!-- SVG LOGO: Provided image, color preserved -->
+        <svg
+          id="splash-logo"
+          width="120"
+          height="120"
+          viewBox="0 0 400 400"
+          fill="none"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <rect x="59" y="53" width="282" height="37" fill="#DE541E" />
+          <rect x="59" y="115" width="282" height="37" fill="#DE541E" />
+          <path d="M327 348H280.904L234 79H280.904L327 348Z" fill="#DE541E" />
+          <path d="M78 348H124.096L171 79H124.096L78 348Z" fill="#DE541E" />
+          <rect x="171" y="288.857" width="59" height="59.1429" fill="#DE541E" />
+          <ellipse cx="200.5" cy="288.31" rx="29.5" ry="32.3095" fill="#DE541E" />
+        </svg>
+      </div>
+      <div class="splash-spinner"></div>
+    </div>
+
+    <!-- STARTUP STATUS CONTAINER (Bottom Right) -->
+    <div id="startup-status">
+      <div class="status-dot active"></div>
+      <span id="startup-status-text">Establishing Connection...</span>
+    </div>
+    <div id="ambient-glow-u"></div>
+
+    <div class="app-container">
+      <iframe id="contentFrame" src="" title="Content Area"></iframe>
+
+      <nav class="bottom-nav">
+        <a href="#" class="nav-item" data-src="anime.html">
+          <span class="nav-icon"><i class="fas fa-film"></i></span>
+          <span class="nav-text">ANIME</span>
+        </a>
+        <a href="#" class="nav-item" data-src="manga.html">
+          <span class="nav-icon"><i class="fas fa-book-open"></i></span>
+          <span class="nav-text">MANGA</span>
+        </a>
+        <a href="#" class="nav-item" data-src="search.html">
+          <span class="nav-icon"><i class="fas fa-search"></i></span>
+          <span class="nav-text">SEARCH</span>
+        </a>
+        <a href="#" class="nav-item" data-src="library.html">
+          <span class="nav-icon"><i class="fas fa-bookmark"></i></span>
+          <span class="nav-text">LIBRARY</span>
+        </a>
+      </nav>
+    </div>
+
+    <!-- PWA Install Banner -->
+    <div id="pwa-install-banner" class="hidden">
+      <div class="banner-content">
+        <div class="banner-text">
+          <i class="fas fa-download"></i>
+          <span id="pwa-install-message">Install Animex for a better experience</span>
+        </div>
+        <div class="banner-actions">
+          <button id="pwa-install-btn">Install</button>
+          <button id="pwa-install-close"><i class="fas fa-times"></i></button>
+        </div>
+      </div>
+    </div>
+
+    <!-- INTRO OVERLAY -->
+    <div id="intro-overlay" style="display: none; position: fixed; z-index: 2000; top: 0; left: 0; width: 100vw; height: 100vh; background: #050505;">
+      <iframe id="intro-iframe" src="intro.html" style="width: 100vw; height: 100vh; border: none; background: #050505"></iframe>
+    </div>
+
+    <!-- Server Connection Modal -->
+    <div id="server-modal" class="modal-overlay">
+      <div class="modal-content">
+        <h2>Extension Server Not Connected</h2>
+        <p>
+          Please enter the IP address of your Animex extension server.
+          <a href="https://github.com/Animex-App/Extension-Servers" id="learn-more-link">Learn More</a>
+        </p>
+        <div class="ip-input-container">
+          <input type="text" id="ip-input" class="ip-input" placeholder="e.g., 192.168.1.100" />
+        </div>
+        <button id="connect-btn" class="connect-button">Connect</button>
+        <div id="status-indicator" class="status-indicator"></div>
+      </div>
+    </div>
+
+    <!-- Fullscreen Iframe Popup -->
+    <div id="iframe-popup-overlay">
+      <div class="popup-content-wrapper">
+        <div class="popup-header">
+          <button id="popup-close-btn" class="popup-close">×</button>
+        </div>
+        <iframe id="popup-iframe" src="" allowfullscreen></iframe>
+      </div>
+    </div>
+
+    <!-- List Manager Popup -->
+    <div id="list-manager-overlay">
+      <div class="list-manager-wrapper">
+        <iframe id="list-manager-iframe" src="lists.html"></iframe>
+      </div>
+    </div>
+
+    <!-- Toast Container -->
+    <div id="toast-container"></div>
+
+    <!-- ALPINE.JS PLAYER LOGIC -->
+    <script>
+        function musicPlayer() {
+            return {
+                queue: [],
+                history:[], // For Rewind
+                currentTrack: { url: null, title: '', anime: '', image: '', type: '' },
+                isPlaying: false,
+                videoMode: false,
+                showBar: false,
+                isExpanded: false,
+                volume: 0.8,
+                currentTime: 0,
+                duration: 0,
+                pollingInterval: null,
+                lastCmdTime: 0,
+                lastQueueStr: '',
+                
+                // Scrubbing State
+                isSeeking: false,
+
+                // Drag State
+                dragStartY: 0,
+                dragCurrentY: 0,
+
+                get hasTrack() { return !!this.currentTrack.url; },
+                get progress() { return this.duration ? (this.currentTime / this.duration) * 100 : 0; },
+
+                init() {
+                    this.restoreState();
+                    this.setupMediaSession();
+                    this.pollingInterval = setInterval(() => { this.checkStorage(); }, 1000);
+                    window.addEventListener('storage', () => this.checkStorage());
+                },
+
+                // --- STATE MANAGEMENT ---
+                saveState() {
+                    const state = {
+                        track: this.currentTrack,
+                        currentTime: this.currentTime,
+                        isPlaying: this.isPlaying,
+                        queue: this.queue,
+                        history: this.history
+                    };
+                    localStorage.setItem('animex_music_state', JSON.stringify(state));
+                },
+
+                restoreState() {
+                    try {
+                        const saved = localStorage.getItem('animex_music_state');
+                        if (saved) {
+                            const state = JSON.parse(saved);
+                            if (state.track && state.track.url) {
+                                this.currentTrack = state.track;
+                                this.queue = state.queue ||[];
+                                this.history = state.history ||[];
+                                this.showBar = false; 
+                                // Restore time but don't play automatically
+                                this.$nextTick(() => {
+                                    const video = this.$refs.audioPlayer;
+                                    if(video) {
+                                        video.currentTime = state.currentTime || 0;
+                                        video.volume = this.volume;
+                                    }
+                                    this.updateMediaSessionMetadata();
+                                });
+                            }
+                        }
+                    } catch(e) { console.error("Restore Error", e); }
+                },
+
+                checkStorage() {
+                    try {
+                        // Check for direct command (Force Play)
+                        const cmd = localStorage.getItem('animex_music_cmd');
+                        if (cmd && parseInt(cmd) > this.lastCmdTime) {
+                            this.lastCmdTime = parseInt(cmd);
+                            // Only replace queue if it's a new command
+                            const q = localStorage.getItem('animex_music_queue');
+                            if (q) {
+                                this.queue = JSON.parse(q);
+                                if(this.queue.length > 0) {
+                                    if(this.currentTrack.url) this.history.push(this.currentTrack);
+                                    const next = this.queue.shift();
+                                    this.loadTrack(next);
+                                    // Persist the remaining upcoming queue so current track
+                                    // does not reappear in the Up Next list.
+                                    localStorage.setItem('animex_music_queue', JSON.stringify(this.queue));
+                                    this.lastQueueStr = JSON.stringify(this.queue);
+                                }
+                            }
+                        }
+                        
+                        // Check for Queue Updates (Add to Queue)
+                        const rawQ = localStorage.getItem('animex_music_queue');
+                        if (rawQ && rawQ !== this.lastQueueStr) {
+                             this.queue = JSON.parse(rawQ);
+                             this.lastQueueStr = rawQ;
+                        }
+                    } catch(e) { console.error("Storage Read Error", e); }
+                },
+
+                // --- PLAYER CONTROLS ---
+
+                loadTrack(track) {
+                    this.currentTrack = track;
+                    this.showBar = true;
+                    this.updateMediaSessionMetadata();
+                    
+                    this.$nextTick(() => {
+                        const video = this.$refs.audioPlayer;
+                        if(video) {
+                            video.volume = this.volume;
+                            video.play().then(() => {
+                                this.isPlaying = true;
+                                this.saveState();
+                            }).catch(e => console.error("Play error:", e));
+                        }
+                    });
+                },
+
+                togglePlay() {
+                    const video = this.$refs.audioPlayer;
+                    if(!video) return;
+                    if(video.paused) { video.play(); this.isPlaying = true; } 
+                    else { video.pause(); this.isPlaying = false; }
+                    this.saveState();
+                },
+
+                // Next: Current -> History. Queue[0] -> Current.
+                nextTrack() {
+                   if(this.queue.length > 0) {
+                       if(this.currentTrack.url) {
+                           this.history.push(this.currentTrack);
+                       }
+                       const next = this.queue.shift();
+                       this.loadTrack(next);
+                   } else {
+                       // End of playlist
+                       this.isPlaying = false;
+                       this.showBar = false;
+                       this.isExpanded = false;
+                       this.currentTrack = { url: null };
+                       this.saveState();
+                       if ('mediaSession' in navigator) navigator.mediaSession.playbackState = "none";
+                   }
+                },
+
+                // Prev: Current -> Queue[0]. History[Last] -> Current.
+                prevTrack() {
+                    // If played more than 3 seconds, just restart song
+                    if(this.currentTime > 3) {
+                        this.$refs.audioPlayer.currentTime = 0;
+                        return;
+                    }
+
+                    if(this.history.length > 0) {
+                        if(this.currentTrack.url) {
+                            this.queue.unshift(this.currentTrack);
+                        }
+                        const prev = this.history.pop();
+                        this.loadTrack(prev);
+                    }
+                },
+                
+                playQueueItem(index) {
+                    if(this.currentTrack.url) this.history.push(this.currentTrack);
+                    
+                    const selected = this.queue.splice(index, 1)[0];
+                    this.loadTrack(selected);
+                },
+
+                removeFromQueue(index) {
+                    this.queue.splice(index, 1);
+                    this.saveState();
+                    
+                    // Explicitly update local storage so it syncs immediately with other components/tabs
+                    localStorage.setItem('animex_music_queue', JSON.stringify(this.queue));
+                    this.lastQueueStr = JSON.stringify(this.queue);
+                },
+
+                seek(e) {
+                    if(!this.duration) return;
+                    
+                    // Mark as seeking so onTimeUpdate doesn't fight the user
+                    this.isSeeking = true;
+                    
+                    const rect = e.currentTarget.getBoundingClientRect();
+                    const x = e.clientX - rect.left;
+                    const pct = x / rect.width;
+                    const time = pct * this.duration;
+                    
+                    // Instant visual update (optimistic UI)
+                    this.currentTime = time;
+                    this.$refs.audioPlayer.currentTime = time;
+                },
+
+                formatTime(seconds) {
+                    if (!seconds) return "0:00";
+                    const m = Math.floor(seconds / 60);
+                    const s = Math.floor(seconds % 60);
+                    return `${m}:${s < 10 ? '0' + s : s}`;
+                },
+
+                onTimeUpdate(e) { 
+                    // If user is seeking/scrubbing, do not let video engine overwrite time
+                    if (this.isSeeking) return;
+
+                    this.currentTime = e.target.currentTime; 
+                    if (Math.floor(this.currentTime) % 5 === 0) this.saveState();
+
+                    // Update Media Session Position for System Scrubbing
+                    if ('mediaSession' in navigator && !isNaN(this.duration) && this.duration > 0) {
+                        try {
+                            navigator.mediaSession.setPositionState({
+                                duration: this.duration,
+                                playbackRate: e.target.playbackRate,
+                                position: e.target.currentTime
+                            });
+                        } catch(err) { /* ignore duration errors */ }
+                    }
+                },
+                
+                onMeta(e) { 
+                    this.duration = e.target.duration; 
+                    this.updateMediaSessionMetadata();
+                },
+                
+                onEnded() { this.nextTrack(); },
+
+                toggleBar() { 
+                    this.showBar = !this.showBar; 
+                    if(!this.showBar) this.isExpanded = false;
+                },
+                
+                openExpanded() {
+                    this.isExpanded = true;
+                },
+                
+                closeExpanded() {
+                    this.isExpanded = false;
+                },
+
+                // --- MEDIA SESSION API (iOS Control Center / Android Notification) ---
+                setupMediaSession() {
+                    if ('mediaSession' in navigator) {
+                        const ms = navigator.mediaSession;
+                        ms.setActionHandler('play', () => this.togglePlay());
+                        ms.setActionHandler('pause', () => this.togglePlay());
+                        ms.setActionHandler('previoustrack', () => this.prevTrack());
+                        ms.setActionHandler('nexttrack', () => this.nextTrack());
+                        ms.setActionHandler('seekto', (details) => {
+                             if (details.seekTime && this.$refs.audioPlayer) {
+                                 this.isSeeking = true;
+                                 this.currentTime = details.seekTime;
+                                 this.$refs.audioPlayer.currentTime = details.seekTime;
+                             }
+                        });
+                    }
+                },
+
+                updateMediaSessionMetadata() {
+                    if ('mediaSession' in navigator && this.currentTrack.title) {
+                        navigator.mediaSession.metadata = new MediaMetadata({
+                            title: this.currentTrack.title,
+                            artist: this.currentTrack.anime || 'Animex', // Series is the Artist
+                            album: 'Animex',
+                            artwork:[
+                                { src: this.currentTrack.image || 'https://placehold.co/512x512/333/666', sizes: '96x96', type: 'image/png' },
+                                { src: this.currentTrack.image || 'https://placehold.co/512x512/333/666', sizes: '128x128', type: 'image/png' },
+                                { src: this.currentTrack.image || 'https://placehold.co/512x512/333/666', sizes: '192x192', type: 'image/png' },
+                                { src: this.currentTrack.image || 'https://placehold.co/512x512/333/666', sizes: '256x256', type: 'image/png' },
+                                { src: this.currentTrack.image || 'https://placehold.co/512x512/333/666', sizes: '384x384', type: 'image/png' },
+                                { src: this.currentTrack.image || 'https://placehold.co/512x512/333/666', sizes: '512x512', type: 'image/png' },
+                            ]
+                        });
+                    }
+                },
+
+                // --- DRAG LOGIC (Mobile) ---
+                dragStart(e) {
+                    this.dragStartY = e.touches[0].clientY;
+                },
+                dragMove(e) {
+                    this.dragCurrentY = e.touches[0].clientY;
+                    const delta = this.dragCurrentY - this.dragStartY;
+                    if (delta > 0) {
+                        const el = document.getElementById('expanded-player-overlay');
+                        el.style.transform = `translateY(${delta}px)`;
+                    }
+                },
+                dragEnd(e) {
+                    const delta = this.dragCurrentY - this.dragStartY;
+                    const el = document.getElementById('expanded-player-overlay');
+                    el.style.transform = '';
+                    
+                    if (delta > 100) {
+                        this.closeExpanded();
+                    }
+                    this.dragStartY = 0;
+                    this.dragCurrentY = 0;
+                }
+            }
+        }
+    </script>
+
+    <!-- EXISTING VANILLA JS LOGIC -->
+    <script>
+      // --- GLOBAL WATCH HISTORY LOGIC ---
+      let localWatchHistory = {};
+      function loadLocalWatchHistory() {
+        try {
+          const history = localStorage.getItem("animex_watch_history");
+          localWatchHistory = history ? JSON.parse(history) : {};
+        } catch (e) {
+          localWatchHistory = {};
+        }
+      }
+      document.addEventListener("DOMContentLoaded", () => {
+        loadLocalWatchHistory();
+      });
+    </script>
+
+    <script>
+      if ("serviceWorker" in navigator) {
+        navigator.serviceWorker
+          .register("/sw.js")
+          .then((reg) => {
+            console.log("SW registered", reg);
+            function promptForUpdate(worker) {
+              if (confirm("A new version is available — reload to update?")) {
+                worker.postMessage({ type: "SKIP_WAITING" });
+              }
+            }
+            if (reg.waiting) {
+              promptForUpdate(reg.waiting);
+            }
+            reg.addEventListener("updatefound", () => {
+              const installing = reg.installing;
+              installing.addEventListener("statechange", () => {
+                if (installing.state === "installed" && navigator.serviceWorker.controller) {
+                  promptForUpdate(installing);
+                }
+              });
+            });
+            navigator.serviceWorker.addEventListener("controllerchange", () => {
+              window.location.reload();
+            });
+          })
+          .catch((err) => console.error("SW registration failed:", err));
+      }
+    </script>
+
+    <script>
+      let deferredPrompt;
+      const urlParams = new URLSearchParams(window.location.search);
+      const skipIntro = urlParams.get("skipIntro") === "true";
+
+      if (!skipIntro && shouldShowIntro()) {
+        showIntroCover();
+      }
+
+      function isInStandaloneMode() {
+        return (
+          window.matchMedia("(display-mode: standalone)").matches ||
+          window.navigator.standalone === true
+        );
+      }
+
+      function shouldShowIntro() {
+        const urlParams = new URLSearchParams(window.location.search);
+        const skipIntroParam = urlParams.get("skipIntro") === "true";
+        if (skipIntroParam) return false;
+        const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+        return !isInStandaloneMode() && isMobile;
+      }
+
+      function showIntroCover() {
+        if (skipIntro) return;
+        const intro = document.getElementById("intro-overlay");
+        if (intro) {
+          intro.style.display = "block";
+        }
+      }
+
+      function showBanner(message = "Install Animex for a better experience") {
+        if (isInStandaloneMode()) return;
+        const banner = document.getElementById("pwa-install-banner");
+        document.getElementById("pwa-install-message").textContent = message;
+        banner.classList.remove("hidden");
+        requestAnimationFrame(() => banner.classList.add("show"));
+      }
+
+      function hideBanner() {
+        const banner = document.getElementById("pwa-install-banner");
+        banner.classList.remove("show");
+        banner.addEventListener(
+          "transitionend",
+          () => {
+            banner.classList.add("hidden");
+          },
+          { once: true }
+        );
+      }
+
+      window.addEventListener("beforeinstallprompt", (e) => {
+        e.preventDefault();
+        deferredPrompt = e;
+        showBanner();
+      });
+
+      document.addEventListener("DOMContentLoaded", () => {
+        const installBtn = document.getElementById("pwa-install-btn");
+        const closeBtn = document.getElementById("pwa-install-close");
+        if (installBtn) {
+          installBtn.addEventListener("click", async () => {
+            hideBanner();
+            if (deferredPrompt) {
+              deferredPrompt.prompt();
+              const choice = await deferredPrompt.userChoice;
+              deferredPrompt = null;
+            }
+          });
+        }
+        if (closeBtn) {
+          closeBtn.addEventListener("click", hideBanner);
+        }
+      });
+    </script>
+
+    <script>
+      const serverModal = document.getElementById("server-modal");
+      const ipInput = document.getElementById("ip-input");
+      const connectBtn = document.getElementById("connect-btn");
+      const statusIndicator = document.getElementById("status-indicator");
+
+      const startupStatus = document.getElementById("startup-status");
+      const startupStatusText = document.getElementById("startup-status-text");
+      const startupStatusDot = startupStatus.querySelector(".status-dot");
+      const splashScreen = document.getElementById("splash-screen");
+      const appContainer = document.querySelector(".app-container");
+
+      const delay = (ms) => new Promise((res) => setTimeout(res, ms));
+
+      async function checkServerStatus(ip, isDeployed = false) {
+        statusIndicator.textContent = "Connecting...";
+        statusIndicator.className = "status-indicator connecting";
+        const url = isDeployed ? "/identify" : `http://{ip}:7275/identify`;
+
+        try {
+          const response = await fetch(url, {
+            method: "GET",
+            mode: isDeployed ? "same-origin" : "cors",
+            signal: AbortSignal.timeout(5000),
+          });
+          if (response.ok) {
+            const data = await response.json();
+            if (data.app === "Animex Extension API") {
+              statusIndicator.textContent = "Connected!";
+              statusIndicator.className = "status-indicator connected";
+              if (!isDeployed) {
+                localStorage.setItem("extension_server_ip", ip);
+              } else {
+                localStorage.setItem("extension_server_ip", window.location.hostname);
+              }
+              setTimeout(() => {
+                serverModal.classList.remove("active");
+              }, 1000);
+              return true;
+            }
+          }
+          throw new Error("Not a valid Animex server.");
+        } catch (error) {
+          console.error("Server connection error:", error);
+          statusIndicator.textContent = isDeployed
+            ? "Connection to server failed. Please refresh."
+            : "Connection failed. Check IP and ensure server is running.";
+          statusIndicator.className = "status-indicator error";
+          return false;
+        }
+      }
+
+      connectBtn.addEventListener("click", async () => {
+        const ip = ipInput.value.trim();
+        if (ip) {
+          const connected = await checkServerStatus(ip, false);
+          if (connected) {
+            proceedToApp();
+          }
+        }
+      });
+
+      async function initApp() {
+        const isDeployed = window.location.protocol.startsWith("http");
+        await delay(500);
+        startupStatus.classList.add("visible");
+        await delay(1000);
+
+        let connected = false;
+        if (isDeployed) {
+          connected = await checkServerStatus(null, true);
+        } else {
+          const savedIp = localStorage.getItem("extension_server_ip");
+          if (savedIp) {
+            connected = await checkServerStatus(savedIp, false);
+          } else {
+            connected = false;
+          }
+        }
+
+        if (connected) {
+          startupStatusText.textContent = "Connection Found";
+          startupStatusDot.classList.remove("active");
+          startupStatusDot.classList.add("success");
+          await delay(500);
+          proceedToApp();
+        } else {
+          startupStatusText.textContent = "Connection Failed";
+          startupStatusDot.style.background = "#ff3b30";
+          startupStatusDot.style.boxShadow = "0 0 10px #ff3b30";
+          startupStatusDot.classList.remove("active");
+          serverModal.classList.add("active");
+
+          if (isDeployed) {
+            serverModal.querySelector(".modal-content h2").textContent = "Connection Failed";
+            serverModal.querySelector(".modal-content p").textContent = "Could not connect to the backend server. Please refresh or check your deployment.";
+            serverModal.querySelector(".ip-input-container").style.display = "none";
+            serverModal.querySelector(".connect-button").style.display = "none";
+          }
+        }
+      }
+
+      async function proceedToApp() {
+        startupStatus.classList.remove("visible");
+        const glow = document.getElementById("ambient-glow-u");
+        glow.classList.add("visible");
+        await delay(1000);
+        splashScreen.classList.add("splash-hide");
+        glow.classList.remove("visible");
+
+        setTimeout(() => {
+          splashScreen.style.display = "none";
+          appContainer.classList.add("visible");
+          handleIntroLogic();
+        }, 600);
+      }
+
+      function handleIntroLogic() {
+        if (shouldShowIntro()) {
+          const introOverlay = document.getElementById("intro-overlay");
+          const introIframe = document.getElementById("intro-iframe");
+          introOverlay.style.display = "block";
+          introIframe.src = "intro.html";
+          appContainer.style.display = "none";
+          window.addEventListener("message", function handleIntroMsg(e) {
+            if (e.data === "introDone") {
+              introOverlay.style.display = "none";
+              appContainer.style.display = "";
+              localStorage.setItem("introSeen", "1");
+              window.removeEventListener("message", handleIntroMsg);
+            }
+          });
+        }
+      }
+
+      document.addEventListener("DOMContentLoaded", () => {
+        initApp();
+
+        const navItems = document.querySelectorAll(".bottom-nav .nav-item");
+        const contentFrame = document.getElementById("contentFrame");
+        const defaultSrc = "anime.html";
+        const bottomNav = document.querySelector(".bottom-nav");
+        const GUEST_PROFILE_ID = "guest";
+
+        function setActiveTab(selectedItem) {
+          navItems.forEach((item) => {
+            item.classList.remove("active");
+          });
+          selectedItem.classList.add("active");
+
+          if (contentFrame.src !== selectedItem.dataset.src) {
+            contentFrame.style.opacity = "0.7";
+            const newSrc = `${selectedItem.dataset.src}?profileId=${GUEST_PROFILE_ID}`;
+            contentFrame.src = newSrc;
+            contentFrame.addEventListener(
+              "load",
+              () => {
+                contentFrame.style.opacity = "1";
+                try {
+                  const iframeDoc = contentFrame.contentDocument || contentFrame.contentWindow.document;
+                  if (iframeDoc && iframeDoc.body && window.innerWidth >= 700) {
+                    iframeDoc.body.style.paddingBottom = "120px";
+                  } else if (iframeDoc && iframeDoc.body) {
+                    iframeDoc.body.style.paddingBottom = "90px";
+                  }
+                } catch (e) { }
+              },
+              { once: true }
+            );
+          }
+
+          if ("vibrate" in navigator) {
+            navigator.vibrate(20);
+          }
+        }
+
+        navItems.forEach((item) => {
+          item.addEventListener("click", (e) => {
+            e.preventDefault();
+            setActiveTab(item);
+            if (window.AudioContext || window.webkitAudioContext) {
+              const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+              if (audioContext.state === "suspended") {
+                audioContext.resume();
+              }
+            }
+          });
+        });
+
+        const initialActiveItem = document.querySelector(`.nav-item[data-src="${defaultSrc}"]`) || navItems[0];
+        if (initialActiveItem) {
+          setActiveTab(initialActiveItem);
+        }
+      });
+
+      // --- IFRAME POPUP LOGIC ---
+      const popupOverlay = document.getElementById("iframe-popup-overlay");
+      const popupIframe = document.getElementById("popup-iframe");
+      const popupCloseBtn = document.getElementById("popup-close-btn");
+
+      function openPopup(url) {
+        if (!url || !popupOverlay || !popupIframe) return;
+        popupIframe.src = url;
+        popupOverlay.classList.add("visible");
+      }
+
+      function closePopup() {
+        if (!popupOverlay || !popupIframe) return;
+        popupOverlay.classList.remove("visible");
+        popupOverlay.addEventListener(
+          "transitionend",
+          () => {
+            popupIframe.src = "about:blank";
+          },
+          { once: true }
+        );
+      }
+
+      window.openPopup = openPopup;
+      if (popupCloseBtn) {
+        popupCloseBtn.addEventListener("click", closePopup);
+      }
+
+      // --- LIST MANAGER LOGIC ---
+      const listManagerOverlay = document.getElementById("list-manager-overlay");
+      const listManagerIframe = document.getElementById("list-manager-iframe");
+
+      function openListManager(data) {
+        if (!listManagerOverlay || !listManagerIframe) return;
+        listManagerOverlay.classList.add("visible");
+        setTimeout(() => {
+          listManagerIframe.contentWindow.postMessage(
+            { type: "manage-item", data: data },
+            "*"
+          );
+        }, 100);
+      }
+
+      function closeListManager() {
+        if (!listManagerOverlay) return;
+        listManagerOverlay.classList.remove("visible");
+      }
+
+      window.openListManager = openListManager;
+      window.closeListManager = closeListManager;
+
+      window.addEventListener("message", (event) => {
+        if (event.data === "close-list-manager") {
+          closeListManager();
+        }
+      });
+
+      listManagerOverlay.addEventListener("click", (event) => {
+        if (event.target === listManagerOverlay) {
+          closeListManager();
+        }
+      });
+
+      // --- Toast Notification Logic ---
+      function showToast(message, type = "info", duration = 4000) {
+        const container = document.getElementById("toast-container");
+        if (!container) return;
+        const toast = document.createElement("div");
+        toast.className = `toast-message ${type}`;
+        let iconClass = "fas fa-info-circle";
+        if (type === "success") iconClass = "fas fa-check-circle";
+        if (type === "error") iconClass = "fas fa-exclamation-triangle";
+        toast.innerHTML = `
+              <i class="toast-icon ${iconClass}"></i>
+              <span class="toast-text">${message}</span>
+          `;
+        container.appendChild(toast);
+        setTimeout(() => {
+          toast.classList.add("hiding");
+          toast.addEventListener("animationend", () => {
+            toast.remove();
+          });
+        }, duration);
+      }
+      window.showToast = showToast;
+
+      // --- CACHE & SETTINGS SYNC LOGIC ---
+      window.addEventListener("message", (event) => {
+        if (!event.data || !event.data.action) return;
+        switch (event.data.action) {
+          case "clearPageCache":
+            if ("serviceWorker" in navigator) {
+              navigator.serviceWorker.ready.then((registration) => {
+                  if (registration.active) {
+                    registration.active.postMessage({ action: "clear_page_cache" });
+                  } else {
+                    showToast("No active service worker found.", "error");
+                  }
+                });
+            } else {
+              showToast("Service workers not supported.", "error");
+            }
+            break;
+          case "clearAllData":
+            localStorage.clear();
+            sessionStorage.clear();
+            if ("serviceWorker" in navigator) {
+              navigator.serviceWorker.getRegistrations()
+                .then(registrations => Promise.all(registrations.map(reg => reg.unregister())))
+                .then(() => caches.keys().then(keys => Promise.all(keys.map(key => caches.delete(key)))))
+                .then(() => {
+                  showToast("All data cleared. Reloading.", "success");
+                  setTimeout(() => window.location.reload(), 1500);
+                });
+            }
+            break;
+          case "animex_watch_history_updated":
+            document.querySelectorAll("iframe").forEach((frame) => {
+              if (frame.contentWindow && frame.contentWindow !== event.source) {
+                frame.contentWindow.postMessage(
+                  { action: "animex_watch_history_updated" },
+                  "*"
+                );
+              }
+            });
+            break;
+        }
+      });
+
+      if (navigator.serviceWorker) {
+        navigator.serviceWorker.addEventListener("message", (event) => {
+          if (event.data && event.data.action === "cacheCleared") {
+            if (event.data.type === "page") {
+              showToast("Cache cleared. Reloading...", "success");
+              setTimeout(() => window.location.reload(), 1500);
+            }
+          }
+        });
+      }
+    </script>
+  </body>
+</html>
