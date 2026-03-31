@@ -252,6 +252,18 @@
         box-shadow: 0 10px 30px rgba(255, 149, 0, 0.5);
       }
 
+      /* RX watch button states */
+      .hero-watch-btn.rx-rated {
+        transition: all 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94),
+                    background-color 0.15s ease;
+      }
+      .hero-watch-btn.rx-rated:hover {
+        cursor: not-allowed;
+        background-color: #c0392b;
+        box-shadow: 0 10px 30px rgba(192, 57, 43, 0.5);
+        transform: translateY(-3px) scale(1.02);
+      }
+
       .hero-action-btn {
         display: inline-flex;
         align-items: center;
@@ -996,6 +1008,128 @@
       }
       .popup-close:hover { background: #fff; color: #000; transform: rotate(90deg); }
       iframe { width: 100%; height: 100%; border: none; }
+
+      /* =========================================
+         7. RX GATE MODAL
+         ========================================= */
+      .rx-gate-overlay {
+        position: fixed;
+        inset: 0;
+        z-index: 99999;
+        background: rgba(0, 0, 0, 0.97);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 2rem;
+        backdrop-filter: blur(20px);
+        opacity: 0;
+        transition: opacity 0.3s ease;
+        pointer-events: none;
+      }
+      .rx-gate-overlay.visible {
+        opacity: 1;
+        pointer-events: all;
+      }
+      .rx-gate-card {
+        background: var(--background-secondary);
+        border: 1px solid rgba(192, 57, 43, 0.4);
+        border-radius: 20px;
+        padding: 3rem 2.5rem;
+        max-width: 480px;
+        width: 100%;
+        text-align: center;
+        box-shadow: 0 0 60px rgba(192, 57, 43, 0.15), 0 20px 60px rgba(0,0,0,0.8);
+        transform: translateY(20px) scale(0.97);
+        transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.3s ease;
+        opacity: 0;
+      }
+      .rx-gate-overlay.visible .rx-gate-card {
+        transform: translateY(0) scale(1);
+        opacity: 1;
+      }
+      .rx-gate-icon {
+        font-size: 3.5rem;
+        margin-bottom: 1.2rem;
+        display: block;
+        line-height: 1;
+      }
+      .rx-gate-badge {
+        display: inline-block;
+        background: linear-gradient(135deg, #e53935, #b71c1c);
+        color: #fff;
+        font-size: 0.75rem;
+        font-weight: 900;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+        padding: 5px 14px;
+        border-radius: 50px;
+        margin-bottom: 1.4rem;
+      }
+      .rx-gate-title {
+        font-size: 1.5rem;
+        font-weight: 800;
+        color: var(--text-primary);
+        margin-bottom: 0.8rem;
+        letter-spacing: -0.02em;
+        line-height: 1.2;
+      }
+      .rx-gate-subtitle {
+        font-size: 0.95rem;
+        color: var(--text-secondary);
+        line-height: 1.6;
+        margin-bottom: 2rem;
+      }
+      .rx-gate-actions {
+        display: flex;
+        gap: 12px;
+        justify-content: center;
+        flex-wrap: wrap;
+      }
+      .rx-gate-btn-yes {
+        flex: 1;
+        min-width: 140px;
+        padding: 13px 24px;
+        border-radius: 10px;
+        border: 1px solid rgba(192, 57, 43, 0.5);
+        background: rgba(192, 57, 43, 0.15);
+        color: #e57373;
+        font-size: 0.95rem;
+        font-weight: 700;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        font-family: inherit;
+      }
+      .rx-gate-btn-yes:hover {
+        background: rgba(192, 57, 43, 0.3);
+        border-color: #e53935;
+        color: #fff;
+        transform: translateY(-2px);
+      }
+      .rx-gate-btn-no {
+        flex: 1;
+        min-width: 140px;
+        padding: 13px 24px;
+        border-radius: 10px;
+        border: none;
+        background: var(--brand-accent);
+        color: #000;
+        font-size: 0.95rem;
+        font-weight: 800;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        font-family: inherit;
+      }
+      .rx-gate-btn-no:hover {
+        background: var(--brand-accent-hover);
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(255,149,0,0.4);
+      }
+      .rx-gate-disclaimer {
+        margin-top: 1.5rem;
+        font-size: 0.75rem;
+        color: var(--text-muted);
+        line-height: 1.5;
+      }
     </style>
   </head>
   <body>
@@ -1133,6 +1267,26 @@
       </div>
     </div>
 
+    <!-- RX Gate Modal -->
+    <div id="rx-gate-overlay" class="rx-gate-overlay">
+      <div class="rx-gate-card">
+        <span class="rx-gate-icon">🔞</span>
+        <div class="rx-gate-badge">Rated Rx — Explicit Content</div>
+        <h2 class="rx-gate-title">Are you sure about this?</h2>
+        <p class="rx-gate-subtitle">
+          This series has been rated <strong>Rx</strong> and contains explicit adult content.
+          Are you absolutely certain you want to proceed?
+        </p>
+        <div class="rx-gate-actions">
+          <button class="rx-gate-btn-yes" id="rx-gate-yes">Yes, I'm sure</button>
+          <button class="rx-gate-btn-no" id="rx-gate-no">No, take me back</button>
+        </div>
+        <p class="rx-gate-disclaimer">
+          By continuing you confirm you are of legal age to view adult content in your region.
+        </p>
+      </div>
+    </div>
+
     <script src="https://www.youtube.com/iframe_api"></script>
 
 
@@ -1150,6 +1304,10 @@
       let characterData = [];
       let animeDetails = {}; // Store for music player
       let isMovie = false;
+
+      // RX rating state
+      let isRxRated = false;
+      let rxGateAccepted = false; // tracks if user already confirmed in this session
 
       document.addEventListener("DOMContentLoaded", () => {
         if (!currentMalId) return;
@@ -1177,8 +1335,42 @@
             );
           }
         };
+
+        // RX Gate button handlers
+        document.getElementById("rx-gate-yes").onclick = () => {
+          rxGateAccepted = true;
+          dismissRxGate();
+        };
+        document.getElementById("rx-gate-no").onclick = () => {
+          window.history.back();
+        };
       });
 
+      /* =========================================
+         RX GATE HELPERS
+         ========================================= */
+      function showRxGate() {
+        const overlay = document.getElementById("rx-gate-overlay");
+        overlay.style.display = "flex";
+        // Force reflow before adding visible class for CSS transition
+        requestAnimationFrame(() => {
+          requestAnimationFrame(() => {
+            overlay.classList.add("visible");
+          });
+        });
+      }
+
+      function dismissRxGate() {
+        const overlay = document.getElementById("rx-gate-overlay");
+        overlay.classList.remove("visible");
+        overlay.addEventListener("transitionend", () => {
+          overlay.style.display = "none";
+        }, { once: true });
+      }
+
+      /* =========================================
+         MOBILE TABS
+         ========================================= */
       function setupMobileTabs() {
         document.querySelectorAll(".tab-btn").forEach((btn) => {
           if (btn.onclick || btn.classList.contains("char-lang-btn")) return;
@@ -1288,6 +1480,15 @@
           ratingSpan.textContent = text;
           ratingSpan.className = `rating-pill ${rClass}`;
           ratingSpan.style.display = "block";
+
+          // Detect Rx rating (e.g. "Rx - Hentai")
+          if (anime.rating.toLowerCase().startsWith("rx")) {
+            isRxRated = true;
+            // Show the gate if user hasn't accepted yet this session
+            if (!rxGateAccepted) {
+              showRxGate();
+            }
+          }
         }
         document.getElementById("meta-year").textContent = anime.year || "N/A";
         document.getElementById("meta-type").textContent = anime.type;
@@ -1442,6 +1643,9 @@
 
       async function fetchAndRenderEpisodes() {
         let episodes = [];
+        let mapSucceeded = false;
+
+        // Step 1: Try the /map endpoint + Kitsu
         try {
           const mapRes = await fetch(`${serverUrl}/map/mal/${currentMalId}`);
           if (mapRes.ok) {
@@ -1455,27 +1659,31 @@
                 url = d.links?.next;
                 if (episodes.length > 50 && !url) break;
               }
+              if (episodes.length > 0) mapSucceeded = true;
             }
           }
-        } catch (e) {}
-
-        if (episodes.length === 0) {
-          try {
-            const jRes = await fetch(`https://api.jikan.moe/v4/anime/${currentMalId}/videos`);
-            const jData = await jRes.json();
-            if (jData.data?.episodes) {
-              episodes = jData.data.episodes.map((e) => ({
-                attributes: {
-                  number: e.mal_id, canonicalTitle: e.title,
-                  thumbnail: { original: e.images.jpg.image_url },
-                },
-              }));
-            }
-          } catch (e) {}
+        } catch (e) {
+          // /map endpoint failed — will fall back below
         }
+
+        // Step 2: If map failed or returned nothing, build episodes from already-received Jikan data
+        if (!mapSucceeded || episodes.length === 0) {
+          const epCount = (animeDetails && animeDetails.episodes) ? animeDetails.episodes : 1;
+          for (let i = 1; i <= epCount; i++) {
+            episodes.push({
+              attributes: {
+                number: i,
+                canonicalTitle: `Episode ${i}`,
+                thumbnail: { original: null },
+              },
+            });
+          }
+        }
+
         episodesData = episodes.sort((a, b) => a.attributes.number - b.attributes.number);
         renderEpisodes();
       }
+
       function formatTime(s) {
           if (isNaN(s) || s < 0) return "0:00";
           const m = Math.floor(s / 60);
@@ -1619,7 +1827,7 @@
         if (mode === "Movie") {
           const hasWatched = lastEp === 1;
           btn.innerHTML = hasWatched ? `<i class="fas fa-play"></i> Resume Movie` : `<i class="fas fa-film"></i> Watch Movie`;
-          btn.onclick = () => openPlayer(1);
+          btn.onclick = (e) => handleWatchClick(e, 1);
         } else {
           let target = lastEp > 0 ? lastEp : 1;
           if (hist[target]?.state === "finished") target++;
@@ -1630,8 +1838,68 @@
           } else {
             btn.innerHTML = `<i class="fas fa-play"></i> ${lastEp > 0 ? "Continue" : "Start"} EP ${target}`;
           }
-          btn.onclick = () => openPlayer(target);
+          btn.onclick = (e) => handleWatchClick(e, target);
         }
+
+        // Apply/remove RX styling and hover behavior
+        if (isRxRated) {
+          btn.classList.add("rx-rated");
+          attachRxHoverBehavior(btn);
+        } else {
+          btn.classList.remove("rx-rated");
+          detachRxHoverBehavior(btn);
+        }
+      }
+
+      // ---- RX watch button hover handlers ----
+      function attachRxHoverBehavior(btn) {
+        // Avoid double-attaching
+        if (btn._rxHoverAttached) return;
+        btn._rxHoverAttached = true;
+
+        btn._rxMouseEnter = () => {
+          // Save the current inner HTML so we can restore it on mouse leave
+          btn._rxOriginalHTML = btn.innerHTML;
+          btn.innerHTML = `<i class="fas fa-ban"></i> Really... I'm Disappointed`;
+        };
+        btn._rxMouseLeave = () => {
+          if (btn._rxOriginalHTML !== undefined) {
+            btn.innerHTML = btn._rxOriginalHTML;
+          }
+        };
+
+        btn.addEventListener("mouseenter", btn._rxMouseEnter);
+        btn.addEventListener("mouseleave", btn._rxMouseLeave);
+      }
+
+      function detachRxHoverBehavior(btn) {
+        if (!btn._rxHoverAttached) return;
+        btn.removeEventListener("mouseenter", btn._rxMouseEnter);
+        btn.removeEventListener("mouseleave", btn._rxMouseLeave);
+        btn._rxHoverAttached = false;
+      }
+
+      // ---- Unified watch click handler ----
+      function handleWatchClick(e, ep) {
+        if (isRxRated && !rxGateAccepted) {
+          // Shift+click silently bypasses the gate — no mention of this anywhere
+          if (e.shiftKey) {
+            rxGateAccepted = true;
+            openPlayer(ep);
+            return;
+          }
+          showRxGate();
+          // After user accepts the gate, clicking the button again will open the player
+          // We re-wire the button's onclick after acceptance so the next click goes straight through
+          const originalOnClick = document.getElementById("hero-watch-btn").onclick;
+          document.getElementById("rx-gate-yes").onclick = () => {
+            rxGateAccepted = true;
+            dismissRxGate();
+            openPlayer(ep);
+          };
+          return;
+        }
+        openPlayer(ep);
       }
 
       function openPlayer(ep) {
