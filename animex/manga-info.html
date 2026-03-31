@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
@@ -7,8 +7,6 @@
       content="width=device-width, initial-scale=1.0, user-scalable=no"
     />
     <title>Manga Info</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
       href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
       rel="stylesheet"
@@ -18,9 +16,9 @@
       href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"
     />
     <style>
-      /* --- CSS VARIABLES & RESET --- */
+      /* --- CORE CSS --- */
       :root {
-        --brand-accent: #ff9500; /* Orange from screenshot */
+        --brand-accent: #ff9500;
         --brand-hover: #e08400;
         --background-primary: #0a0a0a;
         --background-secondary: #161616;
@@ -31,12 +29,7 @@
         --border-color: #2a2a2a;
         --success-color: #28a745;
         --ongoing-color: #17a2b8;
-
-        --brand-glow: rgba(255, 149, 0, 0.3);
-        --shadow-color: rgba(0, 0, 0, 0.8);
-
         --transition-duration: 0.2s;
-        --border-radius: 6px;
         --container-width: 1400px;
       }
 
@@ -47,42 +40,37 @@
         padding: 0;
         box-sizing: border-box;
       }
-
       body {
         background-color: var(--background-primary);
         color: var(--text-primary);
         font-family: "Inter", sans-serif;
-        line-height: 1.5;
         overflow-x: hidden;
+        line-height: 1.5;
       }
 
-      /* --- HERO SECTION (DESKTOP LAYOUT LIKE SCREENSHOT) --- */
       #hero-section {
         position: relative;
         width: 100%;
-        min-height: 45vh; /* Tall hero */
+        min-height: 45vh;
         display: flex;
-        align-items: flex-end; /* Align content to bottom */
+        align-items: flex-end;
         padding-bottom: 4rem;
         background-size: cover;
         background-position: center top;
-        background-repeat: no-repeat;
       }
-
-      /* Dark Gradient Overlay */
       .hero-overlay {
         position: absolute;
         inset: 0;
-        background: linear-gradient(
-          to right,
-          rgba(10, 10, 10, 0.9) 0%,
-          rgba(10, 10, 10, 0.7) 40%,
-          rgba(10, 10, 10, 0.4) 100%
-        ),
-        linear-gradient(to top, #0a0a0a 10%, transparent 60%);
+        background:
+          linear-gradient(
+            to right,
+            rgba(10, 10, 10, 0.9) 0%,
+            rgba(10, 10, 10, 0.7) 40%,
+            rgba(10, 10, 10, 0.4) 100%
+          ),
+          linear-gradient(to top, #0a0a0a 10%, transparent 60%);
         z-index: 1;
       }
-
       .hero-content {
         position: relative;
         z-index: 2;
@@ -94,25 +82,20 @@
         gap: 3rem;
         align-items: flex-end;
       }
-
-      /* Poster Image */
       .poster-container {
         flex-shrink: 0;
         width: 240px;
-        aspect-ratio: 2 / 3;
+        aspect-ratio: 2/3;
         border-radius: 8px;
-        box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
         overflow: hidden;
-        margin-bottom: 20px; /* Slight lift */
+        margin-bottom: 20px;
       }
-
       .poster-image {
         width: 100%;
         height: 100%;
         object-fit: cover;
       }
-
-      /* Info Area */
       .info-container {
         flex-grow: 1;
         display: flex;
@@ -120,22 +103,19 @@
         gap: 1.2rem;
         padding-bottom: 20px;
       }
-
       .manga-title {
         font-size: clamp(2.5rem, 5vw, 4rem);
         font-weight: 800;
         line-height: 1.1;
         color: #fff;
-        text-shadow: 0 2px 10px rgba(0,0,0,0.5);
+        text-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
       }
-
       .meta-row {
         display: flex;
         flex-wrap: wrap;
         gap: 12px;
         align-items: center;
       }
-
       .meta-tag {
         padding: 4px 8px;
         background: rgba(255, 255, 255, 0.1);
@@ -145,25 +125,22 @@
         font-weight: 600;
         color: #ddd;
       }
-      
       .meta-tag.accent {
         color: var(--brand-accent);
         border-color: var(--brand-accent);
       }
-
-      /* Action Buttons (The "Start EP 1" style) */
       .action-row {
         display: flex;
-        gap: 1rem;
+        gap: 10px;
         margin-top: 0.5rem;
+        align-items: stretch;
       }
-
       .btn-primary {
         display: inline-flex;
         align-items: center;
         gap: 10px;
         background-color: var(--brand-accent);
-        color: #000;
+        color: #fff;
         font-weight: 700;
         font-size: 1rem;
         padding: 14px 32px;
@@ -173,10 +150,27 @@
         text-transform: uppercase;
         transition: background-color var(--transition-duration);
       }
-
       .btn-primary:hover {
         background-color: var(--brand-hover);
         transform: translateY(-2px);
+      }
+      /* New Find Icon Button */
+      .btn-icon-secondary {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        background-color: rgba(255, 255, 255, 0.1);
+        color: #fff;
+        width: 54px;
+        border-radius: 6px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        cursor: pointer;
+        transition: all var(--transition-duration);
+      }
+      .btn-icon-secondary:hover {
+        background-color: rgba(255, 255, 255, 0.2);
+        border-color: var(--brand-accent);
+        color: var(--brand-accent);
       }
 
       .btn-secondary {
@@ -193,11 +187,9 @@
         cursor: pointer;
         transition: background-color var(--transition-duration);
       }
-
       .btn-secondary:hover {
         background-color: rgba(255, 255, 255, 0.2);
       }
-
       .synopsis-text {
         font-size: 1rem;
         line-height: 1.6;
@@ -209,21 +201,17 @@
         overflow: hidden;
       }
 
-      /* --- MAIN CONTENT --- */
       #main-content {
         max-width: var(--container-width);
         margin: 0 auto;
         padding: 2rem 5%;
       }
-
-      /* Tabs */
       .tabs-container {
         display: flex;
         gap: 2rem;
         margin-bottom: 2rem;
         border-bottom: 1px solid var(--border-color);
       }
-
       .tab-btn {
         padding: 1rem 0;
         background: none;
@@ -234,11 +222,9 @@
         cursor: pointer;
         position: relative;
       }
-
       .tab-btn.active {
         color: var(--text-primary);
       }
-
       .tab-btn.active::after {
         content: "";
         position: absolute;
@@ -249,19 +235,19 @@
         background-color: var(--brand-accent);
       }
 
-      /* --- CHAPTER LIST --- */
+      /* --- CHAPTER LIST & FUSION UI --- */
       .list-controls {
         display: flex;
         justify-content: space-between;
         align-items: center;
         margin-bottom: 1rem;
+        flex-wrap: wrap;
+        gap: 10px;
       }
-      
       .pagination-controls {
         display: flex;
         gap: 5px;
       }
-
       .page-btn {
         background: var(--background-secondary);
         border: 1px solid var(--border-color);
@@ -270,21 +256,38 @@
         border-radius: 4px;
         cursor: pointer;
       }
-      
       .page-btn:hover:not(:disabled) {
         background: var(--background-tertiary);
         color: var(--text-primary);
       }
-      
-      .page-btn.active {
-        background: var(--brand-accent);
-        color: #000;
-        border-color: var(--brand-accent);
-      }
-
       .page-btn:disabled {
         opacity: 0.5;
         cursor: not-allowed;
+      }
+
+      .module-switcher {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+        margin-left: auto;
+        margin-right: 20px;
+      }
+      .mod-btn {
+        background: var(--background-secondary);
+        border: 1px solid var(--border-color);
+        color: var(--text-secondary);
+        padding: 4px 10px;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 0.85rem;
+        text-transform: capitalize;
+        transition: 0.2s;
+      }
+      .mod-btn.active {
+        background: var(--brand-accent);
+        color: #000;
+        border-color: var(--brand-accent);
+        font-weight: 600;
       }
 
       #chapter-list {
@@ -293,7 +296,6 @@
         gap: 10px;
         list-style: none;
       }
-
       .chapter-item {
         display: flex;
         align-items: center;
@@ -302,16 +304,37 @@
         border-radius: 6px;
         padding: 10px 15px;
         cursor: pointer;
-        transition: transform 0.1s, border-color 0.1s;
+        transition:
+          transform 0.1s,
+          border-color 0.1s,
+          background-color 0.1s;
       }
-
       .chapter-item:hover {
         transform: scale(1.005);
         border-color: var(--brand-accent);
         background-color: #1e1e1e;
       }
 
-      /* Status Indicators in List */
+      /* Subtle Highlight Animation */
+      @keyframes subtlePulse {
+        0% {
+          border-color: var(--border-color);
+          background-color: var(--background-secondary);
+        }
+        50% {
+          border-color: var(--brand-accent);
+          background-color: rgba(255, 149, 0, 0.15);
+        }
+        100% {
+          border-color: var(--border-color);
+          background-color: var(--background-secondary);
+        }
+      }
+      .highlight-pulse {
+        animation: subtlePulse 2s ease-in-out 2;
+        border-width: 2px;
+      }
+
       .chapter-status-indicator {
         width: 4px;
         height: 40px;
@@ -319,12 +342,10 @@
         margin-right: 15px;
         border-radius: 2px;
       }
-
       .chapter-item.status-read .chapter-status-indicator {
         background: var(--success-color);
         box-shadow: 0 0 5px var(--success-color);
       }
-
       .chapter-item.status-ongoing .chapter-status-indicator {
         background: var(--ongoing-color);
         box-shadow: 0 0 5px var(--ongoing-color);
@@ -333,25 +354,47 @@
       .chapter-info {
         flex-grow: 1;
       }
-
       .chapter-title {
         font-weight: 600;
         font-size: 1rem;
         color: var(--text-primary);
         display: block;
       }
-      
       .chapter-meta {
         font-size: 0.8rem;
         color: var(--text-secondary);
         margin-top: 4px;
       }
 
+      .chapter-badges {
+        display: flex;
+        gap: 5px;
+        margin-top: 6px;
+      }
+      .mod-badge {
+        font-size: 0.7rem;
+        padding: 2px 6px;
+        border-radius: 4px;
+        background: #333;
+        color: #ccc;
+        text-transform: capitalize;
+        font-weight: 600;
+      }
+      .mod-badge.mangadex {
+        background: rgba(255, 103, 64, 0.2);
+        color: #ff6740;
+        border: 1px solid #ff6740;
+      }
+      .mod-badge.comix {
+        background: rgba(0, 180, 216, 0.2);
+        color: #00b4d8;
+        border: 1px solid #00b4d8;
+      }
+
       .chapter-actions {
         display: flex;
         gap: 10px;
       }
-
       .icon-btn {
         background: transparent;
         border: none;
@@ -361,16 +404,13 @@
         padding: 8px;
         transition: color 0.2s;
       }
-
       .icon-btn:hover {
         color: var(--brand-accent);
       }
-
       .chapter-item.status-read .chapter-title {
         color: var(--text-muted);
       }
 
-      /* --- READER MODAL --- */
       #reader-modal-container {
         display: none;
         position: fixed;
@@ -378,79 +418,100 @@
         z-index: 2000;
         background-color: #000;
       }
-
       #reader-modal-container.visible {
         display: block;
       }
-
       iframe {
         width: 100%;
         height: 100%;
         border: none;
       }
 
-      /* --- MOBILE RESPONSIVE --- */
+      #source-modal-overlay {
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.85);
+        backdrop-filter: blur(4px);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 3000;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.2s ease;
+      }
+      #source-modal-overlay.visible {
+        opacity: 1;
+        pointer-events: all;
+      }
+      .source-modal-box {
+        background: var(--background-secondary);
+        border: 1px solid var(--border-color);
+        padding: 24px;
+        border-radius: 8px;
+        width: 320px;
+        text-align: center;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+        transform: scale(0.95);
+        transition: transform 0.2s ease;
+      }
+      #source-modal-overlay.visible .source-modal-box {
+        transform: scale(1);
+      }
+      .source-btn {
+        display: block;
+        width: 100%;
+        padding: 12px;
+        margin-bottom: 10px;
+        border-radius: 6px;
+        background: var(--background-tertiary);
+        border: 1px solid var(--border-color);
+        color: var(--text-primary);
+        font-weight: 600;
+        cursor: pointer;
+        text-transform: capitalize;
+        transition: all 0.2s;
+      }
+      .source-btn:hover {
+        border-color: var(--brand-accent);
+        background: rgba(255, 149, 0, 0.1);
+      }
+
       @media (max-width: 768px) {
         #hero-section {
           min-height: auto;
           display: block;
           padding-bottom: 2rem;
-          background-position: center;
         }
-
         .hero-content {
           flex-direction: column;
           align-items: center;
           text-align: center;
           gap: 1.5rem;
-          padding-top: 4rem; /* Spacer for top nav usually */
+          padding-top: 4rem;
         }
-
         .poster-container {
-            width: 180px;
-            margin-bottom: 0;
+          width: 180px;
+          margin-bottom: 0;
         }
-
-        .info-container {
-          align-items: center;
-        }
-
-        .manga-title {
-            font-size: 2rem;
-        }
-
-        .meta-row {
-            justify-content: center;
-        }
-
         .action-row {
-            flex-direction: column;
-            width: 100%;
+          flex-direction: row;
+          width: 100%;
+          justify-content: center;
         }
-
-        .btn-primary, .btn-secondary {
-            width: 100%;
-            justify-content: center;
+        .btn-primary {
+          flex-grow: 1;
+          justify-content: center;
         }
-
-        .synopsis-text {
-            -webkit-line-clamp: 3;
-            font-size: 0.9rem;
-        }
-        
-        .chapter-item {
-            padding: 8px 10px;
-        }
-        
-        .chapter-status-indicator {
-            height: 30px;
-            margin-right: 10px;
+        .module-switcher {
+          margin: 10px 0;
+          justify-content: flex-start;
+          width: 100%;
         }
       }
     </style>
   </head>
   <body>
-    <!-- Hero Section -->
     <header id="hero-section">
       <div class="hero-overlay"></div>
       <div class="hero-content">
@@ -459,20 +520,24 @@
             id="manga-poster"
             class="poster-image"
             src="https://placehold.co/400x600/202020/666?text=..."
-            alt="Manga Cover"
+            alt="Cover"
           />
         </div>
         <div class="info-container">
-          <div class="meta-row" id="meta-tags">
-            <!-- Populated by JS -->
-          </div>
+          <div class="meta-row" id="meta-tags"></div>
           <h1 id="manga-title" class="manga-title">Loading...</h1>
-          <p id="manga-synopsis" class="synopsis-text">
-            Loading synopsis...
-          </p>
+          <p id="manga-synopsis" class="synopsis-text">Loading metadata...</p>
           <div class="action-row">
             <button id="continue-reading-btn" class="btn-primary">
               <i class="fa-solid fa-play"></i> Start Reading
+            </button>
+            <button
+              id="find-in-list-btn"
+              class="btn-icon-secondary"
+              title="Find in list"
+              style="display: none"
+            >
+              <i class="fa-solid fa-list-ul"></i>
             </button>
             <button id="add-list-btn" class="btn-secondary">
               <i class="fa-solid fa-plus"></i> Add to List
@@ -485,30 +550,75 @@
     <main id="main-content">
       <div class="tabs-container">
         <button class="tab-btn active" data-tab="chapters">Chapters</button>
-        <button class="tab-btn" data-tab="details" style="display:none">Details</button> <!-- Hidden for now -->
       </div>
 
       <div id="tab-chapters" class="tab-panel">
         <div class="list-controls">
-            <span style="color:var(--text-secondary); font-size: 0.9rem;" id="chapter-count-label"></span>
-            <div id="pagination-top" class="pagination-controls"></div>
+          <span
+            style="
+              color: var(--text-secondary);
+              font-size: 0.9rem;
+              font-weight: 600;
+            "
+            id="chapter-count-label"
+          ></span>
+          <button id="sort-toggle" class="mod-btn">
+            <i class="fas fa-sort"></i> Reverse Order
+          </button>
+
+          <div class="module-switcher" id="module-switcher"></div>
+          <div id="pagination-top" class="pagination-controls"></div>
         </div>
-        
-        <ul id="chapter-list">
-            <!-- Chapters generated here -->
-        </ul>
-        
-        <div class="list-controls" style="margin-top: 1rem; justify-content: center;">
-            <div id="pagination-bottom" class="pagination-controls"></div>
+
+        <ul id="chapter-list"></ul>
+
+        <div
+          class="list-controls"
+          style="margin-top: 1rem; justify-content: center"
+        >
+          <div id="pagination-bottom" class="pagination-controls"></div>
         </div>
       </div>
     </main>
 
     <div id="reader-modal-container"></div>
 
+    <div id="source-modal-overlay">
+      <div class="source-modal-box">
+        <h3 style="margin-bottom: 8px">Select Source</h3>
+        <p
+          style="
+            color: var(--text-secondary);
+            margin-bottom: 20px;
+            font-size: 0.9rem;
+          "
+          id="source-modal-subtitle"
+        >
+          Ch.
+        </p>
+        <div
+          id="source-modal-buttons"
+          style="display: flex; flex-direction: column"
+        ></div>
+        <button
+          class="btn-secondary"
+          id="close-source-modal"
+          style="
+            margin-top: 10px;
+            background: transparent;
+            border: none;
+            color: var(--text-secondary);
+            width: 100%;
+            justify-content: center;
+          "
+        >
+          Cancel
+        </button>
+      </div>
+    </div>
+
     <script>
       document.addEventListener("DOMContentLoaded", () => {
-        // --- DOM Elements ---
         const els = {
           hero: document.getElementById("hero-section"),
           poster: document.getElementById("manga-poster"),
@@ -516,34 +626,38 @@
           synopsis: document.getElementById("manga-synopsis"),
           metaTags: document.getElementById("meta-tags"),
           continueBtn: document.getElementById("continue-reading-btn"),
+          findBtn: document.getElementById("find-in-list-btn"),
           addListBtn: document.getElementById("add-list-btn"),
           chapterList: document.getElementById("chapter-list"),
           paginationTop: document.getElementById("pagination-top"),
           paginationBottom: document.getElementById("pagination-bottom"),
           countLabel: document.getElementById("chapter-count-label"),
+          switcher: document.getElementById("module-switcher"),
           modal: document.getElementById("reader-modal-container"),
+          sourceOverlay: document.getElementById("source-modal-overlay"),
+          sourceButtons: document.getElementById("source-modal-buttons"),
+          sourceSubtitle: document.getElementById("source-modal-subtitle"),
         };
 
-        // --- State ---
-        const getServerUrl = () => {
-          const extensionServerIp = localStorage.getItem("extension_server_ip") || "localhost";
-          const url = "";
-          console.log("[manga-info] serverUrl=", url);
-          return url;
-        };
+        const getServerUrl = () =>
+          localStorage.getItem("extension_server_ip") ? "" : "";
         const serverUrl = getServerUrl();
+
         let state = {
           mangaId: null,
-          source: "jikan", // default
+          metaSource: "jikan",
           title: "",
-          chapters: [], // Full list of chapters
+          chapters: [],
+          fusedChapters: [],
+          availableModules: [],
+          selectedModule: "all",
           currentPage: 1,
           itemsPerPage: 30,
           readingHistory: {},
-          mangaDetails: null
+          mangaDetails: null,
+          sortOrder: "asc",
         };
 
-        // --- Initialization ---
         function getUrlParams() {
           const params = new URLSearchParams(window.location.search);
           return {
@@ -559,25 +673,21 @@
             return;
           }
           state.mangaId = params.id;
-          state.source = params.source;
+          state.metaSource = params.source;
 
-          // Load History
           loadReadingHistory();
 
-          // Fetch Data
           try {
-            if (state.source === "mangadex") {
-              await loadMangaDexData();
-            } else {
-              await loadJikanData();
-            }
-            
-            // Render UI
+            if (state.metaSource === "mangadex") await loadMangaDexMetadata();
+            else await loadJikanMetadata();
+
+            await loadFusedChapters();
+
             updateHeroSection();
-            updateContinueButton();
+            renderModuleSwitcher();
             renderPagination();
             renderChapterList();
-            
+            updateContinueButton();
           } catch (e) {
             console.error(e);
             els.title.textContent = "Error loading manga";
@@ -585,331 +695,367 @@
           }
         }
 
-        // --- Data Fetching ---
+        async function loadJikanMetadata() {
+          const detRes = await fetch(
+            `https://api.jikan.moe/v4/manga/${state.mangaId}/full`,
+          );
+          if (!detRes.ok) throw new Error("Jikan API Error");
+          const data = (await detRes.json()).data;
+          state.mangaDetails = {
+            title: data.title,
+            image: data.images?.jpg?.large_image_url,
+            synopsis: data.synopsis,
+            status: data.status,
+            year: data.published?.from
+              ? new Date(data.published.from).getFullYear()
+              : "N/A",
+            genres: data.genres?.map((g) => g.name).slice(0, 3),
+          };
+          state.title = data.title;
+        }
 
-        async function loadJikanData() {
-            // 1. Details
-            const detRes = await fetch(`https://api.jikan.moe/v4/manga/${state.mangaId}/full`);
-            if(!detRes.ok) throw new Error("Jikan API Error");
-            const data = (await detRes.json()).data;
-            
-            state.mangaDetails = {
-                title: data.title,
-                image: data.images?.jpg?.large_image_url,
-                banner: data.images?.jpg?.large_image_url, // Jikan doesn't provide banners usually, fallback
-                synopsis: data.synopsis,
-                status: data.status,
-                year: data.published?.from ? new Date(data.published.from).getFullYear() : "N/A",
-                authors: data.authors?.map(a => a.name).join(", "),
-                genres: data.genres?.map(g => g.name).slice(0,3)
-            };
-            state.title = data.title;
+        async function loadMangaDexMetadata() {
+          const detRes = await fetch(
+            `${serverUrl}/mangadex/manga/${state.mangaId}`,
+          );
+          if (!detRes.ok) throw new Error("MangaDex API Error");
+          const data = await detRes.json();
+          const attrs = data.attributes;
+          const title = attrs.title.en || Object.values(attrs.title)[0];
+          state.mangaDetails = {
+            title: title,
+            image:
+              data.image_url ||
+              `https://placehold.co/400x600/141414/333?text=${title}`,
+            synopsis: attrs.description.en || "No description.",
+            status: attrs.status,
+            year: attrs.year || "N/A",
+            genres: attrs.tags
+              .filter((t) => t.group === "genre")
+              .map((t) => t.attributes.name.en)
+              .slice(0, 3),
+          };
+          state.title = title;
+        }
 
-            // 2. Chapters (From local proxy/server)
+        async function loadFusedChapters() {
+          try {
             const chRes = await fetch(`${serverUrl}/chapters/${state.mangaId}`);
+            if (!chRes.ok) return;
             const chData = await chRes.json();
-            
-            // Normalize Jikan Chapters
-            state.chapters = chData.chapters.map(ch => ({
-                id: String(ch.chapter_number), // ID is the number for Jikan
-                number: ch.chapter_number,
-                title: ch.title || `Chapter ${ch.chapter_number}`,
-                date: null
-            })).reverse(); // Newest first
-        }
+            let modulesMap = chData.modules || {};
+            let chapterMap = {};
+            state.availableModules = Object.keys(modulesMap);
 
-        async function loadMangaDexData() {
-            // 1. Details
-            const detRes = await fetch(`${serverUrl}/mangadex/manga/${state.mangaId}`);
-            if(!detRes.ok) throw new Error("MangaDex API Error");
-            const data = await detRes.json();
-            
-            const attrs = data.attributes;
-            const title = attrs.title.en || Object.values(attrs.title)[0];
-            const banner = `url('${serverUrl}/manga/${state.mangaId}/banner')`; // Use backend proxy for banner
-            
-            state.mangaDetails = {
-                title: title,
-                image: data.image_url || `https://placehold.co/400x600/141414/333?text=${title}`,
-                banner: null, // Will be handled by CSS background logic
-                synopsis: attrs.description.en || "No description.",
-                status: attrs.status,
-                year: attrs.year || "N/A",
-                authors: "", // Simplified
-                genres: attrs.tags.filter(t => t.group === 'genre').map(t => t.attributes.name.en).slice(0,3)
-            };
-            state.title = title;
-
-            // 2. Chapters (Fetch all IDs then paginate logic is simplified for this demo, 
-            // but in production for MD you usually fetch by page. 
-            // To satisfy "Client side pagination" request for "long lists", we fetch a large chunk or all.)
-            
-            // Note: For a robust implementation with thousands of chapters, we should use server pagination.
-            // For this UI demo, we will fetch the first 500 or so to populate the list.
-            const chRes = await fetch(`${serverUrl}/mangadex/manga/${state.mangaId}/chapters?limit=500`);
-            const chData = await chRes.json();
-
-            state.chapters = chData.chapters.map(ch => ({
-                id: ch.id, // UUID
-                number: ch.attributes.chapter,
-                title: ch.attributes.title,
-                date: ch.attributes.publishAt,
-                group: ch.relationships.find(r => r.type === 'scanlation_group')?.attributes?.name
-            }));
-        }
-
-        // --- History Logic ---
-
-        function loadReadingHistory() {
-            const historyRaw = localStorage.getItem("reading_history");
-            if (!historyRaw) return;
-            
-            try {
-                const historyArr = JSON.parse(historyRaw);
-                // Find entry for this manga and source
-                const entry = historyArr.find(item => 
-                    String(item.mangaId) === String(state.mangaId) && 
-                    item.source === state.source
-                );
-                
-                if (entry && entry.chapters) {
-                    state.readingHistory = entry.chapters;
+            for (const [modName, modChaps] of Object.entries(modulesMap)) {
+              modChaps.forEach((ch) => {
+                const numStr = String(ch.chapter_number);
+                const num = parseFloat(numStr);
+                if (isNaN(num)) return;
+                if (!chapterMap[numStr]) {
+                  chapterMap[numStr] = {
+                    number: num,
+                    title: ch.title || `Chapter ${numStr}`,
+                    sources: [],
+                  };
                 }
-            } catch (e) {
-                console.error("Failed to parse reading history", e);
-            }
-        }
-
-        function getChapterStatus(chapterId) {
-            const chHistory = state.readingHistory[chapterId];
-            if (!chHistory) return "unread";
-            if (chHistory.state === "finished") return "read";
-            if (chHistory.state === "ongoing") return "ongoing";
-            return "unread";
-        }
-
-        function getLastReadChapter() {
-            // Find chapter with highest timestamp
-            let lastChId = null;
-            let maxTime = 0;
-
-            for (const [id, data] of Object.entries(state.readingHistory)) {
-                if (data.timestamp > maxTime) {
-                    maxTime = data.timestamp;
-                    lastChId = id;
+                if (modName.toLowerCase().includes("mangadex") && ch.title) {
+                  chapterMap[numStr].title = ch.title;
                 }
+                if (!chapterMap[numStr].sources.includes(modName)) {
+                  chapterMap[numStr].sources.push(modName);
+                }
+              });
             }
-
-            if (!lastChId) return null;
-
-            // Find the object in state.chapters
-            return state.chapters.find(c => String(c.id) === String(lastChId));
+            state.fusedChapters = Object.values(chapterMap).sort(
+              (a, b) => a.number - b.number,
+            );
+            state.chapters = [...state.fusedChapters];
+          } catch (e) {
+            console.error("Failed to fuse chapters:", e);
+            state.chapters = [];
+          }
         }
-
-        // --- Render Functions ---
 
         function updateHeroSection() {
-            const d = state.mangaDetails;
-            document.title = `${d.title} - Manga`;
-            
-            // Background
-            if (state.source === "jikan") {
-                // Jikan fallback background
-                try {
-                    els.hero.style.backgroundImage = `url('${serverUrl}/manga/${state.mangaId}/banner')`;
-                } catch (e) {
-                    els.hero.style.backgroundImage = `url('${d.image}')`;
-                }
-            } else {
-                 els.hero.style.backgroundImage = `url('${serverUrl}/manga/${state.mangaId}/banner')`;
-            }
-
-            els.poster.src = d.image;
-            els.title.textContent = d.title;
-            els.synopsis.textContent = d.synopsis;
-
-            // Meta Tags
-            els.metaTags.innerHTML = `
-                <span class="meta-tag accent">${state.source.toUpperCase()}</span>
+          const d = state.mangaDetails;
+          document.title = `${d.title} - Manga`;
+          els.hero.style.backgroundImage = `url('${serverUrl}/manga/${state.mangaId}/banner')`;
+          els.poster.src = d.image;
+          els.title.textContent = d.title;
+          els.synopsis.textContent = d.synopsis;
+          els.metaTags.innerHTML = `
+                <span class="meta-tag accent">${state.metaSource.toUpperCase()}</span>
                 <span class="meta-tag">${d.year}</span>
                 <span class="meta-tag" style="text-transform:capitalize">${d.status}</span>
-                ${d.genres.map(g => `<span class="meta-tag">${g}</span>`).join('')}
+                ${d.genres.map((g) => `<span class="meta-tag">${g}</span>`).join("")}
             `;
         }
 
-        function updateContinueButton() {
-            const lastRead = getLastReadChapter();
-            
-            if (lastRead) {
-                els.continueBtn.innerHTML = `<i class="fa-solid fa-play"></i> Continue Ch ${lastRead.number}`;
-                els.continueBtn.onclick = () => openReader(lastRead.id);
-            } else {
-                // Find first chapter (last in array usually if sorted desc, but let's be safe)
-                const firstCh = state.chapters[state.chapters.length - 1]; // Assuming desc order
-                if (firstCh) {
-                    els.continueBtn.innerHTML = `<i class="fa-solid fa-book-open"></i> Start Reading`;
-                    els.continueBtn.onclick = () => openReader(firstCh.id);
-                } else {
-                    els.continueBtn.innerHTML = "No Chapters";
-                    els.continueBtn.disabled = true;
-                }
-            }
+        function renderModuleSwitcher() {
+          if (state.availableModules.length === 0) {
+            els.switcher.style.display = "none";
+            return;
+          }
+          els.switcher.innerHTML = `<button class="mod-btn ${state.selectedModule === "all" ? "active" : ""}" data-mod="all">All Modules</button>`;
+          state.availableModules.forEach((mod) => {
+            const btn = document.createElement("button");
+            btn.className = `mod-btn ${state.selectedModule === mod ? "active" : ""}`;
+            btn.dataset.mod = mod;
+            btn.textContent = mod;
+            els.switcher.appendChild(btn);
+          });
+          els.switcher.querySelectorAll(".mod-btn").forEach((btn) => {
+            btn.addEventListener("click", (e) => {
+              const mod = e.target.dataset.mod;
+              state.selectedModule = mod;
+              state.chapters =
+                mod === "all"
+                  ? [...state.fusedChapters]
+                  : state.fusedChapters.filter((ch) =>
+                      ch.sources.includes(mod),
+                    );
+              state.currentPage = 1;
+              renderModuleSwitcher();
+              renderPagination();
+              renderChapterList();
+            });
+          });
         }
 
         function renderPagination() {
-            const totalPages = Math.ceil(state.chapters.length / state.itemsPerPage);
-            if (totalPages <= 1) {
-                els.paginationTop.style.display = 'none';
-                els.paginationBottom.style.display = 'none';
-                return;
-            }
-
-            const createButtons = (container) => {
-                container.innerHTML = '';
-                
-                // Prev
-                const prev = document.createElement('button');
-                prev.className = 'page-btn';
-                prev.innerHTML = '<i class="fas fa-chevron-left"></i>';
-                prev.disabled = state.currentPage === 1;
-                prev.onclick = () => { state.currentPage--; renderChapterList(); renderPagination(); };
-                container.appendChild(prev);
-
-                // Simple page info (Desktop style often uses numbers, keeping it simple for logic)
-                const info = document.createElement('span');
-                info.textContent = `${state.currentPage} / ${totalPages}`;
-                info.style.color = 'var(--text-secondary)';
-                info.style.alignSelf = 'center';
-                info.style.margin = '0 10px';
-                container.appendChild(info);
-
-                // Next
-                const next = document.createElement('button');
-                next.className = 'page-btn';
-                next.innerHTML = '<i class="fas fa-chevron-right"></i>';
-                next.disabled = state.currentPage === totalPages;
-                next.onclick = () => { state.currentPage++; renderChapterList(); renderPagination(); };
-                container.appendChild(next);
+          const totalPages = Math.ceil(
+            state.chapters.length / state.itemsPerPage,
+          );
+          if (totalPages <= 1) {
+            els.paginationTop.style.display = "none";
+            els.paginationBottom.style.display = "none";
+            return;
+          }
+          const createButtons = (container) => {
+            container.innerHTML = "";
+            const prev = document.createElement("button");
+            prev.className = "page-btn";
+            prev.innerHTML = '<i class="fas fa-chevron-left"></i>';
+            prev.disabled = state.currentPage === 1;
+            prev.onclick = () => {
+              state.currentPage--;
+              renderChapterList();
+              renderPagination();
             };
-
-            createButtons(els.paginationTop);
-            createButtons(els.paginationBottom);
-            els.paginationTop.style.display = 'flex';
-            els.paginationBottom.style.display = 'flex';
+            container.appendChild(prev);
+            const info = document.createElement("span");
+            info.textContent = `${state.currentPage} / ${totalPages}`;
+            info.style.color = "var(--text-secondary)";
+            info.style.alignSelf = "center";
+            info.style.margin = "0 10px";
+            container.appendChild(info);
+            const next = document.createElement("button");
+            next.className = "page-btn";
+            next.innerHTML = '<i class="fas fa-chevron-right"></i>';
+            next.disabled = state.currentPage === totalPages;
+            next.onclick = () => {
+              state.currentPage++;
+              renderChapterList();
+              renderPagination();
+            };
+            container.appendChild(next);
+          };
+          createButtons(els.paginationTop);
+          createButtons(els.paginationBottom);
+          els.paginationTop.style.display = "flex";
+          els.paginationBottom.style.display = "flex";
         }
 
         function renderChapterList() {
-            els.chapterList.innerHTML = '';
-            
-            const start = (state.currentPage - 1) * state.itemsPerPage;
-            const end = start + state.itemsPerPage;
-            const currentSlice = state.chapters.slice(start, end);
-
-            els.countLabel.textContent = `${state.chapters.length} Chapters`;
-
-            if (currentSlice.length === 0) {
-                els.chapterList.innerHTML = '<li style="padding:20px; text-align:center; color:gray">No chapters found.</li>';
-                return;
-            }
-
-            currentSlice.forEach(ch => {
-                const status = getChapterStatus(ch.id);
-                const li = document.createElement('li');
-                li.className = `chapter-item status-${status}`;
-                
-                let metaText = `Ch. ${ch.number}`;
-                if (ch.date) {
-                    const d = new Date(ch.date).toLocaleDateString();
-                    metaText += ` • ${d}`;
-                }
-                if (ch.group) {
-                    metaText += ` • ${ch.group}`;
-                }
-
-                li.innerHTML = `
+          els.chapterList.innerHTML = "";
+          els.countLabel.textContent = `${state.chapters.length} Chapters`;
+          const start = (state.currentPage - 1) * state.itemsPerPage;
+          const currentSlice = state.chapters.slice(
+            start,
+            start + state.itemsPerPage,
+          );
+          if (currentSlice.length === 0) {
+            els.chapterList.innerHTML =
+              '<li style="padding:20px; text-align:center; color:gray">No chapters available for this source.</li>';
+            return;
+          }
+          currentSlice.forEach((ch) => {
+            const status = getChapterStatus(ch.number);
+            const li = document.createElement("li");
+            li.className = `chapter-item status-${status}`;
+            li.dataset.ch = ch.number;
+            const badges = ch.sources
+              .map(
+                (s) => `<span class="mod-badge ${s.toLowerCase()}">${s}</span>`,
+              )
+              .join("");
+            li.innerHTML = `
                     <div class="chapter-status-indicator"></div>
                     <div class="chapter-info">
-                        <span class="chapter-title">${ch.title || 'Chapter ' + ch.number}</span>
-                        <div class="chapter-meta">${metaText}</div>
+                        <span class="chapter-title">${ch.title}</span>
+                        <div class="chapter-meta">Ch. ${ch.number} <div class="chapter-badges">${badges}</div></div>
                     </div>
                     <div class="chapter-actions">
-                        <button class="icon-btn add-btn" title="Add to Queue"><i class="fas fa-list-ul"></i></button>
-                        <button class="icon-btn download-btn" title="Download"><i class="fas fa-download"></i></button>
+                        <button class="icon-btn" title="Download"><i class="fas fa-download"></i></button>
                     </div>
                 `;
-
-                li.onclick = (e) => {
-                    // Prevent clicking buttons from triggering read
-                    if (e.target.closest('.chapter-actions')) return;
-                    openReader(ch.id);
-                };
-
-                // Add to List Action (using parent method from prompt context)
-                li.querySelector('.add-btn').onclick = () => {
-                     if (window.parent && typeof window.parent.openListManager === "function") {
-                        window.parent.openListManager({
-                            type: "manga",
-                            id: state.mangaId,
-                            title: state.title,
-                            items: [String(ch.id)],
-                            source: state.source,
-                        });
-                    } else {
-                        alert("List Manager not found in parent window.");
-                    }
-                };
-                
-                // Download Action
-                 li.querySelector('.download-btn').onclick = () => {
-                     window.open(`/download-manga/site/${state.source}/${state.mangaId}/${ch.id}`, "_blank");
-                 };
-
-                els.chapterList.appendChild(li);
-            });
+            li.onclick = (e) => {
+              if (!e.target.closest(".chapter-actions")) handleChapterClick(ch);
+            };
+            els.chapterList.appendChild(li);
+          });
         }
 
-        // --- Interaction ---
+        function handleChapterClick(chapter) {
+          if (chapter.sources.length === 1)
+            openReader(chapter.number, chapter.sources[0]);
+          else showSourceSelectionModal(chapter);
+        }
 
-        function openReader(chapterId) {
-            // Update local storage history immediately for UI responsiveness (mocking)
-            // In a real app, the reader usually updates the history. 
-            // Here we just open the iframe.
-            const url = `/read/${state.source}/${state.mangaId}/${chapterId}`;
-            
-            els.modal.innerHTML = `<iframe src="${url}" allowfullscreen></iframe>`;
-            els.modal.classList.add("visible");
-            document.body.style.overflow = "hidden";
+        function showSourceSelectionModal(chapter) {
+          els.sourceSubtitle.textContent = `Ch. ${chapter.number} is available on multiple modules.`;
+          els.sourceButtons.innerHTML = chapter.sources
+            .map(
+              (src) =>
+                `<button class="source-btn" data-src="${src}" data-num="${chapter.number}">Read on ${src}</button>`,
+            )
+            .join("");
+          els.sourceOverlay.classList.add("visible");
+          els.sourceButtons.querySelectorAll(".source-btn").forEach((btn) => {
+            btn.onclick = () => {
+              els.sourceOverlay.classList.remove("visible");
+              openReader(
+                btn.getAttribute("data-num"),
+                btn.getAttribute("data-src"),
+              );
+            };
+          });
+        }
+
+        document.getElementById("close-source-modal").onclick = () =>
+          els.sourceOverlay.classList.remove("visible");
+        document.getElementById("sort-toggle").addEventListener("click", () => {
+          state.chapters.reverse();
+          state.currentPage = 1;
+          renderChapterList();
+          renderPagination();
+        });
+
+        function openReader(chapterNum, targetModule) {
+          const url = `/read/${targetModule}/${state.mangaId}/${chapterNum}?module=${targetModule}`;
+          els.modal.innerHTML = `<iframe src="${url}" allowfullscreen></iframe>`;
+          els.modal.classList.add("visible");
+          document.body.style.overflow = "hidden";
         }
 
         window.addEventListener("message", (event) => {
-            if (event.data === "close-reader-modal") {
-                els.modal.classList.remove("visible");
-                els.modal.innerHTML = "";
-                document.body.style.overflow = "auto";
-                
-                // Refresh history logic on close
-                loadReadingHistory();
-                updateContinueButton();
-                renderChapterList(); // Re-render to update status indicators
-            }
-        });
-        
-        // Add List Button (Series level)
-        els.addListBtn.addEventListener("click", () => {
-             if (window.parent && typeof window.parent.openListManager === "function") {
-                // Add all loaded chapters
-                const allIds = state.chapters.map(c => String(c.id));
-                window.parent.openListManager({
-                    type: "manga",
-                    id: state.mangaId,
-                    title: state.title,
-                    items: allIds,
-                    source: state.source,
-                });
-            }
+          if (event.data === "close-reader-modal") {
+            els.modal.classList.remove("visible");
+            els.modal.innerHTML = "";
+            document.body.style.overflow = "auto";
+            loadReadingHistory();
+            updateContinueButton();
+            renderChapterList();
+          }
         });
 
-        // Run
+        function loadReadingHistory() {
+          const raw = localStorage.getItem("reading_history");
+          if (!raw) return;
+          try {
+            const arr = JSON.parse(raw);
+            const entry = arr.find((item) => {
+              const idMatch = String(item.mangaId) === String(state.mangaId);
+              if (!idMatch) return false;
+              // If metaSource is Jikan, allow 'comix' or other custom sources to match history
+              return state.metaSource === "mangadex"
+                ? item.source === "mangadex"
+                : item.source !== "mangadex";
+            });
+            if (entry && entry.chapters) state.readingHistory = entry.chapters;
+          } catch (e) {}
+        }
+
+        function getChapterStatus(chapterNum) {
+          const chHistory = state.readingHistory[chapterNum];
+          if (!chHistory) return "unread";
+          return chHistory.state === "finished" ? "read" : "ongoing";
+        }
+
+        function getLastReadChapter() {
+          let lastChNum = null,
+            maxTime = 0;
+          for (const [num, data] of Object.entries(state.readingHistory)) {
+            if (data.timestamp > maxTime) {
+              maxTime = data.timestamp;
+              lastChNum = num;
+            }
+          }
+          if (!lastChNum) return null;
+          return state.fusedChapters.find(
+            (c) => String(c.number) === String(lastChNum),
+          );
+        }
+
+        function updateContinueButton() {
+          const lastRead = getLastReadChapter();
+          if (lastRead) {
+            els.continueBtn.innerHTML = `<i class="fa-solid fa-play"></i> Continue Ch ${lastRead.number}`;
+            els.continueBtn.onclick = () => handleChapterClick(lastRead);
+            els.findBtn.style.display = "inline-flex";
+            els.findBtn.onclick = () => findChapterInList(lastRead.number);
+          } else {
+            // Pick Chapter 1 (Ascending order check)
+            const sorted = [...state.fusedChapters].sort(
+              (a, b) => a.number - b.number,
+            );
+            const firstCh = sorted[0];
+            if (firstCh) {
+              els.continueBtn.innerHTML = `<i class="fa-solid fa-book-open"></i> Start Reading`;
+              els.continueBtn.onclick = () => handleChapterClick(firstCh);
+              els.findBtn.style.display = "none";
+            } else {
+              els.continueBtn.innerHTML = "No Chapters";
+              els.continueBtn.disabled = true;
+              els.findBtn.style.display = "none";
+            }
+          }
+        }
+
+        // --- New Logic: Find & Animate ---
+        function findChapterInList(chapterNum) {
+          // 1. Find index in currently filtered chapter list
+          const index = state.chapters.findIndex(
+            (c) => String(c.number) === String(chapterNum),
+          );
+          if (index === -1) {
+            alert("Chapter not found in current module view.");
+            return;
+          }
+
+          // 2. Calculate and go to page
+          state.currentPage = Math.floor(index / state.itemsPerPage) + 1;
+          renderChapterList();
+          renderPagination();
+
+          // 3. Highlight and Scroll (Delay slightly for render)
+          setTimeout(() => {
+            const targetLi = els.chapterList.querySelector(
+              `li[data-ch="${chapterNum}"]`,
+            );
+            if (targetLi) {
+              targetLi.scrollIntoView({ behavior: "smooth", block: "center" });
+              targetLi.classList.add("highlight-pulse");
+              // Remove class after animation finishes (2 cycles = 4s)
+              setTimeout(
+                () => targetLi.classList.remove("highlight-pulse"),
+                4000,
+              );
+            }
+          }, 100);
+        }
+
         init();
       });
     </script>

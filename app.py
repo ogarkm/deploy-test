@@ -31,7 +31,7 @@ from fpdf import FPDF
 import base64
 
 # --- Tunnel Configuration ---
-TUNNEL_TOKEN = os.environ.get("TUNNEL_TOKEN", "change-this-secret-token")
+TUNNEL_TOKEN = os.environ.get("TUNNEL_TOKEN", "PICUrl123")
 active_tunnel: Optional[WebSocket] = None
 pending_requests: Dict[str, asyncio.Future] = {}
 
@@ -103,9 +103,11 @@ class HybridClient:
                     self.content = b""
                 self.text = self.content.decode('utf-8', errors='ignore')
             
-            def json(self): 
-                return json.loads(self.text)
-                
+            def json(self):
+                try:
+                    return json.loads(self.text)
+                except json.JSONDecodeError:
+                    return None                
             def raise_for_status(self):
                 if self.status_code >= 400: 
                     raise httpx.HTTPStatusError(f"Error {self.status_code}", request=None, response=self)
@@ -791,14 +793,15 @@ async def get_movie_thumbnail(mal_id: int):
 async def get_anime_characters(mal_id: int):
     # AniList GraphQL logic
     r = await hybrid_client.post(ANILIST_URL, json={"query": VA_QUERY, "variables": {"idMal": mal_id, "page": 1}})
+    if r is None:
+        raise HTTPException(status_code=500, detail="Failed to get response from AniList API for characters.")
     media = r.json().get("data", {}).get("Media")
     if not media: raise HTTPException(status_code=404)
     chars = []
     for edge in media["characters"]["edges"]:
-        chars.append({"role": edge["role"], "character": {"name": edge["node"]["name"]["full"], "image": edge["node"]["image"]["large"]}, 
+        chars.append({"role": edge["role"], "character": {"name": edge["node"]["name"]["full"], "image": edge["node"]["image"]["large"]},
                       "voice_actors": [{"name": v["name"]["full"], "image": v["image"]["large"]} for v in edge["voiceActors"]]})
     return {"mal_id": mal_id, "characters": chars}
-
 @app.get("/anime/{mal_id}/seasons")
 async def get_anime_seasons_endpoint(mal_id: int):
     cache_key = f"seasons:{mal_id}"
@@ -812,6 +815,8 @@ async def get_anime_seasons_endpoint(mal_id: int):
 @app.get("/anime/{mal_id}/banner")
 async def get_anime_banner(mal_id: int, cover: bool = False):
     r = await hybrid_client.post(ANILIST_URL, json={"query": ANILIST_QUERY, "variables": {"malId": mal_id}})
+    if r is None:
+        raise HTTPException(status_code=500, detail="Failed to get response from AniList API for banner.")
     media = r.json().get("data", {}).get("Media", {})
     url = (media.get("coverImage", {}).get("extraLarge") if cover else media.get("bannerImage"))
     if not url: raise HTTPException(status_code=404)
@@ -831,25 +836,23 @@ async def get_manga_banner(mal_id: int, cover: bool = False):
 
 @app.get("/chapters/{mal_id}")
 async def get_manga_chapters_module(mal_id: int):
+    all_modules_results = {}
+    
     for mid, mdata in loaded_modules.items():
-        if module_states.get(mid) and "MANGA_READER" in mdata["info"].get("type", []):
+        if module_states.get(mid) and "MANGA_READER" in mdata["info"].get("type",[]):
             try:
                 mdata["instance"].httpx = hybrid_client
                 chaps = await mdata["instance"].get_chapters(mal_id)
-                if chaps: return {"chapters": chaps, "source_module": mid}
-            except: pass
-    raise HTTPException(status_code=404)
-
-@app.get("/retrieve/{mal_id}/{chapter_num}")
-async def get_manga_images_module(mal_id: int, chapter_num: str):
-    for mid, mdata in loaded_modules.items():
-        if module_states.get(mid) and "MANGA_READER" in mdata["info"].get("type", []):
-            try:
-                mdata["instance"].httpx = hybrid_client
-                imgs = await mdata["instance"].get_chapter_images(mal_id, chapter_num)
-                if imgs: return imgs
-            except: pass
-    raise HTTPException(status_code=404)
+                if chaps is not None:
+                    all_modules_results[mid] = chaps
+            except Exception as e:
+                print(f"Error fetching chapters from {mid}: {e}")
+                pass
+                
+    if all_modules_results:
+        return {"modules": all_modules_results}
+        
+    raise HTTPException(status_code=404, detail="No chapters found from any module")
 
 @app.get("/download")
 async def get_download_link(mal_id: int, episode: int, dub: bool = False, quality: str = "720p"):
@@ -918,20 +921,86 @@ async def download_manga_chapter_as_pdf_full(source: str, manga_id: str, chapter
             
     return Response(content=bytes(pdf.output(dest='S')), media_type="application/pdf")
 
+def extract_artists(song: dict) -> list[str]:
+    artists = song.get("artists") or []
+    return [a.get("name") for a in artists if a.get("name")]
+
 @app.get("/api/themes/{mal_id}")
-async def get_themes_full(mal_id: int):
-    # Restored Artist extraction and sorting logic
-    url = f"{ANIMETHEMES_API}/anime?filter[site]=MyAnimeList&filter[external_id]={mal_id}&include=animethemes.song.artists,animethemes.animethemeentries.videos"
-    r = await hybrid_client.get(url)
-    anime = r.json().get("anime", [{}])[0]
-    themes = []
-    for t in anime.get("animethemes", []):
-        artists = [a.get("name") for a in t.get("song", {}).get("artists", [])]
-        for e in t.get("animethemeentries", []):
-            for v in e.get("videos", []):
-                themes.append({"title": t.get("song", {}).get("title"), "artists": artists, "type": t["type"], "url": v["link"], "res": v.get("resolution", 0), "nc": v.get("nc", False)})
-    themes.sort(key=lambda x: (x["nc"], x["res"]), reverse=True)
-    return themes
+async def get_themes(mal_id: int):
+    """
+    Fetches themes for a specific MyAnimeList ID.
+    Resolves MAL ID -> AnimeThemes ID -> Flattens Video List.
+    """
+    try:
+        resp = await hybrid_client.get(
+            f"{ANIMETHEMES_API}/anime",
+            params={
+                "filter[has]": "resources",
+                "filter[site]": "MyAnimeList",
+                "filter[external_id]": mal_id,
+                "include": "animethemes.song.artists,animethemes.animethemeentries.videos",
+                "page[size]": 1
+            },
+            timeout=10.0
+        )
+
+        if resp.status_code != 200:
+            raise HTTPException(status_code=resp.status_code, detail="Upstream API error")
+
+        data = resp.json()
+        anime_list = data.get("anime", [])
+
+        if not anime_list:
+            return []
+
+        anime = anime_list[0]
+        themes = []
+        seen = set()
+
+        for theme in anime.get("animethemes", []):
+            song = theme.get("song", {})
+            theme_type = theme.get("type")
+            slug = theme.get("slug")
+
+            artists = extract_artists(song)
+
+            for entry in theme.get("animethemeentries", []):
+                for video in entry.get("videos", []):
+                    url = video.get("link")
+                    if not url:
+                        continue
+
+                    key = (
+                        url,
+                        video.get("resolution", 0),
+                        video.get("title", "")
+                    )
+
+                    if key in seen:
+                        continue
+                    seen.add(key)
+
+                    themes.append({
+                        "title": song.get("title") or "Unknown",
+                        "artists": artists,            # ← NEW
+                        "type": theme_type,
+                        "slug": slug,
+                        "url": url,
+                        "res": video.get("resolution", 0),
+                        "nc": video.get("nc", False),
+                        "source": video.get("source"),
+                    })
+
+        themes.sort(
+            key=lambda x: (x["nc"], x["res"]),
+            reverse=True
+        )
+
+        return themes
+
+    except Exception as e:
+        print(f"Error fetching themes: {e}")
+        return []
 
 @app.get("/modules/streaming", response_model=List[Dict[str, Any]])
 def get_streaming_modules():
@@ -1039,6 +1108,101 @@ async def get_iframe_source(
     )
 
 
+@app.get("/read/{source}/{manga_id}/{chapter_id}", response_class=HTMLResponse)
+async def read_manga_chapter_source(source: str, manga_id: str, chapter_id: str):
+    """
+    Serves the HTML reader interface for a given source (jikan or mangadex).
+    """
+    try:
+        with open("templates/reader.html", "r", encoding="utf-8") as f:
+            return HTMLResponse(content=f.read())
+    except FileNotFoundError:
+        raise HTTPException(status_code=404, detail="Reader UI not found.")
+    
+async def _get_manga_images_from_modules(
+    mal_id: int, 
+    chapter_num: str, 
+    profile_id: Optional[str]
+) -> Optional[List[str]]:
+
+    sorted_modules = []
+    processed_module_ids = set()
+
+    for module_id, module_data in sorted(loaded_modules.items()):
+        if module_id not in processed_module_ids:
+            sorted_modules.append((module_id, module_data))
+
+    for module_id, module_data in sorted_modules:
+        module_info = module_data.get("info", {})
+
+        module_type = module_info.get("type")
+        is_manga_reader = (isinstance(module_type, list) and "MANGA_READER" in module_type) or \
+                          (isinstance(module_type, str) and module_type == "MANGA_READER")
+
+        if module_states.get(module_id) and is_manga_reader:
+            print(f"Attempting to fetch chapter images from module: {module_id}")
+            try:
+                images_func = getattr(module_data["instance"], "get_chapter_images", None)
+                if not images_func:
+                    continue
+                
+                # ✅ INJECT TUNNEL CLIENT — same as the explicit module path does
+                module_data["instance"].httpx = hybrid_client
+                
+                images = await images_func(mal_id, chapter_num)
+                if images is not None:
+                    print(f"Success! Got {len(images)} images from {module_id}")
+                    return images
+            except Exception as e:
+                print(f"Module {module_id} failed with an error: {e}")
+                traceback.print_exc()
+    return None
+
+@app.get("/retrieve/{mal_id}/{chapter_num}")
+async def get_manga_chapter_images(
+    mal_id: int, 
+    chapter_num: str, 
+    profile_id: Optional[str] = Query(None, description="ID of the active user profile"),
+    ext: Optional[str] = Query(None, description="The ID of the extension to use"),
+    module: Optional[str] = Query(None, description="The specific module to pull images from")
+):
+    # --- Handle Extension Request ---
+    if ext:
+        if ext in loaded_extensions:
+            ext_data = loaded_extensions[ext]
+            try:
+                images_func = getattr(ext_data["instance"], "get_chapter_images", None)
+                if images_func:
+                    print(f"Attempting to fetch chapter images from extension: {ext}")
+                    images = await images_func(mal_id, chapter_num)
+                    if images is not None:
+                        return images
+            except Exception as e:
+                raise HTTPException(status_code=500, detail=f"Extension {ext} failed: {e}")
+        else:
+            raise HTTPException(status_code=404, detail=f"Extension '{ext}' not found.")
+
+    # --- Handle Explicit Module Routing ---
+    if module and module in loaded_modules:
+        mod_data = loaded_modules[module]
+        if module_states.get(module) and "MANGA_READER" in mod_data["info"].get("type", []):
+            try:
+                images_func = getattr(mod_data["instance"], "get_chapter_images", None)
+                if images_func:
+                    mod_data["instance"].httpx = hybrid_client
+                    images = await images_func(mal_id, chapter_num)
+                    if images is not None:
+                        return images
+            except Exception as e:
+                print(f"Module {module} failed: {e}")
+                raise HTTPException(status_code=500, detail=str(e))
+
+    # --- Handle Module Request (Fallback Iteration if no specific module is passed) ---
+    images = await _get_manga_images_from_modules(mal_id, chapter_num, profile_id)
+    if images is not None:
+        return images
+                
+    raise HTTPException(status_code=404, detail="Could not retrieve chapter images from any enabled module or extension.")
 
 # --- Serve Frontend ---
 app.mount("/data", StaticFiles(directory="data"), name="data")

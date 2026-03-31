@@ -8,7 +8,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    <link rel="stylesheet" href="Resources/styles.css">
+    
     <style>
         /* =========================================
            1. VARIABLES & RESET (From Reference)
@@ -46,14 +46,17 @@
         html {
             -webkit-font-smoothing: antialiased;
             -moz-osx-font-smoothing: grayscale;
+            overflow-y: auto !important;
         }
 
         body {
             background-color: var(--background-primary);
             color: var(--text-primary);
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            font-family: 'Inter', sans-serif;
             line-height: 1.6;
-            overflow-x: hidden;
+            /* Change overflow-x: hidden to allow vertical scrolling */
+            overflow-x: hidden; 
+            overflow-y: auto !important;
             min-height: 100vh;
         }
 
@@ -68,7 +71,8 @@
            ========================================= */
         .app-container {
             width: 100%;
-            min-height: 100vh;
+            /* Ensure it doesn't trap height */
+            min-height: 100vh; 
             display: flex;
             flex-direction: column;
         }
@@ -78,7 +82,9 @@
             max-width: 1200px;
             margin: 0 auto;
             width: 100%;
-            flex-grow: 1;
+            /* Remove flex-grow if it's causing layout issues, 
+            or ensure it allows expansion */
+            display: block; 
         }
 
         .section-title {
@@ -381,7 +387,7 @@
         .horizontal-scroll-container {
             display: flex;
             overflow-x: auto;
-            overflow-y: hidden;
+            overflow-y: auto !important;
             padding: 10px 0 25px 0;
             -webkit-overflow-scrolling: touch;
             gap: 15px;

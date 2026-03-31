@@ -35,8 +35,10 @@ body {
     color: var(--text-primary);
     display: flex;
     flex-direction: column;
-    height: 100vh;
-    overflow: hidden;
+    
+    height: auto !important;
+    min-height: 100vh;
+    overflow-y: auto !important;
 }
 
 /* 
@@ -51,7 +53,7 @@ DESKTOP STYLES (REWORKED & CONSOLIDATED)
         flex-direction: row;
         flex-grow: 1;
         height: 100vh;
-        overflow: hidden;
+        overflow-x: hidden;
     }
     
     .desktop-main {

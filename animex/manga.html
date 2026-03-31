@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
@@ -141,7 +141,9 @@
         max-width: 220px;
         height: 330px;
         border-radius: 12px;
-        transition: transform 0.6s cubic-bezier(0.25, 1, 0.5, 1), opacity 0.5s ease;
+        transition:
+          transform 0.6s cubic-bezier(0.25, 1, 0.5, 1),
+          opacity 0.5s ease;
         cursor: pointer;
         transform: scale(0.5);
         opacity: 0;
@@ -153,11 +155,31 @@
         border-radius: 12px;
         box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
       }
-      .slide-center { transform: translateX(0) scale(1); opacity: 1; z-index: 10; }
-      .slide-left { transform: translateX(-40%) scale(0.8) rotate(-8deg); opacity: 1; z-index: 5; }
-      .slide-right { transform: translateX(40%) scale(0.8) rotate(8deg); opacity: 1; z-index: 5; }
-      .slide-exit-left { transform: translateX(-150%) scale(0.6); opacity: 0; z-index: 1; }
-      .slide-exit-right { transform: translateX(150%) scale(0.6); opacity: 0; z-index: 1; }
+      .slide-center {
+        transform: translateX(0) scale(1);
+        opacity: 1;
+        z-index: 10;
+      }
+      .slide-left {
+        transform: translateX(-40%) scale(0.8) rotate(-8deg);
+        opacity: 1;
+        z-index: 5;
+      }
+      .slide-right {
+        transform: translateX(40%) scale(0.8) rotate(8deg);
+        opacity: 1;
+        z-index: 5;
+      }
+      .slide-exit-left {
+        transform: translateX(-150%) scale(0.6);
+        opacity: 0;
+        z-index: 1;
+      }
+      .slide-exit-right {
+        transform: translateX(150%) scale(0.6);
+        opacity: 0;
+        z-index: 1;
+      }
 
       /* --- DESKTOP HERO SECTION (Hidden on Mobile) --- */
       #desktop-hero {
@@ -169,9 +191,9 @@
         border-radius: 20px;
         overflow: hidden;
         background-color: #000;
-        box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+        box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
       }
-      
+
       .hero-bg-image {
         position: absolute;
         top: 0;
@@ -180,21 +202,36 @@
         height: 100%;
         object-fit: cover;
         opacity: 0.8;
-        mask-image: linear-gradient(to right, transparent 0%, black 20%, black 100%);
-        -webkit-mask-image: linear-gradient(to right, transparent 0%, black 20%, black 100%);
+        mask-image: linear-gradient(
+          to right,
+          transparent 0%,
+          black 20%,
+          black 100%
+        );
+        -webkit-mask-image: linear-gradient(
+          to right,
+          transparent 0%,
+          black 20%,
+          black 100%
+        );
         transition: opacity 0.5s ease-in-out;
       }
-      
+
       .hero-overlay {
         position: absolute;
         top: 0;
         left: 0;
         width: 100%;
         height: 100%;
-        background: linear-gradient(to right, #121212 30%, rgba(18,18,18,0.8) 50%, transparent 100%);
+        background: linear-gradient(
+          to right,
+          #121212 30%,
+          rgba(18, 18, 18, 0.8) 50%,
+          transparent 100%
+        );
         z-index: 1;
       }
-      
+
       .hero-content {
         position: relative;
         z-index: 2;
@@ -205,7 +242,9 @@
         flex-direction: column;
         justify-content: center;
         box-sizing: border-box;
-        transition: opacity 0.5s ease-in-out, transform 0.5s ease;
+        transition:
+          opacity 0.5s ease-in-out,
+          transform 0.5s ease;
       }
 
       /* Animation State Class */
@@ -228,7 +267,7 @@
         flex-wrap: wrap;
       }
       .hero-tag {
-        background: rgba(255,255,255,0.1);
+        background: rgba(255, 255, 255, 0.1);
         padding: 5px 12px;
         border-radius: 4px;
         font-size: 0.85em;
@@ -241,9 +280,9 @@
         line-height: 1.1;
         font-weight: 800;
         margin: 0 0 10px 0;
-        text-shadow: 0 2px 10px rgba(0,0,0,0.5);
+        text-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
       }
-      
+
       .hero-subtitle {
         font-size: 1.5rem;
         color: var(--accent-color);
@@ -274,13 +313,15 @@
         font-weight: 700;
         border-radius: 8px;
         cursor: pointer;
-        transition: transform 0.2s, background 0.2s;
+        transition:
+          transform 0.2s,
+          background 0.2s;
         display: flex;
         align-items: center;
         gap: 10px;
         border: none;
       }
-      
+
       .btn-primary {
         background: #fff;
         color: #000;
@@ -289,15 +330,15 @@
         background: #eee;
         transform: translateY(-2px);
       }
-      
+
       .btn-outline {
         background: transparent;
-        border: 2px solid rgba(255,255,255,0.3);
+        border: 2px solid rgba(255, 255, 255, 0.3);
         color: #fff;
       }
       .btn-outline:hover {
         border-color: #fff;
-        background: rgba(255,255,255,0.1);
+        background: rgba(255, 255, 255, 0.1);
       }
 
       /* --- Hero Indicators (Dots) --- */
@@ -335,27 +376,31 @@
       /* --- MEDIA QUERY FOR DESKTOP --- */
       @media (min-width: 1024px) {
         body {
-            padding-top: 100px;
+          padding-top: 100px;
         }
         /* Swap Carousel for Hero */
-        #featured-carousel-container { display: none !important; }
-        #desktop-hero { display: flex !important; }
+        #featured-carousel-container {
+          display: none !important;
+        }
+        #desktop-hero {
+          display: flex !important;
+        }
 
         /* Relax grid layout */
         .poster-card {
-            width: 160px;
-            height: 240px;
+          width: 160px;
+          height: 240px;
         }
-        
+
         /* Make navbar cleaner on desktop */
         .navbar {
-            padding: 20px 0;
+          padding: 20px 0;
         }
       }
 
       @media (max-width: 768px) {
         .section-title {
-            font-size: 1em;
+          font-size: 1em;
         }
 
         .horizontal-scroll-container {
@@ -364,51 +409,55 @@
       }
 
       /* --- Search & Grids --- */
-      #mangadex-search-container { margin-bottom: 30px; }
+      #mangadex-search-container {
+        margin-bottom: 30px;
+      }
       .search-box {
-          position: relative;
-          width: 100%;
-          max-width: 600px;
-          margin: 0 auto 30px auto;
+        position: relative;
+        width: 100%;
+        max-width: 600px;
+        margin: 0 auto 30px auto;
       }
       #mangadex-search-input {
-          width: 100%;
-          padding: 15px 50px 15px 20px;
-          font-size: 1.1em;
-          border-radius: 30px;
-          border: 2px solid #333;
-          background-color: #1f1f1f;
-          color: #fff;
-          box-sizing: border-box;
-          transition: border-color 0.3s, box-shadow 0.3s;
+        width: 100%;
+        padding: 15px 50px 15px 20px;
+        font-size: 1.1em;
+        border-radius: 30px;
+        border: 2px solid #333;
+        background-color: #1f1f1f;
+        color: #fff;
+        box-sizing: border-box;
+        transition:
+          border-color 0.3s,
+          box-shadow 0.3s;
       }
       #mangadex-search-input:focus {
-          outline: none;
-          border-color: var(--accent-color);
-          box-shadow: 0 0 15px rgba(var(--accent-rgb), 0.3);
+        outline: none;
+        border-color: var(--accent-color);
+        box-shadow: 0 0 15px rgba(var(--accent-rgb), 0.3);
       }
       #mangadex-search-btn {
-          position: absolute;
-          right: 10px;
-          top: 50%;
-          transform: translateY(-50%);
-          background: var(--accent-color);
-          border: none;
-          color: white;
-          width: 40px;
-          height: 40px;
-          border-radius: 50%;
-          cursor: pointer;
-          font-size: 1.2em;
-          display: flex;
-          align-items: center;
-          justify-content: center;
+        position: absolute;
+        right: 10px;
+        top: 50%;
+        transform: translateY(-50%);
+        background: var(--accent-color);
+        border: none;
+        color: white;
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        cursor: pointer;
+        font-size: 1.2em;
+        display: flex;
+        align-items: center;
+        justify-content: center;
       }
       #mangadex-results-grid {
-          display: grid;
-          grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-          gap: 24px;
-          min-height: 200px;
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+        gap: 24px;
+        min-height: 200px;
       }
 
       /* --- Loaders & Common --- */
@@ -421,7 +470,14 @@
         animation: spin 1s linear infinite;
         margin: 100px auto;
       }
-      @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+      @keyframes spin {
+        0% {
+          transform: rotate(0deg);
+        }
+        100% {
+          transform: rotate(360deg);
+        }
+      }
 
       .section-header-row {
         display: flex;
@@ -429,7 +485,7 @@
         align-items: center;
         margin-bottom: 15px;
         padding-bottom: 10px;
-        border-bottom: 1px solid rgba(255,255,255,0.05);
+        border-bottom: 1px solid rgba(255, 255, 255, 0.05);
       }
       .view-all-arrow {
         display: flex;
@@ -444,7 +500,9 @@
         font-weight: bold;
         transition: background 0.2s;
       }
-      .view-all-arrow:hover { background-color: var(--accent-color); }
+      .view-all-arrow:hover {
+        background-color: var(--accent-color);
+      }
 
       .horizontal-scroll-container {
         display: flex;
@@ -454,9 +512,16 @@
         scrollbar-width: thin;
         scrollbar-color: #444 #121212;
       }
-      .horizontal-scroll-container::-webkit-scrollbar { height: 8px; }
-      .horizontal-scroll-container::-webkit-scrollbar-track { background: #121212; }
-      .horizontal-scroll-container::-webkit-scrollbar-thumb { background-color: #444; border-radius: 4px; }
+      .horizontal-scroll-container::-webkit-scrollbar {
+        height: 8px;
+      }
+      .horizontal-scroll-container::-webkit-scrollbar-track {
+        background: #121212;
+      }
+      .horizontal-scroll-container::-webkit-scrollbar-thumb {
+        background-color: #444;
+        border-radius: 4px;
+      }
 
       .poster-card {
         flex-shrink: 0;
@@ -466,7 +531,9 @@
         position: relative;
         border-radius: 10px;
         overflow: hidden;
-        transition: transform 0.3s ease, box-shadow 0.3s ease;
+        transition:
+          transform 0.3s ease,
+          box-shadow 0.3s ease;
         background-color: #222;
       }
       .poster-card:hover {
@@ -486,7 +553,11 @@
         left: 0;
         width: 100%;
         height: 60%;
-        background: linear-gradient(to top, rgba(0, 0, 0, 0.9) 0%, transparent 100%);
+        background: linear-gradient(
+          to top,
+          rgba(0, 0, 0, 0.9) 0%,
+          transparent 100%
+        );
         border-radius: 0 0 10px 10px;
       }
       .poster-card .poster-title {
@@ -502,7 +573,7 @@
         color: #fff;
         white-space: normal;
         line-height: 1.2;
-        text-shadow: 0 2px 4px rgba(0,0,0,0.8);
+        text-shadow: 0 2px 4px rgba(0, 0, 0, 0.8);
       }
       .error-message {
         color: #e5e5e5;
@@ -519,7 +590,9 @@
         text-align: left;
         transition: transform 0.2s ease-in-out;
       }
-      .poster-container:hover { transform: translateY(-5px); }
+      .poster-container:hover {
+        transform: translateY(-5px);
+      }
       .poster-image-wrapper {
         position: relative;
         cursor: pointer;
@@ -535,7 +608,9 @@
         display: block;
         transition: transform 0.3s ease;
       }
-      .poster-container:hover .poster-image-wrapper img { transform: scale(1.05); }
+      .poster-container:hover .poster-image-wrapper img {
+        transform: scale(1.05);
+      }
       .poster-container .poster-title {
         font-size: 0.9em;
         font-weight: 500;
@@ -544,7 +619,9 @@
         overflow: hidden;
         text-overflow: ellipsis;
       }
-      .poster-container:hover .poster-title { color: var(--accent-color); }
+      .poster-container:hover .poster-title {
+        color: var(--accent-color);
+      }
       .progress-bar {
         position: absolute;
         bottom: 0;
@@ -582,85 +659,122 @@
         fill="none"
         xmlns="http://www.w3.org/2000/svg"
       >
-        <rect width="1767" height="292" rx="146" fill="black" fill-opacity="0.01" />
+        <rect
+          width="1767"
+          height="292"
+          rx="146"
+          fill="black"
+          fill-opacity="0.01"
+        />
         <rect x="802" y="56" width="164" height="22.5285" fill="#DE541E" />
         <rect x="802" y="93.7502" width="164" height="22.5285" fill="#DE541E" />
-        <path d="M957.858 235.619H931.051L903.773 71.8308H931.051L957.858 235.619Z" fill="#DE541E" />
-        <path d="M813.05 235.619H839.857L867.135 71.8308H839.857L813.05 235.619Z" fill="#DE541E" />
-        <rect x="867.135" y="199.608" width="34.3121" height="36.0108" fill="#DE541E" />
-        <ellipse cx="884.291" cy="199.275" rx="17.156" ry="19.6726" fill="#DE541E" />
+        <path
+          d="M957.858 235.619H931.051L903.773 71.8308H931.051L957.858 235.619Z"
+          fill="#DE541E"
+        />
+        <path
+          d="M813.05 235.619H839.857L867.135 71.8308H839.857L813.05 235.619Z"
+          fill="#DE541E"
+        />
+        <rect
+          x="867.135"
+          y="199.608"
+          width="34.3121"
+          height="36.0108"
+          fill="#DE541E"
+        />
+        <ellipse
+          cx="884.291"
+          cy="199.275"
+          rx="17.156"
+          ry="19.6726"
+          fill="#DE541E"
+        />
       </svg>
     </nav>
     <div class="app-container">
-        <!-- Unified Header and Source Toggle -->
-        <div class="section-header">
-            <h2 class="section-title" id="main-heading">Spotlight</h2>
-            <div class="source-switch-container">
-              <button id="source-switch-btn">
-                <i class="fas fa-book"></i>
-                <span id="source-name">Jikan</span>
-              </button>
-            </div>
+      <!-- Unified Header and Source Toggle -->
+      <div class="section-header">
+        <h2 class="section-title" id="main-heading">Spotlight</h2>
+        <div class="source-switch-container">
+          <button id="source-switch-btn" style="display: none;">
+            <i class="fas fa-book"></i>
+            <span id="source-name">Jikan</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Jikan-specific Content -->
+      <section class="content-section" id="jikan-content">
+        <!-- Mobile Carousel -->
+        <div id="featured-carousel-container">
+          <div class="loader"></div>
         </div>
 
-        <!-- Jikan-specific Content -->
-        <section class="content-section" id="jikan-content">
-            <!-- Mobile Carousel -->
-            <div id="featured-carousel-container">
-                <div class="loader"></div>
+        <!-- Desktop Hero Section -->
+        <div id="desktop-hero">
+          <!-- Image filled by JS -->
+          <img class="hero-bg-image" id="hero-bg" src="" alt="" />
+          <div class="hero-overlay"></div>
+          <div class="hero-content" id="hero-content">
+            <span class="hero-label">Trending Manga</span>
+            <div class="hero-tags" id="hero-tags">
+              <!-- Tags filled by JS -->
             </div>
-
-            <!-- Desktop Hero Section -->
-            <div id="desktop-hero">
-                <!-- Image filled by JS -->
-                <img class="hero-bg-image" id="hero-bg" src="" alt="">
-                <div class="hero-overlay"></div>
-                <div class="hero-content" id="hero-content">
-                    <span class="hero-label">Trending Manga</span>
-                    <div class="hero-tags" id="hero-tags">
-                        <!-- Tags filled by JS -->
-                    </div>
-                    <h1 class="hero-title" id="hero-title">Loading...</h1>
-                    <h2 class="hero-subtitle" id="hero-subtitle"></h2>
-                    <p class="hero-synopsis" id="hero-desc"></p>
-                    <div class="hero-actions">
-                        <button class="btn-hero btn-primary" id="hero-read-btn">
-                            Read Now <i class="fas fa-arrow-right"></i>
-                        </button>
-                        <button class="btn-hero btn-outline">
-                            <i class="far fa-bookmark"></i>
-                        </button>
-                    </div>
-                </div>
-                <!-- Interactive Indicators (Dots) -->
-                <div class="hero-indicators" id="hero-indicators"></div>
+            <h1 class="hero-title" id="hero-title">Loading...</h1>
+            <h2 class="hero-subtitle" id="hero-subtitle"></h2>
+            <p class="hero-synopsis" id="hero-desc"></p>
+            <div class="hero-actions">
+              <button class="btn-hero btn-primary" id="hero-read-btn">
+                Read Now <i class="fas fa-arrow-right"></i>
+              </button>
+              <button class="btn-hero btn-outline">
+                <i class="far fa-bookmark"></i>
+              </button>
             </div>
+          </div>
+          <!-- Interactive Indicators (Dots) -->
+          <div class="hero-indicators" id="hero-indicators"></div>
+        </div>
 
-            <main class="main-content" id="main-content-area-jikan"></main>
-        </section>
 
-        <!-- MangaDex-specific Content -->
-        <section class="content-section" id="mangadex-content" style="display: none;">
-            <div id="mangadex-search-container">
-                <div class="search-box">
-                    <input type="text" id="mangadex-search-input" placeholder="Search MangaDex...">
-                    <button id="mangadex-search-btn"><i class="fas fa-search"></i></button>
-                </div>
-                <div id="mangadex-results-grid">
-                    <!-- Search results will appear here -->
-                </div>
-            </div>
-            <main class="main-content" id="main-content-area-mangadex"></main>
-        </section>
-        
-        <!-- Shared Content Area -->
-        <main class="main-content" id="main-content-area-shared"></main>
+      <!-- Shared Content Area -->
+      <main class="main-content" id="main-content-area-shared"></main>
+
+        <main class="main-content" id="main-content-area-jikan"></main>
+      </section>
+
+      <!-- MangaDex-specific Content -->
+      <section
+        class="content-section"
+        id="mangadex-content"
+        style="display: none"
+      >
+        <div id="mangadex-search-container">
+          <div class="search-box">
+            <input
+              type="text"
+              id="mangadex-search-input"
+              placeholder="Search MangaDex..."
+            />
+            <button id="mangadex-search-btn">
+              <i class="fas fa-search"></i>
+            </button>
+          </div>
+          <div id="mangadex-results-grid">
+            <!-- Search results will appear here -->
+          </div>
+        </div>
+        <main class="main-content" id="main-content-area-mangadex"></main>
+      </section>
+
     </div>
 
     <script>
       document.addEventListener("DOMContentLoaded", () => {
         const getServerUrl = () => {
-          const extensionServerIp = localStorage.getItem("extension_server_ip") || "localhost";
+          const extensionServerIp =
+            localStorage.getItem("extension_server_ip") || "localhost";
           const url = "";
           console.log("[manga] serverUrl=", url);
           return url;
@@ -670,7 +784,7 @@
         const CONTENT_JSON_FILE = "manga_content.json";
 
         const urlParams = new URLSearchParams(window.location.search);
-        const profileId = urlParams.get('profileId');
+        const profileId = urlParams.get("profileId");
 
         // --- SOURCE MANAGEMENT ---
         const mainHeading = document.getElementById("main-heading");
@@ -678,104 +792,139 @@
         const sourceNameEl = document.getElementById("source-name");
         const jikanContent = document.getElementById("jikan-content");
         const mangadexContent = document.getElementById("mangadex-content");
-        const mangadexSearchInput = document.getElementById("mangadex-search-input");
-        const mangadexSearchBtn = document.getElementById("mangadex-search-btn");
-        const mangadexResultsGrid = document.getElementById("mangadex-results-grid");
+        const mangadexSearchInput = document.getElementById(
+          "mangadex-search-input",
+        );
+        const mangadexSearchBtn = document.getElementById(
+          "mangadex-search-btn",
+        );
+        const mangadexResultsGrid = document.getElementById(
+          "mangadex-results-grid",
+        );
 
         let currentSource = localStorage.getItem("manga_source") || "jikan";
 
         function setSource(source) {
-            currentSource = source;
-            localStorage.setItem("manga_source", source);
+          currentSource = source;
+          localStorage.setItem("manga_source", source);
 
-            const jikanContinue = document.getElementById('continue-reading-jikan');
-            const mangadexContinue = document.getElementById('continue-reading-mangadex');
+          const jikanContinue = document.getElementById(
+            "continue-reading-jikan",
+          );
+          const mangadexContinue = document.getElementById(
+            "continue-reading-mangadex",
+          );
 
-            if (source === 'mangadex') {
-                jikanContent.style.display = 'none';
-                mangadexContent.style.display = 'block';
-                mainHeading.textContent = "MangaDex";
-                sourceNameEl.textContent = "MangaDex";
-                if(jikanContinue) jikanContinue.style.display = 'none';
-                if(mangadexContinue) mangadexContinue.style.display = 'block';
-            } else {
-                jikanContent.style.display = 'block';
-                mangadexContent.style.display = 'none';
-                mainHeading.textContent = "Spotlight";
-                sourceNameEl.textContent = "Jikan";
-                if(jikanContinue) jikanContinue.style.display = 'block';
-                if(mangadexContinue) mangadexContinue.style.display = 'none';
-            }
+          if (source === "mangadex") {
+            jikanContent.style.display = "none";
+            mangadexContent.style.display = "block";
+            mainHeading.textContent = "MangaDex";
+            sourceNameEl.textContent = "MangaDex";
+            if (jikanContinue) jikanContinue.style.display = "none";
+            if (mangadexContinue) mangadexContinue.style.display = "block";
+          } else {
+            jikanContent.style.display = "block";
+            mangadexContent.style.display = "none";
+            mainHeading.textContent = "Spotlight";
+            sourceNameEl.textContent = "Jikan";
+            if (jikanContinue) jikanContinue.style.display = "block";
+            if (mangadexContinue) mangadexContinue.style.display = "none";
+          }
         }
-        
-        sourceSwitchBtn.addEventListener('click', () => {
-            const newSource = currentSource === 'jikan' ? 'mangadex' : 'jikan';
-            setSource(newSource);
+
+        sourceSwitchBtn.addEventListener("click", () => {
+          const newSource = currentSource === "jikan" ? "mangadex" : "jikan";
+          setSource(newSource);
         });
-        
+
         // Initialize source
         setSource(currentSource);
-        
+
         function openMangaModal(source, mangaId) {
-           window.parent.openPopup(`manga-info.html?source=${source}&id=${mangaId}`);
+          window.parent.openPopup(
+            `manga-info.html?source=${source}&id=${mangaId}`,
+          );
         }
 
         // --- MANGADEX NEW SECTIONS ---
         async function createMangaDexHorizontalSection(title, order) {
-            try {
-                const section = document.createElement("section");
-                section.className = "content-section";
-                section.innerHTML = `
+          try {
+            const section = document.createElement("section");
+            section.className = "content-section";
+            section.innerHTML = `
                 <div class="section-header-row">
                     <h2 class="section-title">${title}</h2>
                 </div>
                 <div class="horizontal-scroll-container"><div class="loader"></div></div>`;
-                
-                const mainContentAreaMangaDex = document.getElementById("main-content-area-mangadex");
-                mainContentAreaMangaDex.appendChild(section);
 
-                const scrollContainer = section.querySelector(".horizontal-scroll-container");
-                const response = await fetch(`${serverUrl}/mangadex/list?order=${order}&limit=15&profile_id=${profileId}`);
-                if (!response.ok) throw new Error(`API error: ${response.status}`);
-                const responseData = await response.json();
-                displayMangaDexPosters(responseData.data, scrollContainer);
-            } catch (error) {
-                console.error(`Failed to load MangaDex section "${title}":`, error);
-                const container = document.getElementById("main-content-area-mangadex");
-                if (container && container.lastElementChild && container.lastElementChild.querySelector(".loader")) {
-                   container.lastElementChild.querySelector(".loader").parentElement.innerHTML = `<p class="error-message">Could not load section.</p>`;
-                }
+            const mainContentAreaMangaDex = document.getElementById(
+              "main-content-area-mangadex",
+            );
+            mainContentAreaMangaDex.appendChild(section);
+
+            const scrollContainer = section.querySelector(
+              ".horizontal-scroll-container",
+            );
+            const response = await fetch(
+              `${serverUrl}/mangadex/list?order=${order}&limit=15&profile_id=${profileId}`,
+            );
+            if (!response.ok) throw new Error(`API error: ${response.status}`);
+            const responseData = await response.json();
+            displayMangaDexPosters(responseData.data, scrollContainer);
+          } catch (error) {
+            console.error(`Failed to load MangaDex section "${title}":`, error);
+            const container = document.getElementById(
+              "main-content-area-mangadex",
+            );
+            if (
+              container &&
+              container.lastElementChild &&
+              container.lastElementChild.querySelector(".loader")
+            ) {
+              container.lastElementChild.querySelector(
+                ".loader",
+              ).parentElement.innerHTML =
+                `<p class="error-message">Could not load section.</p>`;
             }
+          }
         }
 
         function displayMangaDexPosters(mangaData, container) {
-            container.innerHTML = "";
-            if (!mangaData || mangaData.length === 0) {
-                container.innerHTML = `<p class="error-message">No results found.</p>`;
-                return;
-            }
-            mangaData.forEach((manga) => {
-                const title = manga.attributes.title.en || Object.values(manga.attributes.title)[0];
-                const coverUrl = manga.cover_url || 'https://placehold.co/400x600/141414/333?text=?';
+          container.innerHTML = "";
+          if (!mangaData || mangaData.length === 0) {
+            container.innerHTML = `<p class="error-message">No results found.</p>`;
+            return;
+          }
+          mangaData.forEach((manga) => {
+            const title =
+              manga.attributes.title.en ||
+              Object.values(manga.attributes.title)[0];
+            const coverUrl =
+              manga.cover_url ||
+              "https://placehold.co/400x600/141414/333?text=?";
 
-                const card = document.createElement("div");
-                card.className = "poster-card";
-                card.onclick = () => openMangaModal('mangadex', manga.id);
-                card.innerHTML = `
+            const card = document.createElement("div");
+            card.className = "poster-card";
+            card.onclick = () => openMangaModal("mangadex", manga.id);
+            card.innerHTML = `
                 <img src="${coverUrl}" alt="${title}" loading="lazy">
                 <p class="poster-title">${title}</p>`;
-                container.appendChild(card);
-            });
+            container.appendChild(card);
+          });
         }
 
         // --- JIKAN / CURATED CONTENT LOGIC ---
-        const mainContentAreaJikan = document.getElementById("main-content-area-jikan");
-        const carouselContainer = document.getElementById("featured-carousel-container");
+        const mainContentAreaJikan = document.getElementById(
+          "main-content-area-jikan",
+        );
+        const carouselContainer = document.getElementById(
+          "featured-carousel-container",
+        );
         let carouselData = [];
         let currentIndex = 0;
         let slides = [];
         let isAnimating = false;
-        
+
         // Desktop Hero Shuffle Variables
         let currentHeroIndex = 0;
         let heroInterval;
@@ -784,7 +933,8 @@
         async function loadCuratedContent() {
           try {
             const response = await fetch(CONTENT_JSON_FILE);
-            if (!response.ok) throw new Error("Could not load manga_content.json");
+            if (!response.ok)
+              throw new Error("Could not load manga_content.json");
             const data = await response.json();
 
             // 1. Setup Spotlight (Carousel + Hero)
@@ -797,147 +947,160 @@
 
             // 2. Setup Horizontal Sections
             if (data.sections && data.sections.length > 0) {
-              data.sections.forEach(section => {
+              data.sections.forEach((section) => {
                 createLocalJikanSection(section);
               });
             }
-
           } catch (error) {
             console.error("Content Load Error:", error);
             // Fallback to manual API call if JSON fails
-            createJikanHorizontalSection("Top Manga (API Fallback)", `${JIKAN_API_BASE_URL}/top/manga?filter=bypopularity&limit=15`);
+            createJikanHorizontalSection(
+              "Top Manga (API Fallback)",
+              `${JIKAN_API_BASE_URL}/top/manga?filter=bypopularity&limit=15`,
+            );
           }
         }
 
         function setupSpotlight(spotlightItems) {
-            carouselData = spotlightItems;
-            
-            // 1. Mobile Carousel Rendering
-            carouselContainer.innerHTML = `
+          carouselData = spotlightItems;
+
+          // 1. Mobile Carousel Rendering
+          carouselContainer.innerHTML = `
               <div class="carousel-viewport">
-                  ${carouselData.map( (item) => `
+                  ${carouselData
+                    .map(
+                      (item) => `
                       <div class="carousel-slide" data-id="${item.id}">
                           <img src="${item.image_tall || item.image}" alt="${item.name}">
-                      </div>`).join("")}
+                      </div>`,
+                    )
+                    .join("")}
               </div>`;
 
-            // Mobile Carousel Logic
-            slides = Array.from(carouselContainer.querySelectorAll(".carousel-slide"));
-            const viewport = carouselContainer.querySelector(".carousel-viewport");
-            let touchstartX = 0;
-            if(viewport) {
-                viewport.addEventListener("touchstart", (e) => (touchstartX = e.changedTouches[0].screenX), { passive: true });
-                viewport.addEventListener("touchend", (e) => {
-                  const touchendX = e.changedTouches[0].screenX;
-                  if (touchendX < touchstartX - 50) navigateCarousel(1);
-                  if (touchendX > touchstartX + 50) navigateCarousel(-1);
-                });
-                viewport.addEventListener("click", (e) => {
-                  const slide = e.target.closest(".carousel-slide");
-                  if (slide && slide.classList.contains("slide-center")) {
-                    openMangaModal('jikan', slide.dataset.id);
-                  }
-                });
-                updateCarousel();
-            }
+          // Mobile Carousel Logic
+          slides = Array.from(
+            carouselContainer.querySelectorAll(".carousel-slide"),
+          );
+          const viewport =
+            carouselContainer.querySelector(".carousel-viewport");
+          let touchstartX = 0;
+          if (viewport) {
+            viewport.addEventListener(
+              "touchstart",
+              (e) => (touchstartX = e.changedTouches[0].screenX),
+              { passive: true },
+            );
+            viewport.addEventListener("touchend", (e) => {
+              const touchendX = e.changedTouches[0].screenX;
+              if (touchendX < touchstartX - 50) navigateCarousel(1);
+              if (touchendX > touchstartX + 50) navigateCarousel(-1);
+            });
+            viewport.addEventListener("click", (e) => {
+              const slide = e.target.closest(".carousel-slide");
+              if (slide && slide.classList.contains("slide-center")) {
+                openMangaModal("jikan", slide.dataset.id);
+              }
+            });
+            updateCarousel();
+          }
 
-            // 2. Desktop Hero Rendering & Shuffle
-            if (carouselData.length > 0) {
-                setupHeroIndicators(carouselData);
-                updateDesktopHero(carouselData[0]);
-                resetHeroTimer();
-            }
+          // 2. Desktop Hero Rendering & Shuffle
+          if (carouselData.length > 0) {
+            setupHeroIndicators(carouselData);
+            updateDesktopHero(carouselData[0]);
+            resetHeroTimer();
+          }
         }
 
         // Desktop Hero Helper Functions
         function setupHeroIndicators(data) {
-            const container = document.getElementById('hero-indicators');
-            container.innerHTML = '';
-            
-            data.forEach((_, index) => {
-                const dot = document.createElement('div');
-                dot.className = 'hero-dot';
-                if (index === 0) dot.classList.add('active');
-                
-                dot.addEventListener('click', () => {
-                    currentHeroIndex = index;
-                    updateDesktopHero(data[index], true);
-                    resetHeroTimer();
-                });
-                
-                container.appendChild(dot);
+          const container = document.getElementById("hero-indicators");
+          container.innerHTML = "";
+
+          data.forEach((_, index) => {
+            const dot = document.createElement("div");
+            dot.className = "hero-dot";
+            if (index === 0) dot.classList.add("active");
+
+            dot.addEventListener("click", () => {
+              currentHeroIndex = index;
+              updateDesktopHero(data[index], true);
+              resetHeroTimer();
             });
+
+            container.appendChild(dot);
+          });
         }
-        
+
         function resetHeroTimer() {
-            if (heroInterval) clearInterval(heroInterval);
-            heroInterval = setInterval(() => {
-                currentHeroIndex = (currentHeroIndex + 1) % carouselData.length;
-                updateDesktopHero(carouselData[currentHeroIndex], true);
-            }, 8000);
+          if (heroInterval) clearInterval(heroInterval);
+          heroInterval = setInterval(() => {
+            currentHeroIndex = (currentHeroIndex + 1) % carouselData.length;
+            updateDesktopHero(carouselData[currentHeroIndex], true);
+          }, 8000);
         }
-        
+
         function updateDesktopHero(item, animate = false) {
-            if(!item) return;
-            
-            const heroContent = document.getElementById('hero-content');
-            const heroBg = document.getElementById('hero-bg');
-            
-            // DOM Elements to update
-            const heroTitle = document.getElementById('hero-title');
-            const heroSubtitle = document.getElementById('hero-subtitle');
-            const heroDesc = document.getElementById('hero-desc');
-            const heroTags = document.getElementById('hero-tags');
-            const heroBtn = document.getElementById('hero-read-btn');
+          if (!item) return;
 
-            // Update Dots
-            const allDots = document.querySelectorAll('.hero-dot');
-            allDots.forEach((dot, idx) => {
-                if(idx === currentHeroIndex) dot.classList.add('active');
-                else dot.classList.remove('active');
+          const heroContent = document.getElementById("hero-content");
+          const heroBg = document.getElementById("hero-bg");
+
+          // DOM Elements to update
+          const heroTitle = document.getElementById("hero-title");
+          const heroSubtitle = document.getElementById("hero-subtitle");
+          const heroDesc = document.getElementById("hero-desc");
+          const heroTags = document.getElementById("hero-tags");
+          const heroBtn = document.getElementById("hero-read-btn");
+
+          // Update Dots
+          const allDots = document.querySelectorAll(".hero-dot");
+          allDots.forEach((dot, idx) => {
+            if (idx === currentHeroIndex) dot.classList.add("active");
+            else dot.classList.remove("active");
+          });
+
+          // Use item properties from JSON
+          const title = item.name;
+          const subtitle = item.jp_name; // Manga usually don't have separate sub-titles in this JSON format
+          const image = item.image; // Use wide image if available, else standard
+          const synopsis = item.description || "Click to read more.";
+
+          // Function to actually set DOM content
+          const setContent = () => {
+            heroTitle.textContent = title;
+            heroSubtitle.textContent = subtitle;
+            heroDesc.textContent = synopsis;
+            heroBg.src = image;
+
+            heroTags.innerHTML = "";
+            const tag = document.createElement("span");
+            tag.className = "hero-tag";
+            tag.textContent = "Manga";
+            heroTags.appendChild(tag);
+
+            // Clear old listener and add new one
+            const newBtn = heroBtn.cloneNode(true);
+            heroBtn.parentNode.replaceChild(newBtn, heroBtn);
+            newBtn.addEventListener("click", () => {
+              openMangaModal("jikan", item.id);
             });
+          };
 
-            // Use item properties from JSON
-            const title = item.name;
-            const subtitle = item.jp_name; // Manga usually don't have separate sub-titles in this JSON format
-            const image = item.image; // Use wide image if available, else standard
-            const synopsis = item.description || "Click to read more.";
-            
-            // Function to actually set DOM content
-            const setContent = () => {
-                heroTitle.textContent = title;
-                heroSubtitle.textContent = subtitle;
-                heroDesc.textContent = synopsis;
-                heroBg.src = image;
-                
-                heroTags.innerHTML = '';
-                const tag = document.createElement('span');
-                tag.className = 'hero-tag';
-                tag.textContent = "Manga";
-                heroTags.appendChild(tag);
-                
-                // Clear old listener and add new one
-                const newBtn = heroBtn.cloneNode(true);
-                heroBtn.parentNode.replaceChild(newBtn, heroBtn);
-                newBtn.addEventListener('click', () => {
-                   openMangaModal('jikan', item.id); 
-                });
-            };
+          if (animate) {
+            // Add fade-out class
+            heroContent.classList.add("hero-hidden");
+            heroBg.classList.add("hero-hidden");
 
-            if (animate) {
-                // Add fade-out class
-                heroContent.classList.add('hero-hidden');
-                heroBg.classList.add('hero-hidden');
-
-                // Wait for transition (500ms), update content, then fade in
-                setTimeout(() => {
-                    setContent();
-                    heroContent.classList.remove('hero-hidden');
-                    heroBg.classList.remove('hero-hidden');
-                }, 500);
-            } else {
-                setContent();
-            }
+            // Wait for transition (500ms), update content, then fade in
+            setTimeout(() => {
+              setContent();
+              heroContent.classList.remove("hero-hidden");
+              heroBg.classList.remove("hero-hidden");
+            }, 500);
+          } else {
+            setContent();
+          }
         }
 
         // Mobile Carousel Logic
@@ -948,7 +1111,9 @@
           const oldIndex = currentIndex;
           currentIndex = (currentIndex + direction + total) % total;
           updateCarousel(direction, oldIndex);
-          setTimeout(() => { isAnimating = false; }, 600);
+          setTimeout(() => {
+            isAnimating = false;
+          }, 600);
         }
 
         function updateCarousel(direction = 0, oldIndex = -1) {
@@ -960,8 +1125,11 @@
           if (direction !== 0 && oldIndex !== -1) {
             const oldLeftIndex = (oldIndex - 1 + total) % total;
             const oldRightIndex = (oldIndex + 1 + total) % total;
-            if (direction === 1) slides[oldLeftIndex].className = "carousel-slide slide-exit-left";
-            else slides[oldRightIndex].className = "carousel-slide slide-exit-right";
+            if (direction === 1)
+              slides[oldLeftIndex].className = "carousel-slide slide-exit-left";
+            else
+              slides[oldRightIndex].className =
+                "carousel-slide slide-exit-right";
           }
 
           slides.forEach((slide, index) => {
@@ -977,27 +1145,29 @@
 
         // Render sections from JSON
         function createLocalJikanSection(sectionData) {
-            const section = document.createElement("section");
-            section.className = "content-section";
-            section.innerHTML = `
+          const section = document.createElement("section");
+          section.className = "content-section";
+          section.innerHTML = `
               <div class="section-header-row">
                   <h2 class="section-title">${sectionData.title}</h2>
               </div>
               <div class="horizontal-scroll-container"></div>`;
-            mainContentAreaJikan.appendChild(section);
-            const scrollContainer = section.querySelector(".horizontal-scroll-container");
-            
-            if (sectionData.items && sectionData.items.length > 0) {
-                 // Convert JSON format to format expected by displayJikanPosters
-                 const mappedItems = sectionData.items.map(item => ({
-                     mal_id: item.id,
-                     title: item.name,
-                     images: { jpg: { image_url: item.image } }
-                 }));
-                 displayJikanPosters(mappedItems, scrollContainer);
-            } else {
-                scrollContainer.innerHTML = `<p class="error-message">No items in this section.</p>`;
-            }
+          mainContentAreaJikan.appendChild(section);
+          const scrollContainer = section.querySelector(
+            ".horizontal-scroll-container",
+          );
+
+          if (sectionData.items && sectionData.items.length > 0) {
+            // Convert JSON format to format expected by displayJikanPosters
+            const mappedItems = sectionData.items.map((item) => ({
+              mal_id: item.id,
+              title: item.name,
+              images: { jpg: { image_url: item.image } },
+            }));
+            displayJikanPosters(mappedItems, scrollContainer);
+          } else {
+            scrollContainer.innerHTML = `<p class="error-message">No items in this section.</p>`;
+          }
         }
 
         // Legacy function for Fallback API calls
@@ -1012,7 +1182,9 @@
               </div>
               <div class="horizontal-scroll-container"><p style="color: #ccc;">Loading...</p></div>`;
             mainContentAreaJikan.appendChild(section);
-            const scrollContainer = section.querySelector(".horizontal-scroll-container");
+            const scrollContainer = section.querySelector(
+              ".horizontal-scroll-container",
+            );
             const response = await fetch(apiUrl);
             if (!response.ok) throw new Error(`API error: ${response.status}`);
             const responseData = await response.json();
@@ -1032,11 +1204,13 @@
             // Check for valid image in either API structure or JSON structure
             const imageUrl = item.images?.jpg?.image_url || item.image;
             if (!imageUrl) return;
-            
+
             const card = document.createElement("div");
             card.className = "poster-card";
             card.onclick = () => {
-                window.parent.openPopup(`manga-info.html?source=jikan&id=${item.mal_id}`);
+              window.parent.openPopup(
+                `manga-info.html?source=jikan&id=${item.mal_id}`,
+              );
             };
             card.innerHTML = `
               <img src="${imageUrl}" alt="${item.title}" loading="lazy">
@@ -1050,163 +1224,254 @@
 
         // --- MANGADEX API LOGIC ---
         async function performMangaDexSearch() {
-            const query = mangadexSearchInput.value.trim();
-            if (query.length < 3) {
-                mangadexResultsGrid.innerHTML = `<p class="error-message">Please enter at least 3 characters.</p>`;
-                return;
-            }
-            
-            mangadexResultsGrid.innerHTML = `<div class="loader"></div>`;
-            try {
-                const response = await fetch(`${serverUrl}/mangadex/search?q=${encodeURIComponent(query)}&profile_id=${profileId}`);
-                if (!response.ok) throw new Error(`Search failed: ${response.statusText}`);
-                
-                const results = await response.json();
-                displayMangaDexResults(results.data);
-            } catch (error) {
-                console.error("MangaDex search error:", error);
-                mangadexResultsGrid.innerHTML = `<p class="error-message">Could not perform search. Please try again later.</p>`;
-            }
+          const query = mangadexSearchInput.value.trim();
+          if (query.length < 3) {
+            mangadexResultsGrid.innerHTML = `<p class="error-message">Please enter at least 3 characters.</p>`;
+            return;
+          }
+
+          mangadexResultsGrid.innerHTML = `<div class="loader"></div>`;
+          try {
+            const response = await fetch(
+              `${serverUrl}/mangadex/search?q=${encodeURIComponent(query)}&profile_id=${profileId}`,
+            );
+            if (!response.ok)
+              throw new Error(`Search failed: ${response.statusText}`);
+
+            const results = await response.json();
+            displayMangaDexResults(results.data);
+          } catch (error) {
+            console.error("MangaDex search error:", error);
+            mangadexResultsGrid.innerHTML = `<p class="error-message">Could not perform search. Please try again later.</p>`;
+          }
         }
 
         function displayMangaDexResults(data) {
-            mangadexResultsGrid.innerHTML = '';
-            if (!data || data.length === 0) {
-                mangadexResultsGrid.innerHTML = `<p class="error-message">No results found for your search.</p>`;
-                return;
-            }
+          mangadexResultsGrid.innerHTML = "";
+          if (!data || data.length === 0) {
+            mangadexResultsGrid.innerHTML = `<p class="error-message">No results found for your search.</p>`;
+            return;
+          }
 
-            data.forEach(manga => {
-                const title = manga.attributes.title.en || Object.values(manga.attributes.title)[0];
-                const coverUrl = manga.cover_url || 'https://placehold.co/400x600/141414/333?text=?';
+          data.forEach((manga) => {
+            const title =
+              manga.attributes.title.en ||
+              Object.values(manga.attributes.title)[0];
+            const coverUrl =
+              manga.cover_url ||
+              "https://placehold.co/400x600/141414/333?text=?";
 
-                const card = document.createElement("div");
-                card.className = "poster-card";
-                card.onclick = () => openMangaModal('mangadex', manga.id);
-                card.innerHTML = `
+            const card = document.createElement("div");
+            card.className = "poster-card";
+            card.onclick = () => openMangaModal("mangadex", manga.id);
+            card.innerHTML = `
                     <img src="${coverUrl}" alt="${title}" loading="lazy">
                     <p class="poster-title">${title}</p>`;
-                mangadexResultsGrid.appendChild(card);
-            });
+            mangadexResultsGrid.appendChild(card);
+          });
         }
-        
-        mangadexSearchBtn.addEventListener('click', performMangaDexSearch);
-        mangadexSearchInput.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') performMangaDexSearch();
+
+        mangadexSearchBtn.addEventListener("click", performMangaDexSearch);
+        mangadexSearchInput.addEventListener("keypress", (e) => {
+          if (e.key === "Enter") performMangaDexSearch();
         });
 
-
         // --- CONTINUE READING LOGIC (SHARED) ---
-        const mainContentAreaShared = document.getElementById("main-content-area-shared");
+        const mainContentAreaShared = document.getElementById(
+          "main-content-area-shared",
+        );
 
-        async function initializeContinueReading() {
-            const readingHistory = JSON.parse(localStorage.getItem("reading_history")) || [];
-            if (readingHistory.length === 0) return;
+      async function initializeContinueReading() {
+          const rawHistory = JSON.parse(localStorage.getItem("reading_history")) || [];
+          if (rawHistory.length === 0) return;
 
-            // Jikan
-            const jikanHistory = readingHistory.filter(item => !item.startsWith('mangadex:'));
-            const processedJikan = new Map();
-            jikanHistory.reverse().forEach(entry => {
-                const [mangaId, chapterStr] = entry.split('/');
-                if (mangaId && !processedJikan.has(mangaId)) {
-                    processedJikan.set(mangaId, { mangaId, last_chapter: parseInt(chapterStr, 10) });
-                }
-            });
-            if (processedJikan.size > 0) {
-                await renderJikanContinueReading(Array.from(processedJikan.values()));
-            }
+          // 1. Sort the history so the most recently read manga comes first
+          // We look at the highest timestamp inside the chapters object
+          const sortedHistory = [...rawHistory].sort((a, b) => {
+              const aMax = Math.max(...Object.values(a.chapters).map(c => c.timestamp || 0));
+              const bMax = Math.max(...Object.values(b.chapters).map(c => c.timestamp || 0));
+              return bMax - aMax;
+          });
 
-            // MangaDex
-            const mangadexHistory = readingHistory.filter(item => item.startsWith('mangadex:'));
-            const processedMangaDex = new Map();
-            mangadexHistory.reverse().forEach(entry => {
-                const [mangaId, chapterId] = entry.replace('mangadex:', '').split('/');
-                if (mangaId && !processedMangaDex.has(mangaId)) {
-                    processedMangaDex.set(mangaId, { mangaId, chapterId });
-                }
-            });
-            if (processedMangaDex.size > 0) {
-                await renderMangaDexContinueReading(Array.from(processedMangaDex.values()));
-            }
-            
-            // Final visibility check
-            setSource(currentSource);
-        }
+          const jikanList = [];
+          const mangadexList = [];
+
+          sortedHistory.forEach(entry => {
+              // Find the most recent chapter number for this specific manga
+              let latestChNum = null;
+              let maxTime = 0;
+              
+              for (const [chNum, chData] of Object.entries(entry.chapters)) {
+                  if (chData.timestamp > maxTime) {
+                      maxTime = chData.timestamp;
+                      latestChNum = chNum;
+                  }
+              }
+
+              if (!latestChNum) return;
+
+              if (entry.source === 'mangadex') {
+                  mangadexList.push({
+                      mangaId: entry.mangaId,
+                      chapterId: latestChNum // For MangaDex, this is usually the UUID
+                  });
+              } else {
+                  // Jikan, Comix, and others grouped under Jikan UI
+                  jikanList.push({
+                      mangaId: entry.mangaId,
+                      last_chapter: parseFloat(latestChNum)
+                  });
+              }
+          });
+
+          // 2. Render sections
+          const promises = [];
+          
+          // Clear previous containers if they exist to prevent duplicates on refresh
+          const oldJikan = document.getElementById("continue-reading-jikan");
+          const oldMD = document.getElementById("continue-reading-mangadex");
+          if (oldJikan) oldJikan.remove();
+          if (oldMD) oldMD.remove();
+
+          if (jikanList.length > 0) {
+              promises.push(renderJikanContinueReading(jikanList));
+          }
+          
+          if (mangadexList.length > 0) {
+              promises.push(renderMangaDexContinueReading(mangadexList));
+          }
+
+          await Promise.all(promises);
+          
+          // 3. Final visibility toggle based on current source
+          setSource(currentSource);
+      }
 
         async function renderJikanContinueReading(list) {
-            const section = document.createElement("section");
-            section.id = "continue-reading-jikan";
-            section.className = "content-section";
-            section.innerHTML = `<div class="section-header-row">
-                                   <h2 class="section-title">Continue Reading (Jikan)</h2>
+          const section = document.createElement("section");
+          section.id = "continue-reading-jikan";
+          section.className = "content-section";
+          section.innerHTML = `<div class="section-header-row">
+                                   <h2 class="section-title">Continue Reading</h2>
                                </div>
                                <div class="horizontal-scroll-container"></div>`;
-            mainContentAreaShared.prepend(section);
-            const container = section.querySelector(".horizontal-scroll-container");
+          mainContentAreaShared.prepend(section);
+          const container = section.querySelector(
+            ".horizontal-scroll-container",
+          );
 
-            for (const item of list.slice(0, 15)) {
-                try {
-                    await new Promise((resolve) => setTimeout(resolve, 350));
-                    const response = await fetch(`${JIKAN_API_BASE_URL}/manga/${item.mangaId}`);
-                    if (!response.ok) continue;
-                    const mangaData = (await response.json()).data;
-                    if (!mangaData) continue;
+          for (const item of list.slice(0, 15)) {
+            try {
+              await new Promise((resolve) => setTimeout(resolve, 350));
+              const response = await fetch(
+                `${JIKAN_API_BASE_URL}/manga/${item.mangaId}`,
+              );
+              if (!response.ok) continue;
+              const mangaData = (await response.json()).data;
+              if (!mangaData) continue;
 
-                    const title = mangaData.title_english || mangaData.title;
-                    const totalChapters = mangaData.chapters;
-                    const progressPercent = totalChapters > 0 ? (item.last_chapter / totalChapters) * 100 : 0;
-                    const isFinished = totalChapters && item.last_chapter >= totalChapters;
-                    const indicatorText = isFinished ? "Finished" : `Chapter ${item.last_chapter}`;
+              const title = mangaData.title_english || mangaData.title;
+              const totalChapters = mangaData.chapters;
+              const progressPercent =
+                totalChapters > 0
+                  ? (item.last_chapter / totalChapters) * 100
+                  : 0;
+              const isFinished =
+                totalChapters && item.last_chapter >= totalChapters;
+              const indicatorText = isFinished
+                ? "Finished"
+                : `Chapter ${item.last_chapter}`;
 
-                    const poster = createPoster('jikan', mangaData.mal_id, mangaData.images?.jpg?.image_url, title, indicatorText, progressPercent);
-                    container.appendChild(poster);
-                } catch (err) { console.error(`Failed to fetch Jikan data for manga ID ${item.mangaId}:`, err); }
+              const poster = createPoster(
+                "jikan",
+                mangaData.mal_id,
+                mangaData.images?.jpg?.image_url,
+                title,
+                indicatorText,
+                progressPercent,
+              );
+              container.appendChild(poster);
+            } catch (err) {
+              console.error(
+                `Failed to fetch Jikan data for manga ID ${item.mangaId}:`,
+                err,
+              );
             }
+          }
         }
 
         async function renderMangaDexContinueReading(list) {
-            const section = document.createElement("section");
-            section.id = "continue-reading-mangadex";
-            section.className = "content-section";
-            section.innerHTML = `<div class="section-header-row">
+          const section = document.createElement("section");
+          section.id = "continue-reading-mangadex";
+          section.className = "content-section";
+          section.innerHTML = `<div class="section-header-row">
                                    <h2 class="section-title">Continue Reading (MangaDex)</h2>
                                </div>
                                <div class="horizontal-scroll-container"></div>`;
-            mainContentAreaShared.prepend(section);
-            const container = section.querySelector(".horizontal-scroll-container");
+          mainContentAreaShared.prepend(section);
+          const container = section.querySelector(
+            ".horizontal-scroll-container",
+          );
 
-            for (const item of list.slice(0, 15)) {
-                try {
-                    const [mangaRes, chaptersRes] = await Promise.all([
-                        fetch(`${serverUrl}/mangadex/manga/${item.mangaId}`),
-                        fetch(`${serverUrl}/mangadex/manga/${item.mangaId}/chapters`)
-                    ]);
-                    if (!mangaRes.ok || !chaptersRes.ok) continue;
-                    
-                    const mangaData = await mangaRes.json();
-                    const chaptersData = await chaptersRes.json();
-                    const chapters = chaptersData.chapters || [];
+          for (const item of list.slice(0, 15)) {
+            try {
+              const [mangaRes, chaptersRes] = await Promise.all([
+                fetch(`${serverUrl}/mangadex/manga/${item.mangaId}`),
+                fetch(`${serverUrl}/mangadex/manga/${item.mangaId}/chapters`),
+              ]);
+              if (!mangaRes.ok || !chaptersRes.ok) continue;
 
-                    const title = mangaData.attributes.title.en || Object.values(mangaData.attributes.title)[0];
-                    const coverUrl = mangaData.image_url;
-                    
-                    const currentChapterIndex = chapters.findIndex(c => c.id === item.chapterId);
-                    const totalChapters = chapters.length;
-                    const progressPercent = totalChapters > 0 && currentChapterIndex !== -1 ? ((totalChapters - currentChapterIndex) / totalChapters) * 100 : 0;
-                    const chapterNumber = chapters[currentChapterIndex]?.attributes.chapter || '?';
-                    const indicatorText = `Chapter ${chapterNumber}`;
+              const mangaData = await mangaRes.json();
+              const chaptersData = await chaptersRes.json();
+              const chapters = chaptersData.chapters || [];
 
-                    const poster = createPoster('mangadex', item.mangaId, coverUrl, title, indicatorText, progressPercent);
-                    container.appendChild(poster);
+              const title =
+                mangaData.attributes.title.en ||
+                Object.values(mangaData.attributes.title)[0];
+              const coverUrl = mangaData.image_url;
 
-                } catch (err) { console.error(`Failed to fetch MangaDex data for manga ID ${item.mangaId}:`, err); }
+              const currentChapterIndex = chapters.findIndex(
+                (c) => c.id === item.chapterId,
+              );
+              const totalChapters = chapters.length;
+              const progressPercent =
+                totalChapters > 0 && currentChapterIndex !== -1
+                  ? ((totalChapters - currentChapterIndex) / totalChapters) *
+                    100
+                  : 0;
+              const chapterNumber =
+                chapters[currentChapterIndex]?.attributes.chapter || "?";
+              const indicatorText = `Chapter ${chapterNumber}`;
+
+              const poster = createPoster(
+                "mangadex",
+                item.mangaId,
+                coverUrl,
+                title,
+                indicatorText,
+                progressPercent,
+              );
+              container.appendChild(poster);
+            } catch (err) {
+              console.error(
+                `Failed to fetch MangaDex data for manga ID ${item.mangaId}:`,
+                err,
+              );
             }
+          }
         }
-        
-        function createPoster(source, id, imageUrl, title, indicatorText, progressPercent) {
-            const posterContainer = document.createElement("div");
-            posterContainer.className = "poster-container";
-            posterContainer.innerHTML = `
+
+        function createPoster(
+          source,
+          id,
+          imageUrl,
+          title,
+          indicatorText,
+          progressPercent,
+        ) {
+          const posterContainer = document.createElement("div");
+          posterContainer.className = "poster-container";
+          posterContainer.innerHTML = `
                 <div class="poster-image-wrapper">
                     <div class="chapter-indicator">${indicatorText}</div>
                     <img src="${imageUrl}" alt="${title}" loading="lazy">
@@ -1215,20 +1480,26 @@
                     </div>
                 </div>
                 <p class="poster-title" title="${title}">${title}</p>`;
-            posterContainer.addEventListener("click", () => openMangaModal(source, id));
-            return posterContainer;
+          posterContainer.addEventListener("click", () =>
+            openMangaModal(source, id),
+          );
+          return posterContainer;
         }
 
         async function initializePage() {
-            // Jikan / Curated Content
-            await loadCuratedContent();
-            
-            // Continue Reading
-            await initializeContinueReading();
-            
-            // MangaDex content
-            createMangaDexHorizontalSection("Recently Updated", "latestUploadedChapter");
-            createMangaDexHorizontalSection("Popular Titles", "followedCount");
+
+          await initializeContinueReading();
+          // Jikan / Curated Content
+          await loadCuratedContent();
+
+          // Continue Reading
+
+          // MangaDex content
+          createMangaDexHorizontalSection(
+            "Recently Updated",
+            "latestUploadedChapter",
+          );
+          createMangaDexHorizontalSection("Popular Titles", "followedCount");
         }
 
         initializePage();

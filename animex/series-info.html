@@ -1235,7 +1235,7 @@
 
       async function loadData() {
         try {
-          const detRes = await fetch(`https://api.jikan.moe/v4/anime/${currentMalId}/full`);
+          const detRes = await fetch(`/proxy?url=https://api.jikan.moe/v4/anime/${currentMalId}/full`);
           animeDetails = (await detRes.json()).data;
           renderDetails(animeDetails);
 
@@ -1253,7 +1253,7 @@
         const heroSection = document.querySelector(".series-hero-section");
         heroSection.style.backgroundImage = `url('${anime.images.jpg.large_image_url}')`;
 
-        fetch(`${serverUrl}/anime/${currentMalId}/banner`)
+        fetch(`/anime/${currentMalId}/banner`)
           .then((r) => {
             if (!r.ok) throw new Error("Banner fetch failed");
             return r.blob();
@@ -1592,7 +1592,7 @@
               }
               div.innerHTML = `
                   <div class="episode-thumbnail">
-                      <img src="${ep.attributes.thumbnail?.original || "https://placehold.co/320x180"}" loading="lazy">
+                      <img src="${'/proxy-image?url=' + ep.attributes.thumbnail?.original || "https://placehold.co/320x180"}" loading="lazy">
                   </div>
                   <div class="episode-info">
                       <div class="episode-title">${ep.attributes.canonicalTitle || "Episode " + num}</div>
@@ -1642,7 +1642,7 @@
       }
 
       async function fetchRecs() {
-        const res = await fetch(`https://api.jikan.moe/v4/anime/${currentMalId}/recommendations`);
+        const res = await fetch(`/proxy?url=https://api.jikan.moe/v4/anime/${currentMalId}/recommendations`);
         const data = (await res.json()).data;
         const grid = document.getElementById("recommendations-grid");
         if (!data) return;
@@ -1659,7 +1659,7 @@
       }
 
       async function fetchRelated() {
-        const res = await fetch(`https://api.jikan.moe/v4/anime/${currentMalId}/relations`);
+        const res = await fetch(`/proxy?url=https://api.jikan.moe/v4/anime/${currentMalId}/relations`);
         const data = (await res.json()).data;
         const container = document.getElementById("related-container");
         if (data) {
@@ -1674,7 +1674,7 @@
                         </div>
                         <div class="tile-title">${item.name}</div>
                     `;
-              fetch(`https://api.jikan.moe/v4/${item.type}/${item.mal_id}`).then((r) => r.json()).then((d) => {
+              fetch(`/proxy?url=https://api.jikan.moe/v4/${item.type}/${item.mal_id}`).then((r) => r.json()).then((d) => {
                   if (d.data?.images?.jpg?.image_url) a.querySelector("img").src = d.data.images.jpg.image_url;
               });
               container.appendChild(a);
