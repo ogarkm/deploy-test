@@ -253,16 +253,18 @@
       }
 
       /* RX watch button states */
-      .hero-watch-btn.rx-rated {
-        transition: all 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94),
-                    background-color 0.15s ease;
-      }
-      .hero-watch-btn.rx-rated:hover {
-        cursor: not-allowed;
-        background-color: #c0392b;
-        box-shadow: 0 10px 30px rgba(192, 57, 43, 0.5);
-        transform: translateY(-3px) scale(1.02);
-      }
+    
+        .hero-watch-btn.rx-rated {
+          transition: all 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94),
+                      background-color 0.15s ease;
+        }
+
+        .hero-watch-btn.rx-rated:hover {
+          cursor: not-allowed !important; /* The "no selection" cursor */
+          background-color: #ff9500;
+          box-shadow: 0 10px 30px rgba(192, 57, 43, 0.5);
+          transform: translateY(-3px) scale(1.02);
+        }
 
       .hero-action-btn {
         display: inline-flex;
@@ -1270,20 +1272,11 @@
     <!-- RX Gate Modal -->
     <div id="rx-gate-overlay" class="rx-gate-overlay">
       <div class="rx-gate-card">
-        <span class="rx-gate-icon">🔞</span>
-        <div class="rx-gate-badge">Rated Rx — Explicit Content</div>
+        <div class="rx-gate-badge">You know, I really thought you would do better</div>
         <h2 class="rx-gate-title">Are you sure about this?</h2>
-        <p class="rx-gate-subtitle">
-          This series has been rated <strong>Rx</strong> and contains explicit adult content.
-          Are you absolutely certain you want to proceed?
-        </p>
         <div class="rx-gate-actions">
           <button class="rx-gate-btn-yes" id="rx-gate-yes">Yes, I'm sure</button>
-          <button class="rx-gate-btn-no" id="rx-gate-no">No, take me back</button>
         </div>
-        <p class="rx-gate-disclaimer">
-          By continuing you confirm you are of legal age to view adult content in your region.
-        </p>
       </div>
     </div>
 
@@ -1818,89 +1811,103 @@
       }
 
       function updateWatchButton(mode) {
-        const btn = document.getElementById("hero-watch-btn");
-        btn.style.display = "inline-flex";
-        const hist = localWatchHistory[currentMalId] || {};
-        let lastEp = 0;
-        Object.keys(hist).forEach((k) => { if (parseInt(k) > lastEp) lastEp = parseInt(k); });
+  const btn = document.getElementById("hero-watch-btn");
+  btn.style.display = "inline-flex";
+  const hist = localWatchHistory[currentMalId] || {};
+  let lastEp = 0;
+  Object.keys(hist).forEach((k) => { if (parseInt(k) > lastEp) lastEp = parseInt(k); });
 
-        if (mode === "Movie") {
-          const hasWatched = lastEp === 1;
-          btn.innerHTML = hasWatched ? `<i class="fas fa-play"></i> Resume Movie` : `<i class="fas fa-film"></i> Watch Movie`;
-          btn.onclick = (e) => handleWatchClick(e, 1);
-        } else {
-          let target = lastEp > 0 ? lastEp : 1;
-          if (hist[target]?.state === "finished") target++;
-          const exists = episodesData.find((e) => e.attributes.number === target);
-          if (!exists && lastEp > 0) {
-            target = 1;
-            btn.innerHTML = `<i class="fas fa-rotate-right"></i> Re-watch`;
-          } else {
-            btn.innerHTML = `<i class="fas fa-play"></i> ${lastEp > 0 ? "Continue" : "Start"} EP ${target}`;
-          }
-          btn.onclick = (e) => handleWatchClick(e, target);
-        }
+  // Determine standard text
+  let btnContent = "";
+  let targetEp = 1;
 
-        // Apply/remove RX styling and hover behavior
-        if (isRxRated) {
-          btn.classList.add("rx-rated");
-          attachRxHoverBehavior(btn);
-        } else {
-          btn.classList.remove("rx-rated");
-          detachRxHoverBehavior(btn);
-        }
-      }
+  if (mode === "Movie") {
+    targetEp = 1;
+    const hasWatched = lastEp === 1;
+    btnContent = hasWatched ? `<i class="fas fa-play"></i> Resume Movie` : `<i class="fas fa-film"></i> Watch Movie`;
+  } else {
+    targetEp = lastEp > 0 ? lastEp : 1;
+    if (hist[targetEp]?.state === "finished") targetEp++;
+    const exists = episodesData.find((e) => e.attributes.number === targetEp);
+    
+    if (!exists && lastEp > 0) {
+      targetEp = 1;
+      btnContent = `<i class="fas fa-rotate-right"></i> Re-watch`;
+    } else {
+      btnContent = `<i class="fas fa-play"></i> ${lastEp > 0 ? "Continue" : "Start"} EP ${targetEp}`;
+    }
+  }
 
-      // ---- RX watch button hover handlers ----
-      function attachRxHoverBehavior(btn) {
-        // Avoid double-attaching
-        if (btn._rxHoverAttached) return;
-        btn._rxHoverAttached = true;
+  btn.innerHTML = btnContent;
+  btn.onclick = (e) => handleWatchClick(e, targetEp);
 
-        btn._rxMouseEnter = () => {
-          // Save the current inner HTML so we can restore it on mouse leave
-          btn._rxOriginalHTML = btn.innerHTML;
-          btn.innerHTML = `<i class="fas fa-ban"></i> Really... I'm Disappointed`;
-        };
-        btn._rxMouseLeave = () => {
-          if (btn._rxOriginalHTML !== undefined) {
-            btn.innerHTML = btn._rxOriginalHTML;
-          }
-        };
+  // Apply RX logic if needed
+  if (isRxRated && !rxGateAccepted) {
+    btn.classList.add("rx-rated");
+    attachRxHoverBehavior(btn, btnContent);
+  } else {
+    btn.classList.remove("rx-rated");
+    detachRxHoverBehavior(btn);
+  }
+}
 
-        btn.addEventListener("mouseenter", btn._rxMouseEnter);
-        btn.addEventListener("mouseleave", btn._rxMouseLeave);
-      }
+function attachRxHoverBehavior(btn, originalHTML) {
+  if (btn._rxHoverAttached) return;
+  btn._rxHoverAttached = true;
+  btn._rxOriginalHTML = originalHTML;
 
-      function detachRxHoverBehavior(btn) {
-        if (!btn._rxHoverAttached) return;
-        btn.removeEventListener("mouseenter", btn._rxMouseEnter);
-        btn.removeEventListener("mouseleave", btn._rxMouseLeave);
-        btn._rxHoverAttached = false;
-      }
+  btn._rxMouseEnter = () => {
+    // Only change text if they haven't accepted the gate yet
+    if (!rxGateAccepted) {
+      btn.innerHTML = `<i class="fas fa-ban"></i> Really... I'm Disappointed`;
+    }
+  };
+  
+  btn._rxMouseLeave = () => {
+    btn.innerHTML = btn._rxOriginalHTML;
+  };
 
-      // ---- Unified watch click handler ----
-      function handleWatchClick(e, ep) {
-        if (isRxRated && !rxGateAccepted) {
-          // Shift+click silently bypasses the gate — no mention of this anywhere
-          if (e.shiftKey) {
-            rxGateAccepted = true;
-            openPlayer(ep);
-            return;
-          }
-          showRxGate();
-          // After user accepts the gate, clicking the button again will open the player
-          // We re-wire the button's onclick after acceptance so the next click goes straight through
-          const originalOnClick = document.getElementById("hero-watch-btn").onclick;
-          document.getElementById("rx-gate-yes").onclick = () => {
-            rxGateAccepted = true;
-            dismissRxGate();
-            openPlayer(ep);
-          };
-          return;
-        }
-        openPlayer(ep);
-      }
+  btn.addEventListener("mouseenter", btn._rxMouseEnter);
+  btn.addEventListener("mouseleave", btn._rxMouseLeave);
+}
+
+function handleWatchClick(e, ep) {
+  // 1. SECRET BYPASS: Shift + Click
+  if (e.shiftKey) {
+    console.log("Bypassing gate via shift-click...");
+    rxGateAccepted = true;
+    dismissRxGate();
+    detachRxHoverBehavior(document.getElementById("hero-watch-btn"));
+    openPlayer(ep);
+    return;
+  }
+
+  // 2. STANDARD RX GATE
+  if (isRxRated && !rxGateAccepted) {
+    showRxGate();
+    
+    // Wire up the modal's "Yes" button to actually open the player
+    document.getElementById("rx-gate-yes").onclick = () => {
+      rxGateAccepted = true;
+      dismissRxGate();
+      // Remove the "disappointed" hover effect now that they've admitted it
+      detachRxHoverBehavior(document.getElementById("hero-watch-btn"));
+      openPlayer(ep);
+    };
+    return;
+  }
+
+  // 3. NORMAL PLAY
+  openPlayer(ep);
+}
+
+function detachRxHoverBehavior(btn) {
+  if (!btn || !btn._rxHoverAttached) return;
+  btn.removeEventListener("mouseenter", btn._rxMouseEnter);
+  btn.removeEventListener("mouseleave", btn._rxMouseLeave);
+  btn.classList.remove("rx-rated");
+  btn._rxHoverAttached = false;
+}
 
       function openPlayer(ep) {
         const url = `view.html?id=${currentMalId}&ep=${ep}`;
