@@ -2,15 +2,12 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta
-      name="viewport"
-      content="width=device-width, initial-scale=1.0, user-scalable=no"
-    />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
     <title>Manga - Media App</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
-      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;800&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=DM+Sans:wght@400;500;600&display=swap"
       rel="stylesheet"
     />
     <link
@@ -20,943 +17,610 @@
     <style>
       :root {
         --accent-color: #de541e;
+        --accent-glow: rgba(222, 84, 30, 0.35);
         --accent-rgb: 222, 84, 30;
-        --bg-dark: #121212;
-        --glass-bg: rgba(18, 18, 18, 0.7);
+        --background-color: #0e0e0e;
+        --surface: #1c1c1c;
+        --text-primary: #ffffff;
+        --text-secondary: #999999;
+        --border-color: rgba(255, 255, 255, 0.08);
+        --shadow-heavy: 0 20px 50px rgba(0, 0, 0, 0.7);
+        --transition-smooth: cubic-bezier(0.25, 0.46, 0.45, 0.94);
+        --radius-card: 14px;
       }
 
-      /* Base styles */
+      * { box-sizing: border-box; }
+
       body {
-        font-family: "Inter", sans-serif;
-        background-color: var(--bg-dark);
-        background-image: radial-gradient(
-          circle,
-          rgba(255, 255, 255, 0.05) 1px,
-          transparent 1px
-        );
-        background-size: 5px 5px;
+        font-family: "Outfit", -apple-system, BlinkMacSystemFont, sans-serif;
+        background-color: var(--background-color);
         margin: 0;
-        color: #fff;
-        padding-top: 80px; /* Space for fixed navbar */
+        color: var(--text-primary);
         overflow-x: hidden;
-      }
-      .app-container {
-        padding: 0 20px;
-        max-width: 1400px;
-        margin: 0 auto;
-      }
-      .content-section {
-        margin-bottom: 30px;
+        -webkit-font-smoothing: antialiased;
+        padding-top: 80px;
       }
 
-      /* --- Navbar --- */
+      /* ── Navbar ── */
       .navbar {
         position: fixed;
-        top: 0;
-        left: 0;
+        top: 0; left: 0;
         width: 100%;
         z-index: 1000;
-        padding: 15px 0;
-        background: var(--glass-bg);
-        backdrop-filter: blur(12px);
-        -webkit-backdrop-filter: blur(12px);
-        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-        transition: background 0.3s ease;
+        padding: 14px 0;
+        background: rgba(14, 14, 14, 0.9);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        border-bottom: 1px solid rgba(222, 84, 30, 0.1);
+        box-shadow: 0 1px 0 rgba(255, 255, 255, 0.03);
       }
+
       .navbar svg {
         display: block;
         margin: 0 auto;
-        height: 50px;
+        height: 44px;
         width: auto;
         max-width: 80%;
       }
 
-      .section-header {
-        width: 100%;
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        margin-bottom: 25px;
-        gap: 15px;
-        margin-top: 20px;
-      }
-      .section-title {
-        font-size: 1.8em;
-        font-weight: 800;
-        text-transform: uppercase;
-        margin: 0;
+      /* ── App container ── */
+      .app-container {
+        padding: 0 5%;
+        max-width: 1500px;
+        margin: 0 auto;
       }
 
-      /* --- Source Switch Button --- */
-      .source-switch-container {
-        display: flex;
-        justify-content: flex-end;
-        align-items: center;
-      }
-      #source-switch-btn {
-        background-color: #2c2c2e;
-        color: #fff;
-        border: 1px solid #444;
-        border-radius: 12px;
-        padding: 10px 16px;
-        font-size: 0.95em;
-        font-weight: 600;
-        cursor: pointer;
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        transition: all 0.2s ease;
-      }
-      #source-switch-btn:hover {
-        background-color: #3a3a3c;
-        border-color: var(--accent-color);
-      }
-      #source-switch-btn .fas {
-        font-size: 1.1em;
-        color: var(--accent-color);
-      }
-
-      /* --- Mobile Carousel (Default) --- */
-      #featured-carousel-container {
-        min-height: 400px;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        position: relative;
-        overflow: hidden;
-        margin-bottom: 30px;
-      }
-      .carousel-viewport {
-        width: 100%;
-        height: 350px;
-        position: relative;
-        perspective: 1200px;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-      }
-      .carousel-slide {
-        position: absolute;
-        width: 60%;
-        max-width: 220px;
-        height: 330px;
-        border-radius: 12px;
-        transition:
-          transform 0.6s cubic-bezier(0.25, 1, 0.5, 1),
-          opacity 0.5s ease;
-        cursor: pointer;
-        transform: scale(0.5);
-        opacity: 0;
-      }
-      .carousel-slide img {
-        width: 100%;
-        height: 100%;
-        object-fit: cover;
-        border-radius: 12px;
-        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
-      }
-      .slide-center {
-        transform: translateX(0) scale(1);
-        opacity: 1;
-        z-index: 10;
-      }
-      .slide-left {
-        transform: translateX(-40%) scale(0.8) rotate(-8deg);
-        opacity: 1;
-        z-index: 5;
-      }
-      .slide-right {
-        transform: translateX(40%) scale(0.8) rotate(8deg);
-        opacity: 1;
-        z-index: 5;
-      }
-      .slide-exit-left {
-        transform: translateX(-150%) scale(0.6);
-        opacity: 0;
-        z-index: 1;
-      }
-      .slide-exit-right {
-        transform: translateX(150%) scale(0.6);
-        opacity: 0;
-        z-index: 1;
-      }
-
-      /* --- DESKTOP HERO SECTION (Hidden on Mobile) --- */
+      /* ── Desktop Hero ── */
       #desktop-hero {
-        display: none; /* Default hidden */
+        display: none;
         position: relative;
         width: 100%;
-        height: 600px; /* Fixed height for hero */
-        margin-bottom: 50px;
+        height: 580px;
+        margin: 24px 0 56px;
         border-radius: 20px;
         overflow: hidden;
         background-color: #000;
-        box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+        box-shadow: 0 24px 60px rgba(0,0,0,0.6);
+        border: 1px solid rgba(255, 255, 255, 0.05);
       }
 
       .hero-bg-image {
         position: absolute;
-        top: 0;
-        right: 0;
+        top: 0; right: 0;
         width: 65%;
         height: 100%;
         object-fit: cover;
-        opacity: 0.8;
-        mask-image: linear-gradient(
-          to right,
-          transparent 0%,
-          black 20%,
-          black 100%
-        );
-        -webkit-mask-image: linear-gradient(
-          to right,
-          transparent 0%,
-          black 20%,
-          black 100%
-        );
+        object-position: center; /* Centers banners beautifully */
+        opacity: 0.75;
+        mask-image: linear-gradient(to right, transparent 0%, black 22%, black 100%);
+        -webkit-mask-image: linear-gradient(to right, transparent 0%, black 22%, black 100%);
         transition: opacity 0.5s ease-in-out;
       }
 
       .hero-overlay {
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background: linear-gradient(
-          to right,
-          #121212 30%,
-          rgba(18, 18, 18, 0.8) 50%,
-          transparent 100%
-        );
+        position: absolute; inset: 0;
+        background: linear-gradient(to right, #0e0e0e 28%, rgba(14,14,14,0.72) 52%, transparent 100%);
         z-index: 1;
       }
 
       .hero-content {
         position: relative;
         z-index: 2;
-        width: 50%;
+        width: 52%;
         height: 100%;
-        padding: 60px;
+        padding: 56px 60px;
         display: flex;
         flex-direction: column;
         justify-content: center;
-        box-sizing: border-box;
-        transition:
-          opacity 0.5s ease-in-out,
-          transform 0.5s ease;
+        transition: opacity 0.5s ease-in-out, transform 0.5s ease;
       }
 
-      /* Animation State Class */
-      .hero-hidden {
-        opacity: 0;
-      }
+      .hero-hidden { opacity: 0; transform: translateY(8px); }
 
       .hero-label {
-        font-size: 1.5em;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 0.75rem;
         font-weight: 700;
-        color: #fff;
-        margin-bottom: 20px;
-        display: block;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: var(--accent-color);
+        margin-bottom: 18px;
+        background: rgba(222, 84, 30, 0.12);
+        border: 1px solid rgba(222, 84, 30, 0.25);
+        padding: 5px 12px;
+        border-radius: 20px;
+        width: fit-content;
       }
 
       .hero-tags {
         display: flex;
-        gap: 10px;
-        margin-bottom: 20px;
+        gap: 8px;
+        margin-bottom: 16px;
         flex-wrap: wrap;
       }
+
       .hero-tag {
-        background: rgba(255, 255, 255, 0.1);
-        padding: 5px 12px;
-        border-radius: 4px;
-        font-size: 0.85em;
-        color: #ccc;
-        backdrop-filter: blur(5px);
+        background: rgba(255, 255, 255, 0.08);
+        padding: 4px 11px;
+        border-radius: 6px;
+        font-size: 0.8rem;
+        color: #bbb;
+        border: 1px solid rgba(255,255,255,0.08);
+        font-family: "DM Sans", sans-serif;
       }
 
       .hero-title {
-        font-size: 4rem;
-        line-height: 1.1;
+        font-size: 3.2rem;
+        line-height: 1.08;
         font-weight: 800;
         margin: 0 0 10px 0;
-        text-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
+        text-shadow: 0 2px 14px rgba(0,0,0,0.6);
+        letter-spacing: -0.02em;
       }
 
       .hero-subtitle {
-        font-size: 1.5rem;
+        font-size: 1.15rem;
         color: var(--accent-color);
-        margin: 0 0 20px 0;
+        margin: 0 0 18px 0;
         font-weight: 600;
+        opacity: 0.85;
       }
 
       .hero-synopsis {
-        font-size: 1em;
-        line-height: 1.6;
-        color: #ddd;
-        margin-bottom: 30px;
+        font-size: 0.93rem;
+        line-height: 1.65;
+        color: #ccc;
+        margin-bottom: 32px;
         display: -webkit-box;
-        -webkit-line-clamp: 4; /* Limit to 4 lines */
+        -webkit-line-clamp: 4;
         -webkit-box-orient: vertical;
         overflow: hidden;
-        max-width: 90%;
+        max-width: 88%;
+        font-family: "DM Sans", sans-serif;
       }
 
-      .hero-actions {
-        display: flex;
-        gap: 15px;
-      }
+      .hero-actions { display: flex; gap: 14px; }
 
       .btn-hero {
-        padding: 12px 24px;
-        font-size: 1em;
+        padding: 12px 26px;
+        font-size: 0.93rem;
         font-weight: 700;
-        border-radius: 8px;
+        border-radius: 10px;
         cursor: pointer;
-        transition:
-          transform 0.2s,
-          background 0.2s;
+        transition: transform 0.2s, background 0.2s, box-shadow 0.2s;
         display: flex;
         align-items: center;
         gap: 10px;
         border: none;
+        font-family: "Outfit", sans-serif;
+        letter-spacing: 0.01em;
       }
 
       .btn-primary {
-        background: #fff;
-        color: #000;
+        background: var(--accent-color);
+        color: #fff;
+        box-shadow: 0 4px 20px var(--accent-glow);
       }
       .btn-primary:hover {
-        background: #eee;
+        background: #f05f22;
         transform: translateY(-2px);
+        box-shadow: 0 8px 28px rgba(222,84,30,0.5);
       }
 
       .btn-outline {
-        background: transparent;
-        border: 2px solid rgba(255, 255, 255, 0.3);
+        background: rgba(255,255,255,0.08);
+        border: 1.5px solid rgba(255,255,255,0.18);
         color: #fff;
+        backdrop-filter: blur(8px);
       }
       .btn-outline:hover {
-        border-color: #fff;
-        background: rgba(255, 255, 255, 0.1);
+        border-color: rgba(255,255,255,0.4);
+        background: rgba(255,255,255,0.14);
+        transform: translateY(-2px);
       }
 
-      /* --- Hero Indicators (Dots) --- */
+      /* ── Hero Dots ── */
       .hero-indicators {
         position: absolute;
-        bottom: 40px;
-        right: 60px;
+        bottom: 36px; right: 52px;
         display: flex;
-        gap: 12px;
+        gap: 10px;
         z-index: 10;
       }
 
       .hero-dot {
-        width: 12px;
-        height: 12px;
-        background-color: rgba(255, 255, 255, 0.3);
-        border-radius: 50%;
+        width: 10px; height: 10px;
+        background-color: rgba(255,255,255,0.25);
+        border-radius: 10px;
         cursor: pointer;
-        transition: all 0.3s ease;
-        border: 2px solid transparent;
+        transition: all 0.35s ease;
       }
-
-      .hero-dot:hover {
-        background-color: rgba(255, 255, 255, 0.6);
-        transform: scale(1.1);
-      }
-
+      .hero-dot:hover { background-color: rgba(255,255,255,0.55); }
       .hero-dot.active {
         background-color: var(--accent-color);
-        width: 20px; /* Stretch effect */
-        border-radius: 20px;
-        box-shadow: 0 0 10px rgba(222, 84, 30, 0.4);
+        width: 22px;
+        box-shadow: 0 0 10px var(--accent-glow);
       }
 
-      /* --- MEDIA QUERY FOR DESKTOP --- */
-      @media (min-width: 1024px) {
-        body {
-          padding-top: 100px;
-        }
-        /* Swap Carousel for Hero */
-        #featured-carousel-container {
-          display: none !important;
-        }
-        #desktop-hero {
-          display: flex !important;
-        }
-
-        /* Relax grid layout */
-        .poster-card {
-          width: 160px;
-          height: 240px;
-        }
-
-        /* Make navbar cleaner on desktop */
-        .navbar {
-          padding: 20px 0;
-        }
-      }
-
-      @media (max-width: 768px) {
-        .section-title {
-          font-size: 1em;
-        }
-
-        .horizontal-scroll-container {
-          display: none;
-        }
-      }
-
-      /* --- Search & Grids --- */
-      #mangadex-search-container {
-        margin-bottom: 30px;
-      }
-      .search-box {
-        position: relative;
-        width: 100%;
-        max-width: 600px;
-        margin: 0 auto 30px auto;
-      }
-      #mangadex-search-input {
-        width: 100%;
-        padding: 15px 50px 15px 20px;
-        font-size: 1.1em;
-        border-radius: 30px;
-        border: 2px solid #333;
-        background-color: #1f1f1f;
-        color: #fff;
-        box-sizing: border-box;
-        transition:
-          border-color 0.3s,
-          box-shadow 0.3s;
-      }
-      #mangadex-search-input:focus {
-        outline: none;
-        border-color: var(--accent-color);
-        box-shadow: 0 0 15px rgba(var(--accent-rgb), 0.3);
-      }
-      #mangadex-search-btn {
-        position: absolute;
-        right: 10px;
-        top: 50%;
-        transform: translateY(-50%);
-        background: var(--accent-color);
-        border: none;
-        color: white;
-        width: 40px;
-        height: 40px;
-        border-radius: 50%;
-        cursor: pointer;
-        font-size: 1.2em;
+      /* ── Mobile Carousel ── */
+      #featured-carousel-container {
+        min-height: 360px;
         display: flex;
+        flex-direction: column;
         align-items: center;
-        justify-content: center;
-      }
-      #mangadex-results-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-        gap: 24px;
-        min-height: 200px;
+        position: relative;
+        overflow: hidden;
+        margin-bottom: 24px;
+        margin-top: 16px;
       }
 
-      /* --- Loaders & Common --- */
-      .loader {
-        border: 4px solid rgba(255, 255, 255, 0.2);
-        border-top: 4px solid var(--accent-color);
-        border-radius: 50%;
-        width: 50px;
-        height: 50px;
-        animation: spin 1s linear infinite;
-        margin: 100px auto;
+      .carousel-viewport {
+        width: 100%;
+        height: 320px;
+        position: relative;
+        perspective: 1200px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
       }
-      @keyframes spin {
-        0% {
-          transform: rotate(0deg);
-        }
-        100% {
-          transform: rotate(360deg);
-        }
+
+      .carousel-slide {
+        position: absolute;
+        width: 60%;
+        max-width: 195px;
+        height: 290px;
+        border-radius: var(--radius-card);
+        transition: transform 0.6s cubic-bezier(0.25, 1, 0.5, 1), opacity 0.5s ease;
+        cursor: pointer;
+        transform: scale(0.5);
+        opacity: 0;
       }
+      .carousel-slide img {
+        width: 100%; height: 100%;
+        object-fit: cover;
+        border-radius: var(--radius-card);
+        box-shadow: 0 12px 32px rgba(0,0,0,0.55);
+      }
+      .slide-center  { transform: translateX(0) scale(1); opacity: 1; z-index: 10; }
+      .slide-left    { transform: translateX(-40%) scale(0.78) rotate(-7deg); opacity: 0.9; z-index: 5; }
+      .slide-right   { transform: translateX(40%) scale(0.78) rotate(7deg); opacity: 0.9; z-index: 5; }
+      .slide-exit-left  { transform: translateX(-150%) scale(0.6); opacity: 0; z-index: 1; }
+      .slide-exit-right { transform: translateX(150%) scale(0.6); opacity: 0; z-index: 1; }
+
+      /* ── Sections ── */
+      .content-section { margin-bottom: 48px; }
 
       .section-header-row {
         display: flex;
         justify-content: space-between;
         align-items: center;
-        margin-bottom: 15px;
-        padding-bottom: 10px;
-        border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-      }
-      .view-all-arrow {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        width: 30px;
-        height: 30px;
-        background-color: #333;
-        color: #fff;
-        border-radius: 50%;
-        text-decoration: none;
-        font-weight: bold;
-        transition: background 0.2s;
-      }
-      .view-all-arrow:hover {
-        background-color: var(--accent-color);
+        margin-bottom: 18px;
+        padding-bottom: 12px;
+        border-bottom: 1px solid rgba(255,255,255,0.05);
       }
 
+      .section-title {
+        font-size: 1.28rem;
+        font-weight: 700;
+        letter-spacing: 0.01em;
+        margin: 0;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        color: var(--text-primary);
+      }
+
+      .section-title::before {
+        content: "";
+        display: block;
+        width: 3px; height: 20px;
+        background: linear-gradient(to bottom, var(--accent-color), rgba(222,84,30,0.2));
+        border-radius: 3px;
+        flex-shrink: 0;
+      }
+
+      /* ── Horizontal Scroll ── */
       .horizontal-scroll-container {
         display: flex;
         overflow-x: auto;
-        padding-bottom: 15px;
-        gap: 15px;
-        scrollbar-width: thin;
-        scrollbar-color: #444 #121212;
+        padding: 14px 0 30px;
+        gap: 16px;
+        scroll-behavior: smooth;
+        mask-image: linear-gradient(to right, black 93%, transparent 100%);
+        -webkit-mask-image: linear-gradient(to right, black 93%, transparent 100%);
       }
-      .horizontal-scroll-container::-webkit-scrollbar {
-        height: 8px;
-      }
-      .horizontal-scroll-container::-webkit-scrollbar-track {
-        background: #121212;
-      }
-      .horizontal-scroll-container::-webkit-scrollbar-thumb {
-        background-color: #444;
-        border-radius: 4px;
-      }
+      .horizontal-scroll-container::-webkit-scrollbar { display: none; }
+      .horizontal-scroll-container { -ms-overflow-style: none; scrollbar-width: none; }
 
+      /* ── Curated Poster Cards ── */
       .poster-card {
         flex-shrink: 0;
-        width: 140px;
-        height: 210px;
+        width: 150px; height: 225px;
         cursor: pointer;
         position: relative;
-        border-radius: 10px;
+        border-radius: var(--radius-card);
         overflow: hidden;
-        transition:
-          transform 0.3s ease,
-          box-shadow 0.3s ease;
-        background-color: #222;
+        transition: transform 0.35s var(--transition-smooth), box-shadow 0.35s var(--transition-smooth);
+        background-color: var(--surface);
+        border: 1.5px solid transparent;
       }
       .poster-card:hover {
-        transform: scale(1.05) translateY(-5px);
-        box-shadow: 0 0 20px rgba(var(--accent-rgb), 0.5);
+        transform: scale(1.04) translateY(-6px);
+        box-shadow: 0 20px 44px rgba(0,0,0,0.65), 0 0 0 1px rgba(222,84,30,0.2);
+        border-color: rgba(222,84,30,0.18);
         z-index: 10;
       }
       .poster-card img {
-        width: 100%;
-        height: 100%;
+        width: 100%; height: 100%;
         object-fit: cover;
+        transition: transform 0.4s var(--transition-smooth);
       }
+      .poster-card:hover img { transform: scale(1.04); }
       .poster-card::after {
         content: "";
-        position: absolute;
-        bottom: 0;
-        left: 0;
-        width: 100%;
-        height: 60%;
-        background: linear-gradient(
-          to top,
-          rgba(0, 0, 0, 0.9) 0%,
-          transparent 100%
-        );
-        border-radius: 0 0 10px 10px;
+        position: absolute; bottom: 0; left: 0;
+        width: 100%; height: 58%;
+        background: linear-gradient(to top, rgba(0,0,0,0.92) 0%, transparent 100%);
+        border-radius: 0 0 var(--radius-card) var(--radius-card);
+        pointer-events: none;
       }
       .poster-card .poster-title {
-        position: absolute;
-        bottom: 0;
-        left: 0;
+        position: absolute; bottom: 0; left: 0;
         width: 100%;
-        padding: 12px;
-        box-sizing: border-box;
+        padding: 10px;
         z-index: 2;
-        font-size: 0.95em;
+        font-size: 0.86rem;
         font-weight: 600;
         color: #fff;
         white-space: normal;
-        line-height: 1.2;
-        text-shadow: 0 2px 4px rgba(0, 0, 0, 0.8);
+        line-height: 1.25;
+        text-shadow: 0 2px 6px rgba(0,0,0,0.8);
+        font-family: "DM Sans", sans-serif;
       }
-      .error-message {
-        color: #e5e5e5;
-        font-style: italic;
-        width: 100%;
-        text-align: center;
-        padding: 40px 0;
+      .manga-badge {
+        position: absolute;
+        top: 7px; left: 7px;
+        z-index: 2;
+        background: var(--accent-color);
+        color: #fff;
+        font-size: 0.66rem;
+        font-weight: 700;
+        padding: 2px 7px;
+        border-radius: 5px;
+        letter-spacing: 0.08em;
+        font-family: "Outfit", sans-serif;
+        box-shadow: 0 2px 6px rgba(0,0,0,0.35);
       }
 
-      /* Continue Reading */
+      /* ── Continue Reading Posters ── */
       .poster-container {
         flex-shrink: 0;
-        width: 160px;
+        width: 155px;
         text-align: left;
-        transition: transform 0.2s ease-in-out;
+        transition: transform 0.3s var(--transition-smooth);
       }
-      .poster-container:hover {
-        transform: translateY(-5px);
-      }
+      .poster-container:hover { transform: translateY(-6px); }
+
       .poster-image-wrapper {
         position: relative;
         cursor: pointer;
         margin-bottom: 10px;
-        border-radius: 8px;
+        border-radius: var(--radius-card);
         overflow: hidden;
-        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        box-shadow: 0 6px 20px rgba(0,0,0,0.4);
+        border: 1.5px solid transparent;
+        transition: border-color 0.3s, box-shadow 0.3s;
+      }
+      .poster-container:hover .poster-image-wrapper {
+        border-color: rgba(222,84,30,0.22);
+        box-shadow: 0 12px 32px rgba(0,0,0,0.55);
       }
       .poster-image-wrapper img {
-        width: 100%;
-        height: 230px;
+        width: 100%; height: 220px;
         object-fit: cover;
         display: block;
-        transition: transform 0.3s ease;
+        transition: transform 0.4s var(--transition-smooth);
       }
-      .poster-container:hover .poster-image-wrapper img {
-        transform: scale(1.05);
-      }
+      .poster-container:hover .poster-image-wrapper img { transform: scale(1.04); }
+
       .poster-container .poster-title {
-        font-size: 0.9em;
-        font-weight: 500;
-        color: #e5e5e5;
+        font-size: 0.83rem;
+        font-weight: 600;
+        color: var(--text-secondary);
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
+        transition: color 0.3s;
+        font-family: "DM Sans", sans-serif;
+        padding: 0 2px;
       }
-      .poster-container:hover .poster-title {
-        color: var(--accent-color);
-      }
+      .poster-container:hover .poster-title { color: var(--accent-color); }
+
       .progress-bar {
-        position: absolute;
-        bottom: 0;
-        left: 0;
-        width: 100%;
-        height: 4px;
-        background-color: rgba(255, 255, 255, 0.3);
+        position: absolute; bottom: 0; left: 0;
+        width: 100%; height: 3px;
+        background-color: rgba(255,255,255,0.15);
+        z-index: 2;
       }
       .progress-bar-inner {
-        height: 100%;
-        width: 0%;
-        background-color: var(--accent-color);
+        height: 100%; width: 0%;
+        background: linear-gradient(to right, var(--accent-color), #ff7a3a);
+        box-shadow: 0 0 8px var(--accent-glow);
+        border-radius: 0 2px 2px 0;
       }
+
       .chapter-indicator {
         position: absolute;
-        top: 8px;
-        left: 8px;
-        background-color: rgba(0, 0, 0, 0.75);
+        top: 7px; left: 7px;
+        background-color: rgba(0,0,0,0.72);
         color: #fff;
-        padding: 4px 8px;
+        padding: 3px 8px;
         border-radius: 6px;
-        font-size: 0.8em;
-        font-weight: 600;
+        font-size: 0.7rem;
+        font-weight: 700;
         z-index: 2;
-        backdrop-filter: blur(2px);
+        backdrop-filter: blur(4px);
+        border: 1px solid rgba(255,255,255,0.08);
+        font-family: "Outfit", sans-serif;
+        letter-spacing: 0.02em;
+      }
+
+      /* ── Loader ── */
+      .loader {
+        border: 3px solid rgba(255,255,255,0.1);
+        border-top: 3px solid var(--accent-color);
+        border-radius: 50%;
+        width: 46px; height: 46px;
+        animation: spin 0.8s linear infinite;
+        margin: 80px auto;
+      }
+      @keyframes spin {
+        0%   { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+      }
+
+      /* ── Error ── */
+      .error-message {
+        color: #777;
+        font-style: italic;
+        width: 100%;
+        text-align: center;
+        padding: 40px 0;
+        font-family: "DM Sans", sans-serif;
+      }
+
+      /* ── Responsive ── */
+      @media (min-width: 1024px) {
+        body { padding-top: 100px; }
+        #featured-carousel-container { display: none !important; }
+        #desktop-hero { display: flex !important; }
+        .navbar { padding: 18px 0; }
+      }
+
+      @media (min-width: 1400px) {
+        #desktop-hero { height: 620px; }
+        .hero-title { font-size: 3.6rem; }
+        .poster-container { width: 168px; }
+        .poster-card { width: 162px; height: 243px; }
+      }
+
+      @media (max-width: 768px) {
+        .section-title { font-size: 1.05rem; }
+        .poster-container { width: 128px; }
+        .poster-image-wrapper img { height: 185px; }
+        .poster-card { width: 118px; height: 177px; }
+        .poster-card .poster-title { font-size: 0.76rem; padding: 8px; }
+        .chapter-indicator { font-size: 0.66rem; padding: 2px 5px; }
+        .content-section { margin-bottom: 36px; }
+        .horizontal-scroll-container { gap: 10px; }
       }
     </style>
   </head>
   <body>
+
+    <!-- Navbar -->
     <nav class="navbar">
       <svg
-        width="1767"
-        height="292"
+        width="1767" height="292"
         viewBox="0 0 1767 292"
         fill="none"
         xmlns="http://www.w3.org/2000/svg"
       >
-        <rect
-          width="1767"
-          height="292"
-          rx="146"
-          fill="black"
-          fill-opacity="0.01"
-        />
+        <rect width="1767" height="292" rx="146" fill="black" fill-opacity="0.01" />
         <rect x="802" y="56" width="164" height="22.5285" fill="#DE541E" />
         <rect x="802" y="93.7502" width="164" height="22.5285" fill="#DE541E" />
-        <path
-          d="M957.858 235.619H931.051L903.773 71.8308H931.051L957.858 235.619Z"
-          fill="#DE541E"
-        />
-        <path
-          d="M813.05 235.619H839.857L867.135 71.8308H839.857L813.05 235.619Z"
-          fill="#DE541E"
-        />
-        <rect
-          x="867.135"
-          y="199.608"
-          width="34.3121"
-          height="36.0108"
-          fill="#DE541E"
-        />
-        <ellipse
-          cx="884.291"
-          cy="199.275"
-          rx="17.156"
-          ry="19.6726"
-          fill="#DE541E"
-        />
+        <path d="M957.858 235.619H931.051L903.773 71.8308H931.051L957.858 235.619Z" fill="#DE541E" />
+        <path d="M813.05 235.619H839.857L867.135 71.8308H839.857L813.05 235.619Z" fill="#DE541E" />
+        <rect x="867.135" y="199.608" width="34.3121" height="36.0108" fill="#DE541E" />
+        <ellipse cx="884.291" cy="199.275" rx="17.156" ry="19.6726" fill="#DE541E" />
       </svg>
     </nav>
+
     <div class="app-container">
-      <!-- Unified Header and Source Toggle -->
-      <div class="section-header">
-        <h2 class="section-title" id="main-heading">Spotlight</h2>
-        <div class="source-switch-container">
-          <button id="source-switch-btn" style="display: none;">
-            <i class="fas fa-book"></i>
-            <span id="source-name">Jikan</span>
-          </button>
+
+      <!-- Desktop Hero (shown on 1024px+) -->
+      <div id="desktop-hero">
+        <img class="hero-bg-image" id="hero-bg" src="" alt="" />
+        <div class="hero-overlay"></div>
+        <div class="hero-content" id="hero-content">
+          <span class="hero-label"><i class="fas fa-fire"></i> Trending Manga</span>
+          <div class="hero-tags" id="hero-tags"></div>
+          <h1 class="hero-title" id="hero-title">Loading...</h1>
+          <h2 class="hero-subtitle" id="hero-subtitle"></h2>
+          <p class="hero-synopsis" id="hero-desc"></p>
+          <div class="hero-actions">
+            <button class="btn-hero btn-primary" id="hero-read-btn">
+              Read Now <i class="fas fa-arrow-right"></i>
+            </button>
+            <button class="btn-hero btn-outline">
+              <i class="far fa-bookmark"></i>
+            </button>
+          </div>
         </div>
+        <div class="hero-indicators" id="hero-indicators"></div>
       </div>
 
-      <!-- Jikan-specific Content -->
+      <!-- Jikan Content (carousel on mobile, hero replaces on desktop) -->
       <section class="content-section" id="jikan-content">
         <!-- Mobile Carousel -->
         <div id="featured-carousel-container">
           <div class="loader"></div>
         </div>
 
-        <!-- Desktop Hero Section -->
-        <div id="desktop-hero">
-          <!-- Image filled by JS -->
-          <img class="hero-bg-image" id="hero-bg" src="" alt="" />
-          <div class="hero-overlay"></div>
-          <div class="hero-content" id="hero-content">
-            <span class="hero-label">Trending Manga</span>
-            <div class="hero-tags" id="hero-tags">
-              <!-- Tags filled by JS -->
-            </div>
-            <h1 class="hero-title" id="hero-title">Loading...</h1>
-            <h2 class="hero-subtitle" id="hero-subtitle"></h2>
-            <p class="hero-synopsis" id="hero-desc"></p>
-            <div class="hero-actions">
-              <button class="btn-hero btn-primary" id="hero-read-btn">
-                Read Now <i class="fas fa-arrow-right"></i>
-              </button>
-              <button class="btn-hero btn-outline">
-                <i class="far fa-bookmark"></i>
-              </button>
-            </div>
-          </div>
-          <!-- Interactive Indicators (Dots) -->
-          <div class="hero-indicators" id="hero-indicators"></div>
-        </div>
-
-
-      <!-- Shared Content Area -->
-      <main class="main-content" id="main-content-area-shared"></main>
-
-        <main class="main-content" id="main-content-area-jikan"></main>
-      </section>
-
-      <!-- MangaDex-specific Content -->
-      <section
-        class="content-section"
-        id="mangadex-content"
-        style="display: none"
-      >
-        <div id="mangadex-search-container">
-          <div class="search-box">
-            <input
-              type="text"
-              id="mangadex-search-input"
-              placeholder="Search MangaDex..."
-            />
-            <button id="mangadex-search-btn">
-              <i class="fas fa-search"></i>
-            </button>
-          </div>
-          <div id="mangadex-results-grid">
-            <!-- Search results will appear here -->
-          </div>
-        </div>
-        <main class="main-content" id="main-content-area-mangadex"></main>
+        <!-- Continue Reading + Curated sections injected here -->
+        <main id="main-content-area-shared"></main>
+        <main id="main-content-area-jikan"></main>
       </section>
 
     </div>
 
     <script>
       document.addEventListener("DOMContentLoaded", () => {
-        const getServerUrl = () => {
-          const extensionServerIp =
-            localStorage.getItem("extension_server_ip") || "localhost";
-          const url = "";
-          console.log("[manga] serverUrl=", url);
-          return url;
-        };
-        const serverUrl = getServerUrl();
         const JIKAN_API_BASE_URL = "https://api.jikan.moe/v4";
         const CONTENT_JSON_FILE = "manga_content.json";
 
         const urlParams = new URLSearchParams(window.location.search);
         const profileId = urlParams.get("profileId");
 
-        // --- SOURCE MANAGEMENT ---
-        const mainHeading = document.getElementById("main-heading");
-        const sourceSwitchBtn = document.getElementById("source-switch-btn");
-        const sourceNameEl = document.getElementById("source-name");
-        const jikanContent = document.getElementById("jikan-content");
-        const mangadexContent = document.getElementById("mangadex-content");
-        const mangadexSearchInput = document.getElementById(
-          "mangadex-search-input",
-        );
-        const mangadexSearchBtn = document.getElementById(
-          "mangadex-search-btn",
-        );
-        const mangadexResultsGrid = document.getElementById(
-          "mangadex-results-grid",
-        );
-
-        let currentSource = localStorage.getItem("manga_source") || "jikan";
-
-        function setSource(source) {
-          currentSource = source;
-          localStorage.setItem("manga_source", source);
-
-          const jikanContinue = document.getElementById(
-            "continue-reading-jikan",
-          );
-          const mangadexContinue = document.getElementById(
-            "continue-reading-mangadex",
-          );
-
-          if (source === "mangadex") {
-            jikanContent.style.display = "none";
-            mangadexContent.style.display = "block";
-            mainHeading.textContent = "MangaDex";
-            sourceNameEl.textContent = "MangaDex";
-            if (jikanContinue) jikanContinue.style.display = "none";
-            if (mangadexContinue) mangadexContinue.style.display = "block";
-          } else {
-            jikanContent.style.display = "block";
-            mangadexContent.style.display = "none";
-            mainHeading.textContent = "Spotlight";
-            sourceNameEl.textContent = "Jikan";
-            if (jikanContinue) jikanContinue.style.display = "block";
-            if (mangadexContinue) mangadexContinue.style.display = "none";
-          }
-        }
-
-        sourceSwitchBtn.addEventListener("click", () => {
-          const newSource = currentSource === "jikan" ? "mangadex" : "jikan";
-          setSource(newSource);
-        });
-
-        // Initialize source
-        setSource(currentSource);
-
+        // ── Open manga in parent popup ──
         function openMangaModal(source, mangaId) {
-          window.parent.openPopup(
-            `manga-info.html?source=${source}&id=${mangaId}`,
-          );
+          window.parent.openPopup(`manga-info.html?source=${source}&id=${mangaId}`);
         }
 
-        // --- MANGADEX NEW SECTIONS ---
-        async function createMangaDexHorizontalSection(title, order) {
-          try {
-            const section = document.createElement("section");
-            section.className = "content-section";
-            section.innerHTML = `
-                <div class="section-header-row">
-                    <h2 class="section-title">${title}</h2>
-                </div>
-                <div class="horizontal-scroll-container"><div class="loader"></div></div>`;
-
-            const mainContentAreaMangaDex = document.getElementById(
-              "main-content-area-mangadex",
-            );
-            mainContentAreaMangaDex.appendChild(section);
-
-            const scrollContainer = section.querySelector(
-              ".horizontal-scroll-container",
-            );
-            const response = await fetch(
-              `${serverUrl}/mangadex/list?order=${order}&limit=15&profile_id=${profileId}`,
-            );
-            if (!response.ok) throw new Error(`API error: ${response.status}`);
-            const responseData = await response.json();
-            displayMangaDexPosters(responseData.data, scrollContainer);
-          } catch (error) {
-            console.error(`Failed to load MangaDex section "${title}":`, error);
-            const container = document.getElementById(
-              "main-content-area-mangadex",
-            );
-            if (
-              container &&
-              container.lastElementChild &&
-              container.lastElementChild.querySelector(".loader")
-            ) {
-              container.lastElementChild.querySelector(
-                ".loader",
-              ).parentElement.innerHTML =
-                `<p class="error-message">Could not load section.</p>`;
-            }
-          }
-        }
-
-        function displayMangaDexPosters(mangaData, container) {
-          container.innerHTML = "";
-          if (!mangaData || mangaData.length === 0) {
-            container.innerHTML = `<p class="error-message">No results found.</p>`;
-            return;
-          }
-          mangaData.forEach((manga) => {
-            const title =
-              manga.attributes.title.en ||
-              Object.values(manga.attributes.title)[0];
-            const coverUrl =
-              manga.cover_url ||
-              "https://placehold.co/400x600/141414/333?text=?";
-
-            const card = document.createElement("div");
-            card.className = "poster-card";
-            card.onclick = () => openMangaModal("mangadex", manga.id);
-            card.innerHTML = `
-                <img src="${coverUrl}" alt="${title}" loading="lazy">
-                <p class="poster-title">${title}</p>`;
-            container.appendChild(card);
-          });
-        }
-
-        // --- JIKAN / CURATED CONTENT LOGIC ---
-        const mainContentAreaJikan = document.getElementById(
-          "main-content-area-jikan",
-        );
-        const carouselContainer = document.getElementById(
-          "featured-carousel-container",
-        );
+        // ── Carousel state ──
+        const carouselContainer = document.getElementById("featured-carousel-container");
         let carouselData = [];
         let currentIndex = 0;
         let slides = [];
         let isAnimating = false;
 
-        // Desktop Hero Shuffle Variables
+        // ── Desktop hero state ──
         let currentHeroIndex = 0;
         let heroInterval;
 
-        // Fetch the curated JSON
+        // ── Load curated JSON ──
         async function loadCuratedContent() {
           try {
             const response = await fetch(CONTENT_JSON_FILE);
-            if (!response.ok)
-              throw new Error("Could not load manga_content.json");
+            if (!response.ok) throw new Error("Could not load manga_content.json");
             const data = await response.json();
 
-            // 1. Setup Spotlight (Carousel + Hero)
             if (data.spotlight && data.spotlight.length > 0) {
               setupSpotlight(data.spotlight);
             } else {
-              // Fallback if spotlight is empty
               carouselContainer.innerHTML = `<p class="error-message">No spotlight content found.</p>`;
             }
 
-            // 2. Setup Horizontal Sections
             if (data.sections && data.sections.length > 0) {
-              data.sections.forEach((section) => {
-                createLocalJikanSection(section);
-              });
+              data.sections.forEach((section) => createLocalJikanSection(section));
             }
           } catch (error) {
             console.error("Content Load Error:", error);
-            // Fallback to manual API call if JSON fails
             createJikanHorizontalSection(
-              "Top Manga (API Fallback)",
-              `${JIKAN_API_BASE_URL}/top/manga?filter=bypopularity&limit=15`,
+              "Top Manga",
+              `${JIKAN_API_BASE_URL}/top/manga?filter=bypopularity&limit=15`
             );
           }
         }
@@ -964,32 +628,23 @@
         function setupSpotlight(spotlightItems) {
           carouselData = spotlightItems;
 
-          // 1. Mobile Carousel Rendering
+          // Mobile carousel HTML (Continues to use poster images)
           carouselContainer.innerHTML = `
-              <div class="carousel-viewport">
-                  ${carouselData
-                    .map(
-                      (item) => `
-                      <div class="carousel-slide" data-id="${item.id}">
-                          <img src="${item.image_tall || item.image}" alt="${item.name}">
-                      </div>`,
-                    )
-                    .join("")}
-              </div>`;
+            <div class="carousel-viewport">
+              ${carouselData.map((item) =>
+                `<div class="carousel-slide" data-id="${item.id}">
+                   <img src="${item.image_tall || item.image}" alt="${item.name}">
+                 </div>`
+              ).join("")}
+            </div>`;
 
-          // Mobile Carousel Logic
-          slides = Array.from(
-            carouselContainer.querySelectorAll(".carousel-slide"),
-          );
-          const viewport =
-            carouselContainer.querySelector(".carousel-viewport");
+          slides = Array.from(carouselContainer.querySelectorAll(".carousel-slide"));
+          const viewport = carouselContainer.querySelector(".carousel-viewport");
           let touchstartX = 0;
+
           if (viewport) {
-            viewport.addEventListener(
-              "touchstart",
-              (e) => (touchstartX = e.changedTouches[0].screenX),
-              { passive: true },
-            );
+            viewport.addEventListener("touchstart",
+              (e) => (touchstartX = e.changedTouches[0].screenX), { passive: true });
             viewport.addEventListener("touchend", (e) => {
               const touchendX = e.changedTouches[0].screenX;
               if (touchendX < touchstartX - 50) navigateCarousel(1);
@@ -997,14 +652,13 @@
             });
             viewport.addEventListener("click", (e) => {
               const slide = e.target.closest(".carousel-slide");
-              if (slide && slide.classList.contains("slide-center")) {
+              if (slide && slide.classList.contains("slide-center"))
                 openMangaModal("jikan", slide.dataset.id);
-              }
             });
             updateCarousel();
           }
 
-          // 2. Desktop Hero Rendering & Shuffle
+          // Desktop hero
           if (carouselData.length > 0) {
             setupHeroIndicators(carouselData);
             updateDesktopHero(carouselData[0]);
@@ -1012,22 +666,19 @@
           }
         }
 
-        // Desktop Hero Helper Functions
+        // ── Desktop hero ──
         function setupHeroIndicators(data) {
           const container = document.getElementById("hero-indicators");
           container.innerHTML = "";
-
           data.forEach((_, index) => {
             const dot = document.createElement("div");
             dot.className = "hero-dot";
             if (index === 0) dot.classList.add("active");
-
             dot.addEventListener("click", () => {
               currentHeroIndex = index;
               updateDesktopHero(data[index], true);
               resetHeroTimer();
             });
-
             container.appendChild(dot);
           });
         }
@@ -1044,34 +695,27 @@
           if (!item) return;
 
           const heroContent = document.getElementById("hero-content");
-          const heroBg = document.getElementById("hero-bg");
+          const heroBg     = document.getElementById("hero-bg");
+          const heroTitle  = document.getElementById("hero-title");
+          const heroSub    = document.getElementById("hero-subtitle");
+          const heroDesc   = document.getElementById("hero-desc");
+          const heroTags   = document.getElementById("hero-tags");
+          const heroBtn    = document.getElementById("hero-read-btn");
 
-          // DOM Elements to update
-          const heroTitle = document.getElementById("hero-title");
-          const heroSubtitle = document.getElementById("hero-subtitle");
-          const heroDesc = document.getElementById("hero-desc");
-          const heroTags = document.getElementById("hero-tags");
-          const heroBtn = document.getElementById("hero-read-btn");
-
-          // Update Dots
-          const allDots = document.querySelectorAll(".hero-dot");
-          allDots.forEach((dot, idx) => {
-            if (idx === currentHeroIndex) dot.classList.add("active");
-            else dot.classList.remove("active");
+          document.querySelectorAll(".hero-dot").forEach((dot, idx) => {
+            dot.classList.toggle("active", idx === currentHeroIndex);
           });
 
-          // Use item properties from JSON
-          const title = item.name;
-          const subtitle = item.jp_name; // Manga usually don't have separate sub-titles in this JSON format
-          const image = item.image; // Use wide image if available, else standard
-          const synopsis = item.description || "Click to read more.";
-
-          // Function to actually set DOM content
           const setContent = () => {
-            heroTitle.textContent = title;
-            heroSubtitle.textContent = subtitle;
-            heroDesc.textContent = synopsis;
-            heroBg.src = image;
+            heroTitle.textContent = item.name;
+            heroSub.textContent   = item.jp_name || "";
+            heroDesc.textContent  = item.description || "Click to read more.";
+            
+            // Set Anilist banner dynamically. Fallback to poster if banner is unavailable.
+            heroBg.src = `/manga/${item.id}/banner`;
+            heroBg.onerror = () => {
+              heroBg.src = item.image;
+            };
 
             heroTags.innerHTML = "";
             const tag = document.createElement("span");
@@ -1079,20 +723,14 @@
             tag.textContent = "Manga";
             heroTags.appendChild(tag);
 
-            // Clear old listener and add new one
             const newBtn = heroBtn.cloneNode(true);
             heroBtn.parentNode.replaceChild(newBtn, heroBtn);
-            newBtn.addEventListener("click", () => {
-              openMangaModal("jikan", item.id);
-            });
+            newBtn.addEventListener("click", () => openMangaModal("jikan", item.id));
           };
 
           if (animate) {
-            // Add fade-out class
             heroContent.classList.add("hero-hidden");
             heroBg.classList.add("hero-hidden");
-
-            // Wait for transition (500ms), update content, then fade in
             setTimeout(() => {
               setContent();
               heroContent.classList.remove("hero-hidden");
@@ -1103,7 +741,7 @@
           }
         }
 
-        // Mobile Carousel Logic
+        // ── Mobile carousel ──
         function navigateCarousel(direction) {
           if (isAnimating) return;
           isAnimating = true;
@@ -1111,80 +749,72 @@
           const oldIndex = currentIndex;
           currentIndex = (currentIndex + direction + total) % total;
           updateCarousel(direction, oldIndex);
-          setTimeout(() => {
-            isAnimating = false;
-          }, 600);
+          setTimeout(() => { isAnimating = false; }, 600);
         }
 
         function updateCarousel(direction = 0, oldIndex = -1) {
           const total = slides.length;
           if (total === 0) return;
-          const leftIndex = (currentIndex - 1 + total) % total;
+          const leftIndex  = (currentIndex - 1 + total) % total;
           const rightIndex = (currentIndex + 1 + total) % total;
 
           if (direction !== 0 && oldIndex !== -1) {
-            const oldLeftIndex = (oldIndex - 1 + total) % total;
+            const oldLeftIndex  = (oldIndex - 1 + total) % total;
             const oldRightIndex = (oldIndex + 1 + total) % total;
             if (direction === 1)
-              slides[oldLeftIndex].className = "carousel-slide slide-exit-left";
+              slides[oldLeftIndex].className  = "carousel-slide slide-exit-left";
             else
-              slides[oldRightIndex].className =
-                "carousel-slide slide-exit-right";
+              slides[oldRightIndex].className = "carousel-slide slide-exit-right";
           }
 
           slides.forEach((slide, index) => {
             setTimeout(() => {
-              let newClass = "carousel-slide";
-              if (index === currentIndex) newClass += " slide-center";
-              else if (index === leftIndex) newClass += " slide-left";
-              else if (index === rightIndex) newClass += " slide-right";
-              slide.className = newClass;
+              let cls = "carousel-slide";
+              if (index === currentIndex) cls += " slide-center";
+              else if (index === leftIndex)  cls += " slide-left";
+              else if (index === rightIndex) cls += " slide-right";
+              slide.className = cls;
             }, 10);
           });
         }
 
-        // Render sections from JSON
+        // ── Curated JSON sections ──
+        const mainContentAreaJikan = document.getElementById("main-content-area-jikan");
+
         function createLocalJikanSection(sectionData) {
           const section = document.createElement("section");
           section.className = "content-section";
           section.innerHTML = `
-              <div class="section-header-row">
-                  <h2 class="section-title">${sectionData.title}</h2>
-              </div>
-              <div class="horizontal-scroll-container"></div>`;
+            <div class="section-header-row">
+              <h2 class="section-title">${sectionData.title}</h2>
+            </div>
+            <div class="horizontal-scroll-container"></div>`;
           mainContentAreaJikan.appendChild(section);
-          const scrollContainer = section.querySelector(
-            ".horizontal-scroll-container",
-          );
+          const scrollContainer = section.querySelector(".horizontal-scroll-container");
 
           if (sectionData.items && sectionData.items.length > 0) {
-            // Convert JSON format to format expected by displayJikanPosters
-            const mappedItems = sectionData.items.map((item) => ({
+            const mapped = sectionData.items.map((item) => ({
               mal_id: item.id,
               title: item.name,
               images: { jpg: { image_url: item.image } },
             }));
-            displayJikanPosters(mappedItems, scrollContainer);
+            displayJikanPosters(mapped, scrollContainer);
           } else {
             scrollContainer.innerHTML = `<p class="error-message">No items in this section.</p>`;
           }
         }
 
-        // Legacy function for Fallback API calls
         async function createJikanHorizontalSection(title, apiUrl) {
           try {
             const section = document.createElement("section");
             section.className = "content-section";
             section.innerHTML = `
               <div class="section-header-row">
-                  <h2 class="section-title">${title}</h2>
-                  <a href="#" class="view-all-arrow">></a>
+                <h2 class="section-title">${title}</h2>
               </div>
-              <div class="horizontal-scroll-container"><p style="color: #ccc;">Loading...</p></div>`;
+              <div class="horizontal-scroll-container"><div class="loader"></div></div>`;
             mainContentAreaJikan.appendChild(section);
-            const scrollContainer = section.querySelector(
-              ".horizontal-scroll-container",
-            );
+            const scrollContainer = section.querySelector(".horizontal-scroll-container");
             const response = await fetch(apiUrl);
             if (!response.ok) throw new Error(`API error: ${response.status}`);
             const responseData = await response.json();
@@ -1201,305 +831,106 @@
             return;
           }
           mangaData.forEach((item) => {
-            // Check for valid image in either API structure or JSON structure
             const imageUrl = item.images?.jpg?.image_url || item.image;
             if (!imageUrl) return;
-
             const card = document.createElement("div");
             card.className = "poster-card";
             card.onclick = () => {
-              window.parent.openPopup(
-                `manga-info.html?source=jikan&id=${item.mal_id}`,
-              );
+              window.parent.openPopup(`manga-info.html?source=jikan&id=${item.mal_id}`);
             };
             card.innerHTML = `
               <img src="${imageUrl}" alt="${item.title}" loading="lazy">
-              <div style="position:absolute;top:8px;left:8px;z-index:2;">
-                <span style="background:#DE541E;color:#fff;font-size:0.75em;font-weight:700;padding:2px 8px;border-radius:6px;box-shadow:0 2px 6px rgba(0,0,0,0.2);letter-spacing:1px;">Manga</span>
-              </div>
+              <div class="manga-badge">Manga</div>
               <p class="poster-title">${item.title}</p>`;
             container.appendChild(card);
           });
         }
 
-        // --- MANGADEX API LOGIC ---
-        async function performMangaDexSearch() {
-          const query = mangadexSearchInput.value.trim();
-          if (query.length < 3) {
-            mangadexResultsGrid.innerHTML = `<p class="error-message">Please enter at least 3 characters.</p>`;
-            return;
-          }
+        // ── Continue Reading (Jikan only) ──
+        const mainContentAreaShared = document.getElementById("main-content-area-shared");
 
-          mangadexResultsGrid.innerHTML = `<div class="loader"></div>`;
-          try {
-            const response = await fetch(
-              `${serverUrl}/mangadex/search?q=${encodeURIComponent(query)}&profile_id=${profileId}`,
-            );
-            if (!response.ok)
-              throw new Error(`Search failed: ${response.statusText}`);
-
-            const results = await response.json();
-            displayMangaDexResults(results.data);
-          } catch (error) {
-            console.error("MangaDex search error:", error);
-            mangadexResultsGrid.innerHTML = `<p class="error-message">Could not perform search. Please try again later.</p>`;
-          }
-        }
-
-        function displayMangaDexResults(data) {
-          mangadexResultsGrid.innerHTML = "";
-          if (!data || data.length === 0) {
-            mangadexResultsGrid.innerHTML = `<p class="error-message">No results found for your search.</p>`;
-            return;
-          }
-
-          data.forEach((manga) => {
-            const title =
-              manga.attributes.title.en ||
-              Object.values(manga.attributes.title)[0];
-            const coverUrl =
-              manga.cover_url ||
-              "https://placehold.co/400x600/141414/333?text=?";
-
-            const card = document.createElement("div");
-            card.className = "poster-card";
-            card.onclick = () => openMangaModal("mangadex", manga.id);
-            card.innerHTML = `
-                    <img src="${coverUrl}" alt="${title}" loading="lazy">
-                    <p class="poster-title">${title}</p>`;
-            mangadexResultsGrid.appendChild(card);
-          });
-        }
-
-        mangadexSearchBtn.addEventListener("click", performMangaDexSearch);
-        mangadexSearchInput.addEventListener("keypress", (e) => {
-          if (e.key === "Enter") performMangaDexSearch();
-        });
-
-        // --- CONTINUE READING LOGIC (SHARED) ---
-        const mainContentAreaShared = document.getElementById(
-          "main-content-area-shared",
-        );
-
-      async function initializeContinueReading() {
+        async function initializeContinueReading() {
           const rawHistory = JSON.parse(localStorage.getItem("reading_history")) || [];
           if (rawHistory.length === 0) return;
 
-          // 1. Sort the history so the most recently read manga comes first
-          // We look at the highest timestamp inside the chapters object
           const sortedHistory = [...rawHistory].sort((a, b) => {
-              const aMax = Math.max(...Object.values(a.chapters).map(c => c.timestamp || 0));
-              const bMax = Math.max(...Object.values(b.chapters).map(c => c.timestamp || 0));
-              return bMax - aMax;
+            const aMax = Math.max(...Object.values(a.chapters).map(c => c.timestamp || 0));
+            const bMax = Math.max(...Object.values(b.chapters).map(c => c.timestamp || 0));
+            return bMax - aMax;
           });
 
           const jikanList = [];
-          const mangadexList = [];
-
           sortedHistory.forEach(entry => {
-              // Find the most recent chapter number for this specific manga
-              let latestChNum = null;
-              let maxTime = 0;
-              
-              for (const [chNum, chData] of Object.entries(entry.chapters)) {
-                  if (chData.timestamp > maxTime) {
-                      maxTime = chData.timestamp;
-                      latestChNum = chNum;
-                  }
-              }
-
-              if (!latestChNum) return;
-
-              if (entry.source === 'mangadex') {
-                  mangadexList.push({
-                      mangaId: entry.mangaId,
-                      chapterId: latestChNum // For MangaDex, this is usually the UUID
-                  });
-              } else {
-                  // Jikan, Comix, and others grouped under Jikan UI
-                  jikanList.push({
-                      mangaId: entry.mangaId,
-                      last_chapter: parseFloat(latestChNum)
-                  });
-              }
+            if (entry.source === "mangadex") return; // MangaDex continue reading not shown here
+            let latestChNum = null, maxTime = 0;
+            for (const [chNum, chData] of Object.entries(entry.chapters)) {
+              if (chData.timestamp > maxTime) { maxTime = chData.timestamp; latestChNum = chNum; }
+            }
+            if (!latestChNum) return;
+            jikanList.push({ mangaId: entry.mangaId, last_chapter: parseFloat(latestChNum) });
           });
 
-          // 2. Render sections
-          const promises = [];
-          
-          // Clear previous containers if they exist to prevent duplicates on refresh
-          const oldJikan = document.getElementById("continue-reading-jikan");
-          const oldMD = document.getElementById("continue-reading-mangadex");
-          if (oldJikan) oldJikan.remove();
-          if (oldMD) oldMD.remove();
+          const oldSection = document.getElementById("continue-reading-jikan");
+          if (oldSection) oldSection.remove();
 
-          if (jikanList.length > 0) {
-              promises.push(renderJikanContinueReading(jikanList));
-          }
-          
-          if (mangadexList.length > 0) {
-              promises.push(renderMangaDexContinueReading(mangadexList));
-          }
-
-          await Promise.all(promises);
-          
-          // 3. Final visibility toggle based on current source
-          setSource(currentSource);
-      }
+          if (jikanList.length > 0) await renderJikanContinueReading(jikanList);
+        }
 
         async function renderJikanContinueReading(list) {
           const section = document.createElement("section");
           section.id = "continue-reading-jikan";
           section.className = "content-section";
-          section.innerHTML = `<div class="section-header-row">
-                                   <h2 class="section-title">Continue Reading</h2>
-                               </div>
-                               <div class="horizontal-scroll-container"></div>`;
+          section.innerHTML = `
+            <div class="section-header-row">
+              <h2 class="section-title">Continue Reading</h2>
+            </div>
+            <div class="horizontal-scroll-container"></div>`;
           mainContentAreaShared.prepend(section);
-          const container = section.querySelector(
-            ".horizontal-scroll-container",
-          );
+          const container = section.querySelector(".horizontal-scroll-container");
 
           for (const item of list.slice(0, 15)) {
             try {
               await new Promise((resolve) => setTimeout(resolve, 350));
-              const response = await fetch(
-                `${JIKAN_API_BASE_URL}/manga/${item.mangaId}`,
-              );
+              const response = await fetch(`${JIKAN_API_BASE_URL}/manga/${item.mangaId}`);
               if (!response.ok) continue;
               const mangaData = (await response.json()).data;
               if (!mangaData) continue;
 
-              const title = mangaData.title_english || mangaData.title;
-              const totalChapters = mangaData.chapters;
-              const progressPercent =
-                totalChapters > 0
-                  ? (item.last_chapter / totalChapters) * 100
-                  : 0;
-              const isFinished =
-                totalChapters && item.last_chapter >= totalChapters;
-              const indicatorText = isFinished
-                ? "Finished"
-                : `Chapter ${item.last_chapter}`;
+              const title          = mangaData.title_english || mangaData.title;
+              const totalChapters  = mangaData.chapters;
+              const progressPct    = totalChapters > 0 ? (item.last_chapter / totalChapters) * 100 : 0;
+              const isFinished     = totalChapters && item.last_chapter >= totalChapters;
+              const indicatorText  = isFinished ? "Finished" : `Chapter ${item.last_chapter}`;
 
-              const poster = createPoster(
-                "jikan",
-                mangaData.mal_id,
-                mangaData.images?.jpg?.image_url,
-                title,
-                indicatorText,
-                progressPercent,
+              container.appendChild(
+                createContinuePoster("jikan", mangaData.mal_id, mangaData.images?.jpg?.image_url, title, indicatorText, progressPct)
               );
-              container.appendChild(poster);
             } catch (err) {
-              console.error(
-                `Failed to fetch Jikan data for manga ID ${item.mangaId}:`,
-                err,
-              );
+              console.error(`Failed to fetch Jikan data for manga ID ${item.mangaId}:`, err);
             }
           }
         }
 
-        async function renderMangaDexContinueReading(list) {
-          const section = document.createElement("section");
-          section.id = "continue-reading-mangadex";
-          section.className = "content-section";
-          section.innerHTML = `<div class="section-header-row">
-                                   <h2 class="section-title">Continue Reading (MangaDex)</h2>
-                               </div>
-                               <div class="horizontal-scroll-container"></div>`;
-          mainContentAreaShared.prepend(section);
-          const container = section.querySelector(
-            ".horizontal-scroll-container",
-          );
-
-          for (const item of list.slice(0, 15)) {
-            try {
-              const [mangaRes, chaptersRes] = await Promise.all([
-                fetch(`${serverUrl}/mangadex/manga/${item.mangaId}`),
-                fetch(`${serverUrl}/mangadex/manga/${item.mangaId}/chapters`),
-              ]);
-              if (!mangaRes.ok || !chaptersRes.ok) continue;
-
-              const mangaData = await mangaRes.json();
-              const chaptersData = await chaptersRes.json();
-              const chapters = chaptersData.chapters || [];
-
-              const title =
-                mangaData.attributes.title.en ||
-                Object.values(mangaData.attributes.title)[0];
-              const coverUrl = mangaData.image_url;
-
-              const currentChapterIndex = chapters.findIndex(
-                (c) => c.id === item.chapterId,
-              );
-              const totalChapters = chapters.length;
-              const progressPercent =
-                totalChapters > 0 && currentChapterIndex !== -1
-                  ? ((totalChapters - currentChapterIndex) / totalChapters) *
-                    100
-                  : 0;
-              const chapterNumber =
-                chapters[currentChapterIndex]?.attributes.chapter || "?";
-              const indicatorText = `Chapter ${chapterNumber}`;
-
-              const poster = createPoster(
-                "mangadex",
-                item.mangaId,
-                coverUrl,
-                title,
-                indicatorText,
-                progressPercent,
-              );
-              container.appendChild(poster);
-            } catch (err) {
-              console.error(
-                `Failed to fetch MangaDex data for manga ID ${item.mangaId}:`,
-                err,
-              );
-            }
-          }
+        function createContinuePoster(source, id, imageUrl, title, indicatorText, progressPercent) {
+          const el = document.createElement("div");
+          el.className = "poster-container";
+          el.innerHTML = `
+            <div class="poster-image-wrapper">
+              <div class="chapter-indicator">${indicatorText}</div>
+              <img src="${imageUrl}" alt="${title}" loading="lazy">
+              <div class="progress-bar">
+                <div class="progress-bar-inner" style="width: ${progressPercent}%;"></div>
+              </div>
+            </div>
+            <p class="poster-title" title="${title}">${title}</p>`;
+          el.addEventListener("click", () => openMangaModal(source, id));
+          return el;
         }
 
-        function createPoster(
-          source,
-          id,
-          imageUrl,
-          title,
-          indicatorText,
-          progressPercent,
-        ) {
-          const posterContainer = document.createElement("div");
-          posterContainer.className = "poster-container";
-          posterContainer.innerHTML = `
-                <div class="poster-image-wrapper">
-                    <div class="chapter-indicator">${indicatorText}</div>
-                    <img src="${imageUrl}" alt="${title}" loading="lazy">
-                    <div class="progress-bar">
-                        <div class="progress-bar-inner" style="width: ${progressPercent}%;"></div>
-                    </div>
-                </div>
-                <p class="poster-title" title="${title}">${title}</p>`;
-          posterContainer.addEventListener("click", () =>
-            openMangaModal(source, id),
-          );
-          return posterContainer;
-        }
-
+        // ── Init ──
         async function initializePage() {
-
           await initializeContinueReading();
-          // Jikan / Curated Content
           await loadCuratedContent();
-
-          // Continue Reading
-
-          // MangaDex content
-          createMangaDexHorizontalSection(
-            "Recently Updated",
-            "latestUploadedChapter",
-          );
-          createMangaDexHorizontalSection("Popular Titles", "followedCount");
         }
 
         initializePage();

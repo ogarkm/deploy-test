@@ -10,7 +10,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
-      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=DM+Sans:wght@400;500;600&display=swap"
       rel="stylesheet"
     />
     <link
@@ -19,20 +19,22 @@
     />
     <style>
       :root {
-        --accent-color: #ff9500; /* Distinct Orange */
-        --background-color: #121212;
-        --background-color-secondary: #1e1e1e;
+        --accent-color: #ff9500;
+        --accent-glow: rgba(255, 149, 0, 0.35);
+        --background-color: #0e0e0e;
+        --background-color-secondary: #181818;
+        --surface: #1c1c1c;
         --text-primary: #ffffff;
-        --text-secondary: #aaaaaa;
-        --border-color: rgba(255, 255, 255, 0.15);
+        --text-secondary: #999999;
+        --border-color: rgba(255, 255, 255, 0.08);
         --shadow-medium: 0 10px 30px rgba(0, 0, 0, 0.5);
         --shadow-heavy: 0 20px 50px rgba(0, 0, 0, 0.7);
         --transition-smooth: cubic-bezier(0.25, 0.46, 0.45, 0.94);
+        --radius-card: 14px;
       }
 
       body {
-        font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI",
-          Roboto, sans-serif;
+        font-family: "Outfit", -apple-system, BlinkMacSystemFont, sans-serif;
         background-color: var(--background-color);
         margin: 0;
         color: var(--text-primary);
@@ -44,17 +46,17 @@
         overflow: hidden;
       }
 
-      /* --- Liquid Glass Navbar --- */
+      /* --- Navbar --- */
       .navbar {
         position: fixed;
         top: 0;
         left: 0;
         width: 100%;
         z-index: 1000;
-        padding: 20px 6%;
+        padding: 22px 6%;
         background: linear-gradient(
           to bottom,
-          rgba(0, 0, 0, 0.8) 0%,
+          rgba(0, 0, 0, 0.85) 0%,
           transparent 100%
         );
         backdrop-filter: blur(0px);
@@ -68,19 +70,20 @@
       }
 
       .navbar.scrolled {
-        background: rgba(18, 18, 18, 0.85);
-        backdrop-filter: blur(16px);
-        -webkit-backdrop-filter: blur(16px);
-        border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-        padding: 15px 6%;
+        background: rgba(14, 14, 14, 0.92);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        border-bottom: 1px solid rgba(255, 149, 0, 0.08);
+        padding: 14px 6%;
+        box-shadow: 0 1px 0 rgba(255,255,255,0.04);
       }
 
       .navbar svg {
         display: block;
         margin: 0;
-        height: 40px;
+        height: 38px;
         width: auto;
-        opacity: 0.9;
+        opacity: 0.92;
         transition: opacity 0.4s ease-out;
       }
 
@@ -91,8 +94,8 @@
       /* --- Hero Section Cinematic Carousel --- */
       #hero-section {
         position: relative;
-        height: 65vh;
-        min-height: 600px;
+        height: 68vh;
+        min-height: 580px;
         display: flex;
         flex-direction: column;
         justify-content: center;
@@ -197,39 +200,41 @@
         display: inline-flex;
         align-items: center;
         justify-content: center;
-        gap: 12px;
-        padding: 14px 32px;
-        border-radius: 8px;
+        gap: 10px;
+        padding: 13px 30px;
+        border-radius: 10px;
+        font-family: "Outfit", sans-serif;
         font-weight: 700;
         text-decoration: none;
-        font-size: 1.1rem;
+        font-size: 1rem;
         cursor: pointer;
         transition: all 0.3s var(--transition-smooth);
         border: 1px solid transparent;
+        letter-spacing: 0.02em;
       }
 
       .hero-btn.play-btn {
-        background-color: #ff9500;
+        background-color: var(--accent-color);
         color: #fff;
+        box-shadow: 0 4px 20px var(--accent-glow);
       }
 
       .hero-btn.play-btn:hover {
-        transform: scale(1.05);
-        background-color: var(--accent-color);
-        color: #fff;
-        box-shadow: 0 0 30px rgba(255, 149, 0, 0.4);
+        transform: scale(1.05) translateY(-1px);
+        box-shadow: 0 8px 32px rgba(255, 149, 0, 0.55);
       }
 
       .hero-btn.info-btn {
-        background-color: rgba(100, 100, 100, 0.4);
+        background-color: rgba(255, 255, 255, 0.1);
         color: #ffffff;
-        backdrop-filter: blur(10px);
+        backdrop-filter: blur(12px);
+        border-color: rgba(255, 255, 255, 0.18);
       }
 
       .hero-btn.info-btn:hover {
-        background-color: rgba(255, 255, 255, 0.2);
-        border-color: rgba(255, 255, 255, 0.5);
-        transform: scale(1.05);
+        background-color: rgba(255, 255, 255, 0.18);
+        border-color: rgba(255, 255, 255, 0.4);
+        transform: scale(1.05) translateY(-1px);
       }
 
       .hero-dots {
@@ -266,13 +271,13 @@
       @media (max-width: 768px) {
         .navbar {
           justify-content: center;
-          padding: 15px 6%;
+          padding: 14px 6%;
           display: none;
         }
 
         #hero-section {
-          height: 55vh;
-          min-height: 400px;
+          height: 58vh;
+          min-height: 380px;
         }
 
         .hero-content {
@@ -283,25 +288,25 @@
 
         .hero-logo {
           object-position: center bottom;
-          max-width: 80%;
-          margin-bottom: 20px;
+          max-width: 78%;
+          margin-bottom: 16px;
         }
 
         .hero-buttons {
-          margin-top: -10px;
+          margin-top: -6px;
         }
 
         .hero-background::after {
           background: radial-gradient(
             circle at 50% 35%,
             transparent 0%,
-            rgba(18, 18, 18, 0.2) 40%,
+            rgba(14, 14, 14, 0.2) 40%,
             var(--background-color) 120%
           ),
             linear-gradient(
               to right,
               var(--background-color) 0%,
-              rgba(18, 18, 18, 0.4) 50%,
+              rgba(14, 14, 14, 0.4) 50%,
               transparent 100%
             ),
             linear-gradient(to top, var(--background-color) 0%, transparent 40%);
@@ -311,40 +316,38 @@
           display: none;
         }
 
-        /* --- UPDATED MOBILE CARD SIZES --- */
         .horizontal-scroll-container {
-          gap: 12px !important; /* Tighter gap so more fit on screen */
+          gap: 10px !important;
           margin-bottom: -40px;
         }
 
         .poster-container {
-          max-width: 150px; /* Reduced Width (Fits ~3-4 cards per row) */
+          max-width: 140px;
         }
 
         .poster-title {
-          font-size: 0.8rem; /* Smaller Font */
-          margin-top: 8px;
+          font-size: 0.78rem;
+          margin-top: 7px;
         }
-        
+
         .episode-indicator {
-          font-size: 0.65rem; /* Smaller badge */
-          padding: 2px 6px;
-          top: 6px;
-          right: 6px;
+          font-size: 0.62rem;
+          padding: 2px 5px;
+          top: 5px;
+          right: 5px;
         }
 
         .poster-image-wrapper {
-          max-width: 150px;
+          max-width: 140px;
         }
-        
+
         .poster-info-btn {
-          width: 28px;
-          height: 28px;
-          font-size: 0.8rem;
-          top: 6px;
-          left: 6px;
+          width: 26px;
+          height: 26px;
+          font-size: 0.75rem;
+          top: 5px;
+          left: 5px;
         }
-        /* -------------------------------- */
 
         .hero-buttons {
           justify-content: center;
@@ -355,6 +358,31 @@
           right: auto;
           transform: translateX(-50%) translateY(-450%);
           bottom: 20px;
+        }
+
+        .section-title {
+          font-size: 1.1rem;
+        }
+
+        .content-section {
+          margin-bottom: 36px;
+        }
+      }
+
+      /* 1440p desktop tweaks */
+      @media (min-width: 1400px) {
+        .poster-container {
+          width: 210px;
+        }
+        #hero-section {
+          height: 62vh;
+          min-height: 640px;
+        }
+        .hero-content {
+          max-width: 44%;
+        }
+        .hero-logo {
+          max-width: 420px;
         }
       }
 
@@ -379,33 +407,36 @@
 
       /* --- Content Sections --- */
       .content-section {
-        margin-bottom: 50px;
+        margin-bottom: 48px;
         padding: 0 0 0 6%;
         position: relative;
         z-index: 5;
       }
 
       .content-section:first-of-type {
-        margin-top: -60px;
+        margin-top: -70px;
       }
 
       .section-title {
-        font-size: 1.5rem;
+        font-size: 1.35rem;
         font-weight: 700;
+        letter-spacing: 0.01em;
         color: var(--text-primary);
-        margin-bottom: 25px;
+        margin-bottom: 20px;
         display: flex;
         align-items: center;
-        gap: 10px;
+        gap: 12px;
+        font-family: "Outfit", sans-serif;
       }
 
       .section-title::before {
         content: "";
         display: block;
-        width: 4px;
-        height: 24px;
-        background-color: var(--accent-color);
-        border-radius: 2px;
+        width: 3px;
+        height: 20px;
+        background: linear-gradient(to bottom, var(--accent-color), rgba(255,149,0,0.3));
+        border-radius: 3px;
+        flex-shrink: 0;
       }
 
       .horizontal-scroll-container {
@@ -434,28 +465,28 @@
       /* --- Poster Cards --- */
       .poster-container {
         flex-shrink: 0;
-        width: 220px; /* Desktop Width */
+        width: 200px;
         position: relative;
         transition: z-index 0.3s, transform 0.3s;
       }
 
       .poster-image-wrapper {
         position: relative;
-        border-radius: 12px;
+        border-radius: var(--radius-card);
         overflow: hidden;
         aspect-ratio: 2/3;
-        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+        box-shadow: 0 6px 18px rgba(0, 0, 0, 0.4);
         transition: transform 0.4s var(--transition-smooth),
           box-shadow 0.4s var(--transition-smooth), border-color 0.3s;
-        border: 2px solid transparent;
-        background-color: #2a2a2a;
+        border: 1.5px solid transparent;
+        background-color: var(--surface);
       }
 
       .poster-image-wrapper img {
         width: 100%;
         height: 100%;
         object-fit: cover;
-        transition: filter 0.3s;
+        transition: filter 0.3s, transform 0.4s var(--transition-smooth);
       }
 
       .poster-container:hover {
@@ -463,28 +494,31 @@
       }
 
       .poster-container:hover .poster-image-wrapper {
-        transform: scale(1) translateY(-5px);
-        box-shadow: 0 15px 40px rgba(0, 0, 0, 0.6);
-        border-color: rgba(255, 255, 255, 0.2);
+        transform: scale(1) translateY(-6px);
+        box-shadow: 0 18px 45px rgba(0, 0, 0, 0.65), 0 0 0 1px rgba(255,149,0,0.15);
+        border-color: rgba(255, 149, 0, 0.2);
+      }
+
+      .poster-container:hover .poster-image-wrapper img {
+        transform: scale(1.03);
       }
 
       .poster-title {
-        margin-top: 15px;
-        font-size: 1rem;
+        margin-top: 12px;
+        font-size: 0.88rem;
         font-weight: 600;
         color: var(--text-secondary);
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
         text-align: center;
-        opacity: 0.8;
-        transition: color 0.3s, opacity 0.3s;
-        padding: 0 5px;
+        transition: color 0.3s;
+        padding: 0 4px;
+        font-family: "DM Sans", sans-serif;
       }
 
       .poster-container:hover .poster-title {
         color: var(--text-primary);
-        opacity: 1;
       }
 
       .progress-bar {
@@ -492,53 +526,56 @@
         bottom: 0;
         left: 0;
         width: 100%;
-        height: 4px;
-        background-color: rgba(255, 255, 255, 0.2);
+        height: 3px;
+        background-color: rgba(255, 255, 255, 0.15);
         z-index: 2;
       }
 
       .progress-bar-inner {
         height: 100%;
-        background-color: var(--accent-color);
-        box-shadow: 0 0 10px var(--accent-color);
+        background: linear-gradient(to right, var(--accent-color), #ffb340);
+        box-shadow: 0 0 8px var(--accent-glow);
+        border-radius: 0 2px 2px 0;
       }
 
       .episode-indicator {
         position: absolute;
-        top: 10px;
-        right: 10px;
+        top: 8px;
+        right: 8px;
         left: auto;
-        background-color: rgba(0, 0, 0, 0.6);
+        background-color: rgba(0, 0, 0, 0.72);
         color: #fff;
-        padding: 4px 10px;
-        border-radius: 4px;
-        font-size: 0.75rem;
+        padding: 3px 8px;
+        border-radius: 6px;
+        font-size: 0.7rem;
         font-weight: 700;
         z-index: 2;
-        backdrop-filter: blur(4px);
-        border: 1px solid rgba(255, 255, 255, 0.1);
-        letter-spacing: 0.5px;
+        backdrop-filter: blur(6px);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        letter-spacing: 0.4px;
+        font-family: "Outfit", sans-serif;
       }
 
       .poster-info-btn {
         position: absolute;
-        top: 10px;
-        left: 10px;
+        top: 8px;
+        left: 8px;
         right: auto;
         z-index: 3;
-        background-color: rgba(30, 30, 30, 0.8);
+        background-color: rgba(20, 20, 20, 0.82);
         color: #fff;
-        width: 32px;
-        height: 32px;
+        width: 30px;
+        height: 30px;
         border-radius: 50%;
         display: flex;
         align-items: center;
         justify-content: center;
         opacity: 0;
-        transform: translateY(-10px);
+        transform: translateY(-8px);
         transition: all 0.3s ease;
-        border: 1px solid rgba(255, 255, 255, 0.2);
+        border: 1px solid rgba(255, 255, 255, 0.15);
         cursor: pointer;
+        font-size: 0.8rem;
       }
 
       .poster-container:hover .poster-info-btn {
@@ -547,8 +584,9 @@
       }
 
       .poster-info-btn:hover {
-        background-color: #fff;
-        color: #000;
+        background-color: var(--accent-color);
+        border-color: var(--accent-color);
+        color: #fff;
       }
 
       /* --- Context Menu --- */
@@ -573,12 +611,12 @@
       }
 
       .context-menu {
-        width: 380px;
+        width: 340px;
         max-width: 90%;
-        background-color: #1e1e1e;
-        border-radius: 16px;
-        box-shadow: var(--shadow-heavy);
-        border: 1px solid rgba(255, 255, 255, 0.1);
+        background-color: #1c1c1c;
+        border-radius: 18px;
+        box-shadow: var(--shadow-heavy), 0 0 0 1px rgba(255,255,255,0.06);
+        border: 1px solid rgba(255, 255, 255, 0.08);
         transform: scale(0.95) translateY(20px);
         transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
         overflow: hidden;

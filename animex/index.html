@@ -1083,7 +1083,7 @@
         opacity: 0;
         transform: translateY(20px);
         transition: opacity 0.4s ease, transform 0.4s ease;
-        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255,255,255,0.06) inset;
       }
       #startup-status.visible {
         opacity: 1;
@@ -1095,6 +1095,7 @@
         border-radius: 50%;
         background: #ff9500;
         box-shadow: 0 0 10px #ff9500;
+        flex-shrink: 0;
       }
       #startup-status .status-dot.active {
         animation: blink 1s infinite;
@@ -1105,14 +1106,14 @@
         animation: none;
       }
       #startup-status span {
-        color: #fff;
-        font-size: 0.85rem;
+        color: rgba(255,255,255,0.85);
+        font-size: 0.82rem;
         font-weight: 500;
-        letter-spacing: 0.02em;
+        letter-spacing: 0.03em;
       }
       @keyframes blink {
         0%, 100% { opacity: 1; }
-        50% { opacity: 0.4; }
+        50% { opacity: 0.3; }
       }
 
       /* --- UPDATED: Ambient U-Glow --- */
@@ -1313,8 +1314,9 @@
       .modal-overlay {
         position: fixed;
         inset: 0;
-        background: var(--color-bg-overlay);
-        backdrop-filter: blur(8px);
+        background: rgba(0,0,0,0.8);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
         display: flex;
         place-items: center;
         justify-content: center;
@@ -1329,33 +1331,37 @@
         pointer-events: auto;
       }
       .modal-content {
-        background: var(--color-bg-modal);
-        padding: var(--spacing-lg) var(--spacing-lg);
-        border-radius: var(--radius);
-        border: 1px solid var(--color-border);
-        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+        background: #1c1c1e;
+        background-image: linear-gradient(145deg, rgba(255,255,255,0.03) 0%, transparent 60%);
+        padding: 28px 28px 24px;
+        border-radius: 18px;
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        box-shadow: 0 24px 60px rgba(0, 0, 0, 0.7), 0 0 0 1px rgba(255,255,255,0.04) inset;
         text-align: center;
         max-width: 28rem;
         width: 100%;
-        transform: scale(0.95);
-        transition: transform var(--transition-medium);
+        transform: scale(0.94) translateY(12px);
+        transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.3s ease;
+        opacity: 0;
       }
       .modal-overlay.active .modal-content {
-        transform: scale(1);
+        transform: scale(1) translateY(0);
+        opacity: 1;
       }
       .modal-content h2 {
         margin-bottom: var(--spacing);
-        font-size: 1.75rem;
+        font-size: 1.6rem;
         font-weight: 400;
         color: var(--text-primary);
         font-family: "Bitcount Grid Single";
+        letter-spacing: 0.01em;
       }
       .modal-content p {
         margin-bottom: var(--spacing-lg);
-        font-size: 1rem;
-        line-height: 1.6;
+        font-size: 0.95rem;
+        line-height: 1.65;
         color: var(--text-secondary);
-        font-family: Tahoma;
+        font-family: "Inter", sans-serif;
       }
       .modal-content a {
         color: var(--accent);
@@ -1372,36 +1378,42 @@
       .ip-input-container { margin-bottom: var(--spacing-lg); }
       .ip-input {
         width: 90%;
-        background: var(--color-bg-input);
-        border: 1px solid var(--color-border);
-        border-radius: var(--radius);
+        background: rgba(255,255,255,0.05);
+        border: 1px solid rgba(255,255,255,0.1);
+        border-radius: 10px;
         padding: var(--spacing) calc(var(--spacing) * 1.25);
-        font-size: 1.1rem;
+        font-size: 1.05rem;
         color: var(--text-primary);
         text-align: center;
         outline: none;
-        transition: box-shadow var(--transition-fast), border-color var(--transition-fast);
+        font-family: "Inter", sans-serif;
+        transition: box-shadow var(--transition-fast), border-color var(--transition-fast), background var(--transition-fast);
       }
       .ip-input:focus {
         border-color: var(--accent);
-        box-shadow: 0 0 0 0.25rem var(--accent-fade);
+        background: rgba(255, 149, 0, 0.06);
+        box-shadow: 0 0 0 3px var(--accent-fade);
       }
+      .ip-input::placeholder { color: rgba(255,255,255,0.25); }
 
       .connect-button {
         display: block;
         width: 100%;
-        padding: var(--spacing) 0;
+        padding: 14px 0;
         background: var(--accent);
         border: none;
-        border-radius: var(--radius);
-        font-size: 1.1rem;
+        border-radius: 10px;
+        font-size: 1rem;
         font-weight: 600;
         color: #fff;
         cursor: pointer;
-        transition: background var(--transition-fast), box-shadow var(--transition-fast);
+        letter-spacing: 0.02em;
+        font-family: "Inter", sans-serif;
+        transition: background var(--transition-fast), box-shadow var(--transition-fast), transform 0.1s;
       }
-      .connect-button:hover { background: var(--accent-light); }
-      .connect-button:focus { outline: none; box-shadow: 0 0 0 0.25rem var(--accent-fade); }
+      .connect-button:hover { background: var(--accent-light); box-shadow: 0 4px 16px rgba(255,149,0,0.35); }
+      .connect-button:active { transform: scale(0.98); }
+      .connect-button:focus { outline: none; box-shadow: 0 0 0 3px var(--accent-fade); }
 
       .status-indicator {
         margin-top: var(--spacing-sm);
@@ -1577,6 +1589,71 @@
       .toast-message.success .toast-icon { color: #34c759; }
       .toast-message.error .toast-icon { color: #ff3b30; }
       .toast-message.info .toast-icon { color: #007aff; }
+      /* --- TUNNEL WARNING MODAL --- */
+      .tunnel-warning-content {
+        max-width: 30rem !important;
+        text-align: left !important;
+      }
+      .tunnel-warning-icon {
+        width: 52px;
+        height: 52px;
+        border-radius: 14px;
+        background: rgba(255, 149, 0, 0.12);
+        border: 1px solid rgba(255, 149, 0, 0.25);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 18px;
+      }
+      .tunnel-warning-icon i {
+        font-size: 1.5rem;
+        color: var(--accent);
+      }
+      .tunnel-warning-content h2 {
+        text-align: left !important;
+        font-size: 1.4rem !important;
+        margin-bottom: 10px !important;
+      }
+      .tunnel-warning-content p {
+        text-align: left !important;
+        margin-bottom: 10px !important;
+        font-size: 0.95rem !important;
+      }
+      .tunnel-subtext {
+        color: rgba(179, 179, 181, 0.7) !important;
+        font-size: 0.85rem !important;
+        margin-bottom: 20px !important;
+      }
+      .tunnel-warning-actions {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        margin-top: 6px;
+      }
+      .tunnel-refresh-btn {
+        display: flex !important;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        margin-bottom: 0 !important;
+      }
+      .tunnel-dismiss-btn {
+        background: transparent;
+        border: 1px solid rgba(255,255,255,0.12);
+        border-radius: var(--radius);
+        color: var(--text-secondary);
+        font-size: 0.95rem;
+        font-weight: 500;
+        padding: var(--spacing) 0;
+        cursor: pointer;
+        transition: background var(--transition-fast), color var(--transition-fast);
+        font-family: "Inter", sans-serif;
+        width: 100%;
+      }
+      .tunnel-dismiss-btn:hover {
+        background: rgba(255,255,255,0.07);
+        color: var(--text-primary);
+      }
     </style>
   </head>
   <!-- Initialize Alpine Global Player State -->
@@ -1836,6 +1913,30 @@
         </div>
         <button id="connect-btn" class="connect-button">Connect</button>
         <div id="status-indicator" class="status-indicator"></div>
+      </div>
+    </div>
+
+    <!-- Tunnel Warning Modal -->
+    <div id="tunnel-warning-modal" class="modal-overlay">
+      <div class="modal-content tunnel-warning-content">
+        <div class="tunnel-warning-icon">
+          <i class="fas fa-plug-circle-exclamation"></i>
+        </div>
+        <h2>Service Disruption</h2>
+        <p>
+          Some features are temporarily unavailable. Our backend service is experiencing connectivity issues — live streaming, search suggestions, and syncing may not work as expected.
+        </p>
+        <p class="tunnel-subtext">
+          This is usually resolved automatically. Try refreshing in a few minutes, or continue browsing with limited functionality.
+        </p>
+        <div class="tunnel-warning-actions">
+          <button id="tunnel-refresh-btn" class="connect-button tunnel-refresh-btn">
+            <i class="fas fa-rotate-right"></i> Refresh Page
+          </button>
+          <button id="tunnel-dismiss-btn" class="tunnel-dismiss-btn">
+            Continue Anyway
+          </button>
+        </div>
       </div>
     </div>
 
@@ -2329,6 +2430,10 @@
               setTimeout(() => {
                 serverModal.classList.remove("active");
               }, 1000);
+              // Check tunnel health
+              if (data.tunnel_active === false) {
+                setTimeout(() => showTunnelWarning(), 1200);
+              }
               return true;
             }
           }
@@ -2352,6 +2457,18 @@
           }
         }
       });
+
+      function showTunnelWarning() {
+        const modal = document.getElementById("tunnel-warning-modal");
+        if (!modal) return;
+        modal.classList.add("active");
+        document.getElementById("tunnel-refresh-btn").addEventListener("click", () => {
+          window.location.reload();
+        });
+        document.getElementById("tunnel-dismiss-btn").addEventListener("click", () => {
+          modal.classList.remove("active");
+        });
+      }
 
       async function initApp() {
         const isDeployed = window.location.protocol.startsWith("http");

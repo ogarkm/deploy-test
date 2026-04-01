@@ -838,12 +838,19 @@ body {
   display: none; /* Hide the main title */
 }
 .episode-list.grid-view.thumbnails-hidden .episode-title-romanji {
-  font-size: 0.9rem; /* Match the desired font size */
+  display: none; /* Hide the "Episode X" romanji text in compact mode */
+}
+/* Episode number badge shown only in no-thumbnail tile mode */
+.episode-list.grid-view.thumbnails-hidden .ep-number-badge {
+  display: block;
+  font-size: 1rem;
+  font-weight: 800;
+  color: var(--text-primary);
   margin: 0;
-  white-space: nowrap;
-  display: block; /* Make the romanji title visible */
-  color: var(--text-primary); /* Ensure it's visible, not muted */
-  font-weight: 700; /* Make it bolder */
+  line-height: 1;
+}
+.ep-number-badge {
+  display: none; /* Hidden in all other modes */
 }
 .episode-list.grid-view.thumbnails-hidden .episode-progress-wrapper,
 .episode-list.grid-view.thumbnails-hidden .episode-action-buttons {
@@ -1239,6 +1246,17 @@ body {
 }
 .popup-close:hover { background: #fff; color: #000; transform: rotate(90deg) scale(1.1); }
 iframe { width: 100%; height: 100%; border: none; }
+
+/* Shrink player modal on 1080p / shorter screens */
+@media (max-height: 900px) and (min-width: 1024px) {
+  .episode-popup-content {
+    width: 88%;
+    max-width: 1200px;
+    aspect-ratio: unset;
+    height: 82vh;
+    max-height: 720px;
+  }
+}
 
 /* =========================================
    12. RX GATE MODAL (PHASE 1 MODERNIZATION)
@@ -1849,6 +1867,7 @@ iframe { width: 100%; height: 100%; border: none; }
         <div class="episode-info">
           <div class="episode-title">${ep.attributes.canonicalTitle || 'Episode ' + num}</div>
           <div class="episode-title-romanji">Episode ${num}</div>
+          <span class="ep-number-badge">${num}</span>
           ${progressHtml}
         </div>
         <div class="episode-action-buttons"><i class="fas ${isFinished ? 'fa-rotate-right' : 'fa-play'}"></i></div>

@@ -582,7 +582,6 @@ async def websocket_tunnel(websocket: WebSocket, token: str = Query(...)):
 
 # --- Core Endpoints ---
 
-
 # --- MISSING HELPERS & GRAPHQL QUERIES ---
 
 def _get_cover_url_from_manga(manga: Dict[str, Any]) -> Optional[str]:
@@ -666,6 +665,36 @@ async def proxy_image(url: str):
     res = await tunnel_request("GET", url)
     return Response(content=base64.b64decode(res["body"]), media_type=res["headers"].get("content-type"))
 
+
+# --- JIKAN METADATA & CACHING ---
+@app.get("/jikan/manga/{mal_id}/full")
+async def get_jikan_manga_full(mal_id: int):
+    cache_key = f"jikan_manga_full_{mal_id}"
+    
+    # Default valid 1 day TTL
+    cached = load_named_cache(cache_key, ttl=86400) 
+    if not cached:
+        # Check if there's a cache valid within 1 week (For Finished Series)
+        cached_week = load_named_cache(cache_key, ttl=604800)
+        if cached_week and cached_week.get("publishing") is False:
+            cached = cached_week
+
+    if cached:
+        return {"data": cached}
+
+    # Fetch from Jikan via tunnel/proxy if no valid cache
+    url = f"https://api.jikan.moe/v4/manga/{mal_id}/full"
+    r = await hybrid_client.get(url, timeout=15)
+    
+    if r.status_code != 200:
+        raise HTTPException(status_code=r.status_code, detail="Jikan API error")
+        
+    data = r.json().get("data", {})
+    save_named_cache(cache_key, data)
+    
+    return {"data": data}
+
+
 # --- MangaDex Tunnel Support ---
 MANGADEX_API_URL = "https://api.mangadex.org"
 
@@ -705,10 +734,27 @@ async def list_mangadex(
 
 @app.get("/mangadex/manga/{manga_id}")
 async def get_mangadex_manga_details(manga_id: str):
+    cache_key = f"mangadex_manga_{manga_id}"
+    
+    # Fast access caching
+    cached = load_named_cache(cache_key, ttl=86400)
+    if not cached:
+        cached_week = load_named_cache(cache_key, ttl=604800)
+        # Check MangaDex "status" string
+        if cached_week and cached_week.get("attributes", {}).get("status") in ["completed", "cancelled"]:
+            cached = cached_week
+
+    if cached:
+        if "image_url" not in cached:
+            cached["image_url"] = _get_cover_url_from_manga(cached)
+        return cached
+
     url = f"{MANGADEX_API_URL}/manga/{manga_id}?includes[]=cover_art&includes[]=author&includes[]=artist"
     res = await tunnel_request("GET", url)
     data = json.loads(base64.b64decode(res["body"])).get("data")
-    if data: data["image_url"] = _get_cover_url_from_manga(data)
+    if data: 
+        data["image_url"] = _get_cover_url_from_manga(data)
+        save_named_cache(cache_key, data)
     return data
 
 @app.get("/mangadex/manga/{manga_id}/chapters")
@@ -991,14 +1037,25 @@ async def get_manga_banner(mal_id: int, cover: bool = False):
 # --- RESTORED MODULE INTERFACING & DOWNLOADS ---
 
 @app.get("/chapters/{mal_id}")
-async def get_manga_chapters_module(mal_id: int):
+async def get_manga_chapters_module(mal_id: str, finished: bool = Query(False)):
+    cache_key = f"manga_chapters_{mal_id}"
+    
+    # Condition: 1 week (604800) if finished boolean passed by frontend, else 4 hours (14400)
+    ttl = 604800 if finished else 14400
+    
+    cached = load_named_cache(cache_key, ttl=ttl)
+    if cached:
+        return {"modules": cached}
+
     all_modules_results = {}
     
     for mid, mdata in loaded_modules.items():
         if module_states.get(mid) and "MANGA_READER" in mdata["info"].get("type",[]):
             try:
                 mdata["instance"].httpx = hybrid_client
-                chaps = await mdata["instance"].get_chapters(mal_id)
+                # Standard ID Parsing: Jikan IDs expect INT, UUIDs remain STR for Mangadex 
+                parsed_id = int(mal_id) if mal_id.isdigit() else mal_id
+                chaps = await mdata["instance"].get_chapters(parsed_id)
                 if chaps is not None:
                     all_modules_results[mid] = chaps
             except Exception as e:
@@ -1006,6 +1063,7 @@ async def get_manga_chapters_module(mal_id: int):
                 pass
                 
     if all_modules_results:
+        save_named_cache(cache_key, all_modules_results)
         return {"modules": all_modules_results}
         
     raise HTTPException(status_code=404, detail="No chapters found from any module")

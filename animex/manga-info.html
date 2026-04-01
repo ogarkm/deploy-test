@@ -154,7 +154,6 @@
         background-color: var(--brand-hover);
         transform: translateY(-2px);
       }
-      /* New Find Icon Button */
       .btn-icon-secondary {
         display: inline-flex;
         align-items: center;
@@ -697,7 +696,7 @@
 
         async function loadJikanMetadata() {
           const detRes = await fetch(
-            `https://api.jikan.moe/v4/manga/${state.mangaId}/full`,
+            `${serverUrl}/jikan/manga/${state.mangaId}/full`,
           );
           if (!detRes.ok) throw new Error("Jikan API Error");
           const data = (await detRes.json()).data;
@@ -740,7 +739,11 @@
 
         async function loadFusedChapters() {
           try {
-            const chRes = await fetch(`${serverUrl}/chapters/${state.mangaId}`);
+            const isFinished = state.mangaDetails && (
+              state.mangaDetails.status.toLowerCase() === "finished" || 
+              state.mangaDetails.status.toLowerCase() === "completed"
+            );
+            const chRes = await fetch(`${serverUrl}/chapters/${state.mangaId}?finished=${isFinished}`);
             if (!chRes.ok) return;
             const chData = await chRes.json();
             let modulesMap = chData.modules || {};
@@ -1023,7 +1026,7 @@
           }
         }
 
-        // --- New Logic: Find & Animate ---
+        // --- Logic: Find & Animate ---
         function findChapterInList(chapterNum) {
           // 1. Find index in currently filtered chapter list
           const index = state.chapters.findIndex(
