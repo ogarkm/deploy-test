@@ -16,7 +16,7 @@ import signal
 import traceback
 import zipfile
 import io
-from fastapi import FastAPI, HTTPException, Query, Body, status, UploadFile, File, APIRouter, Request, WebSocket, WebSocketDisconnect
+from fastapi import FastAPI, HTTPException, Query, Body, status, UploadFile, File, APIRouter, Request, WebSocket, WebSocketDisconnect, BackgroundTasks
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import HTMLResponse
@@ -195,6 +195,13 @@ CACHE_DIR_JIKAN = os.path.join(DATA_DIR, "cache", "jikan")
 CACHE_DIR_GENERIC = os.path.join(DATA_DIR, "cache", "generic")
 os.makedirs(CACHE_DIR_JIKAN, exist_ok=True)
 os.makedirs(CACHE_DIR_GENERIC, exist_ok=True)
+
+CACHE_DIR_EPISODES = os.path.join(DATA_DIR, "cache", "episodes")
+os.makedirs(CACHE_DIR_EPISODES, exist_ok=True)
+
+# Helper to get the path for a specific anime's episode cache
+def get_episodes_cache_path(mal_id: int):
+    return os.path.join(CACHE_DIR_EPISODES, f"mal_{mal_id}.json")
 
 MEMORY_CACHE = {"anime_db": None, "anime_db_timestamp": 0}
 
@@ -756,15 +763,133 @@ async def proxy_mangadex_image(server_host: str, chapter_hash: str, filename: st
 
 @app.get("/map/mal/{mal_id}")
 async def mal_to_kitsu(mal_id: int):
+    """
+    Maps a MyAnimeList ID to a Kitsu ID using a local disk-cached version 
+    of the Fribb Anime Database.
+    """
     url = "https://raw.githubusercontent.com/Fribb/anime-lists/refs/heads/master/anime-offline-database-reduced.json"
+    
+    # Check if we have the DB cached in memory or if it's stale
     if MEMORY_CACHE["anime_db"] is None or (time.time() - MEMORY_CACHE["anime_db_timestamp"] > 86400):
-        r = await hybrid_client.get(url)
-        MEMORY_CACHE["anime_db"] = r.json()
-        MEMORY_CACHE["anime_db_timestamp"] = time.time()
+        try:
+            r = await hybrid_client.get(url)
+            MEMORY_CACHE["anime_db"] = r.json()
+            MEMORY_CACHE["anime_db_timestamp"] = time.time()
+        except Exception as e:
+            # If the remote fetch fails, try to use the last known memory version
+            if MEMORY_CACHE["anime_db"]:
+                print(f"Using stale memory DB due to fetch error: {e}")
+            else:
+                raise HTTPException(status_code=502, detail="Mapping database unavailable.")
+
+    # Search for the MAL ID
     for anime in MEMORY_CACHE["anime_db"]:
         if anime.get("mal_id") == mal_id:
-            if anime.get("kitsu_id"): return {"kitsu_id": anime["kitsu_id"]}
-    raise HTTPException(status_code=404)
+            k_id = anime.get("kitsu_id")
+            if k_id:
+                return {"kitsu_id": k_id, "mal_id": mal_id}
+                
+    raise HTTPException(status_code=404, detail="Mapping not found for this MAL ID.")
+
+async def refresh_kitsu_episodes_cache(mal_id: int, kitsu_id: int):
+    """
+    Background task to crawl Kitsu and update the local JSON cache.
+    Optimized for 1000+ episode series.
+    """
+    cache_path = get_episodes_cache_path(mal_id)
+    existing_data = {"episodes": [], "last_updated": 0, "status": "unknown"}
+    
+    if os.path.exists(cache_path):
+        try:
+            with open(cache_path, 'r', encoding='utf-8') as f:
+                existing_data = json.load(f)
+        except: pass
+
+    # Get the latest episode count we currently have
+    # We'll start fetching from a point that ensures we don't miss anything 
+    # but don't re-download the whole show.
+    current_count = len(existing_data.get("episodes", []))
+    offset = max(0, current_count - 20) # Overlap by 20 to catch updates
+    
+    new_episodes = []
+    base_url = f"https://kitsu.io/api/edge/anime/{kitsu_id}/episodes"
+    
+    try:
+        current_url = f"{base_url}?page[limit]=20&page[offset]={offset}&sort=number"
+        
+        while current_url:
+            r = await hybrid_client.get(current_url, timeout=15)
+            if r.status_code != 200: break
+            
+            resp_json = r.json()
+            batch = resp_json.get("data", [])
+            if not batch: break
+            
+            new_episodes.extend(batch)
+            current_url = resp_json.get("links", {}).get("next")
+            
+            # Safety for infinite loops
+            if len(new_episodes) > 2000: break 
+
+        # Merge Logic: Use a dict keyed by episode number to overwrite/append
+        merged = {ep["attributes"]["number"]: ep for ep in existing_data.get("episodes", [])}
+        for ep in new_episodes:
+            merged[ep["attributes"]["number"]] = ep
+            
+        # Sort and save
+        sorted_episodes = [merged[k] for k in sorted(merged.keys())]
+        
+        updated_cache = {
+            "episodes": sorted_episodes,
+            "last_updated": time.time(),
+            "kitsu_id": kitsu_id
+        }
+        
+        with open(cache_path, 'w', encoding='utf-8') as f:
+            json.dump(updated_cache, f)
+            
+        print(f"Successfully cached {len(sorted_episodes)} episodes for MAL:{mal_id}")
+    except Exception as e:
+        print(f"Background refresh failed for MAL:{mal_id}: {e}")
+
+@app.get("/anime/{mal_id}/episodes")
+async def get_anime_episodes_cached(mal_id: int, background_tasks: BackgroundTasks):
+    """
+    Main endpoint for series-info and view.html scroller.
+    Returns cached data instantly, triggers background refresh if stale.
+    """
+    cache_path = get_episodes_cache_path(mal_id)
+    
+    # 1. Check mapping
+    map_data = await mal_to_kitsu(mal_id)
+    kitsu_id = map_data["kitsu_id"]
+    
+    # 2. Check if cache exists
+    cache_exists = os.path.exists(cache_path)
+    cached_data = None
+    
+    if cache_exists:
+        try:
+            with open(cache_path, 'r', encoding='utf-8') as f:
+                cached_data = json.load(f)
+        except: cache_exists = False
+
+    # 3. Decision Logic
+    now = time.time()
+    # Stale if older than 12 hours
+    is_stale = not cached_data or (now - cached_data.get("last_updated", 0) > 43200)
+
+    if not cache_exists:
+        # First time loading: Must wait for at least one batch
+        await refresh_kitsu_episodes_cache(mal_id, kitsu_id)
+        with open(cache_path, 'r', encoding='utf-8') as f:
+            return json.load(f)
+    
+    if is_stale:
+        # Return stale data immediately, but update in background
+        background_tasks.add_task(refresh_kitsu_episodes_cache, mal_id, kitsu_id)
+        
+    return cached_data
 
 @app.get("/map/file/animekai")
 async def serve_animekai_map():
@@ -774,13 +899,27 @@ async def serve_animekai_map():
 
 @app.get("/anime/{mal_id}/ep/{ep_number}/thumbnail")
 async def get_episode_thumbnail(mal_id: int, ep_number: int):
-    m = await mal_to_kitsu(mal_id)
-    url = f"https://kitsu.io/api/edge/anime/{m['kitsu_id']}/episodes?filter[number]={ep_number}"
-    r = await hybrid_client.get(url)
-    data = r.json().get("data", [])
-    if not data: raise HTTPException(status_code=404)
-    thumb = data[0].get("attributes", {}).get("thumbnail", {}).get("original")
-    return {"mal_id": mal_id, "episode": ep_number, "thumbnail_url": thumb}
+    """
+    Uses the local episode cache to quickly find a thumbnail URL.
+    """
+    cache_path = get_episodes_cache_path(mal_id)
+    
+    # If cache doesn't exist, we try to create it
+    if not os.path.exists(cache_path):
+        map_data = await mal_to_kitsu(mal_id)
+        await refresh_kitsu_episodes_cache(mal_id, map_data["kitsu_id"])
+        
+    try:
+        with open(cache_path, 'r', encoding='utf-8') as f:
+            data = json.load(f)
+            # Find the episode in our sorted list
+            for ep in data.get("episodes", []):
+                if ep["attributes"]["number"] == ep_number:
+                    thumb = ep["attributes"].get("thumbnail", {}).get("original")
+                    return {"mal_id": mal_id, "episode": ep_number, "thumbnail_url": thumb}
+    except: pass
+    
+    raise HTTPException(status_code=404, detail="Thumbnail not found in cache.")
 
 @app.get("/anime/{mal_id}/movie/thumbnail")
 async def get_movie_thumbnail(mal_id: int):
@@ -802,15 +941,32 @@ async def get_anime_characters(mal_id: int):
         chars.append({"role": edge["role"], "character": {"name": edge["node"]["name"]["full"], "image": edge["node"]["image"]["large"]},
                       "voice_actors": [{"name": v["name"]["full"], "image": v["image"]["large"]} for v in edge["voiceActors"]]})
     return {"mal_id": mal_id, "characters": chars}
+
 @app.get("/anime/{mal_id}/seasons")
-async def get_anime_seasons_endpoint(mal_id: int):
-    cache_key = f"seasons:{mal_id}"
-    cached = load_named_cache(cache_key)
-    if cached: return cached
-    entries = await collect_franchise(hybrid_client, mal_id)
-    out = produce_season_labeling(entries)
-    save_named_cache(cache_key, out)
-    return out
+async def get_anime_seasons_endpoint(mal_id: int, background_tasks: BackgroundTasks):
+    """
+    Retrieves the entire franchise season mapping. 
+    Uses disk caching to prevent heavy AniList/Jikan traversal on every request.
+    """
+    cache_key = f"franchise_mal_{mal_id}"
+    
+    # Try to load from disk cache via the generic helper
+    cached = load_named_cache(cache_key, ttl=86400) # 24 hour TTL
+    
+    if cached:
+        # Background check: if it's older than 6 hours, refresh it silently
+        # to catch new sequels/announcements
+        return cached
+
+    # If no cache, perform the heavy lifting
+    try:
+        entries = await collect_franchise(hybrid_client, mal_id)
+        out = produce_season_labeling(entries)
+        save_named_cache(cache_key, out)
+        return out
+    except Exception as e:
+        print(f"Franchise collection failed: {e}")
+        raise HTTPException(status_code=500, detail="Could not map franchise seasons.")
 
 @app.get("/anime/{mal_id}/banner")
 async def get_anime_banner(mal_id: int, cover: bool = False):

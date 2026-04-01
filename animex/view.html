@@ -1,611 +1,965 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover" />
-  <title>Episode Player</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"/>
-  <style>
-    :root {
-      --accent-color: #FF9500;
-      --background-color: #0A0A0A;
-      --surface-color: #141414;
-      --text-primary: #FFFFFF;
-      --text-secondary: #A0A0A0;
-      --border-color: rgba(255, 255, 255, 0.1);
-      --indicator-left: 4px;
-      --indicator-width: 0px;
-    }
-    html, body {
-      margin: 0;
-      padding: 0;
-      height: 100%;
-      width: 100%;
-      background: var(--background-color);
-      font-family: 'Inter', sans-serif;
-      color: var(--text-primary);
-      -webkit-tap-highlight-color: transparent;
-      overscroll-behavior-y: contain;
-    }
-    body {
-      display: flex;
-      flex-direction: column;
-      overflow-x: hidden;
-    }
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover"
+    />
+    <title>Episode Player - Animex</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"
+    />
+    <style>
+      :root {
+        --accent-color: #ff9500;
+        --accent-glow: rgba(255, 149, 0, 0.3);
+        --background-color: #0a0a0a;
+        --surface-color: #141414;
+        --surface-lighter: #1e1e1e;
+        --text-primary: #ffffff;
+        --text-secondary: #a0a0a0;
+        --border-color: rgba(255, 255, 255, 0.08);
+        --indicator-left: 4px;
+        --indicator-width: 0px;
+        --player-aspect: 16 / 9;
+      }
 
-    /* --- Loading Screen --- */
-    #loading-container {
-      position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
-      z-index: 200; background-color: #000; background-size: cover;
-      background-position: center; display: flex; align-items: flex-end;
-      justify-content: center; transition: opacity 0.3s ease;
-    }
-    #loading-container::before {
-      content: ''; position: absolute; top: 0; left: 0; width: 100%;
-      height: 100%; background: linear-gradient(to top, rgba(0,0,0,1) 20%, rgba(0,0,0,0.5) 50%, rgba(0,0,0,0) 100%);
-    }
-    #loading-info {
-      position: relative; text-align: left; padding: 1.5rem 1.5rem 3rem;
-      max-width: 90%; max-height: 50%; overflow-y: auto; box-sizing: border-box;
-    }
-    #loading-info h2 { margin: 0 0 0.5rem 0; font-size: 1.5rem; }
-    #loading-info p { margin: 0; font-size: 0.9rem; color: var(--text-secondary); line-height: 1.5; }
-    .loader-spinner {
-      border: 4px solid rgba(255, 255, 255, 0.2); border-radius: 50%;
-      border-top: 4px solid var(--accent-color); width: 40px; height: 40px;
-      animation: spin 1s linear infinite; position: absolute; top: 50%; left: 50%;
-      transform: translate(-50%, -50%);
-    }
-    @keyframes spin { 100% { transform: translate(-50%, -50%) rotate(360deg); } }
+      * {
+        box-sizing: border-box;
+      }
 
-    /* --- Player & Content --- */
-    #player-container {
-      width: 100%;
-      aspect-ratio: 16 / 9;
-      background: #000;
-      flex-shrink: 0;
-      position: relative;
-    }
-    #player-container iframe {
-      width: 100%; height: 100%; border: none; background: #111;
-    }
-    #error-message {
-      color: #ff6b6b; text-align: center; padding: 2rem 1rem; font-size: 1.1rem;
-      display: flex; align-items: center; justify-content: center; height: 100%;
-    }
+      html,
+      body {
+        margin: 0;
+        padding: 0;
+        height: 100%;
+        width: 100%;
+        background: var(--background-color);
+        font-family: "Inter", sans-serif;
+        color: var(--text-primary);
+        -webkit-tap-highlight-color: transparent;
+        overflow-x: hidden;
+      }
 
-    #content-container {
-      flex-grow: 1;
-      padding: 1rem 1.2rem;
-      background: var(--background-color);
-      display: flex;
-      flex-direction: column;
-      gap: 1rem;
-    }
+      body {
+        display: flex;
+        flex-direction: column;
+      }
 
-    /* --- Header Info --- */
-    #header-info {
-      text-align: left;
-    }
-    #series-title { font-size: 1.3rem; font-weight: 700; line-height: 1.3; }
-    #meta-line { font-size: 0.9rem; color: var(--text-secondary); margin-top: 0.25rem; }
+      /* --- Phase 6: Dynamic Ambient Glow --- */
+      #ambient-glow {
+        position: absolute;
+        top: 0;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 100%;
+        height: 60vh;
+        background: radial-gradient(
+          circle at center,
+          var(--accent-glow) 0%,
+          transparent 70%
+        );
+        filter: blur(80px);
+        z-index: -1;
+        opacity: 0.6;
+        pointer-events: none;
+        transition: background 1s ease;
+      }
 
-    /* --- Controls --- */
-    #controls-main {
-      display: grid;
-      grid-template-columns: 1fr auto auto;
-      gap: 0.8rem;
-      align-items: center;
-    }
-    .control-btn {
-      background: var(--surface-color);
-      border: 1px solid var(--border-color);
-      color: var(--text-secondary);
-      border-radius: 12px;
-      padding: 12px;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      transition: background 0.2s, color 0.2s;
-      height: 44px; /* Match height of other controls */
-      width: 44px;
-    }
-    .control-btn:hover {
-      background: var(--border-color);
-      color: var(--text-primary);
-    }
-    #source-controls {
-      display: flex;
-      background-color: var(--surface-color);
-      border-radius: 12px;
-      padding: 5px;
-      border: 1px solid var(--border-color);
-      gap: 5px;
-    }
+      /* --- Loading Screen --- */
+      #loading-container {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        z-index: 200;
+        background-color: #000;
+        background-size: cover;
+        background-position: center;
+        display: flex;
+        align-items: flex-end;
+        justify-content: center;
+        transition: opacity 0.5s ease;
+      }
+      #loading-container::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(
+          to top,
+          rgba(0, 0, 0, 1) 10%,
+          rgba(0, 0, 0, 0.4) 100%
+        );
+      }
+      #loading-info {
+        position: relative;
+        text-align: left;
+        padding: 3rem 1.5rem;
+        width: 100%;
+        max-width: 800px;
+        z-index: 201;
+      }
+      #loading-info h2 {
+        margin: 0 0 0.5rem 0;
+        font-size: 2rem;
+        font-weight: 800;
+        letter-spacing: -0.02em;
+      }
+      #loading-info p {
+        margin: 0;
+        font-size: 1rem;
+        color: var(--text-secondary);
+        line-height: 1.6;
+        display: -webkit-box;
+        -webkit-line-clamp: 3;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+      }
 
-    /* SUB/DUB Toggle */
-    .subdub-toggle {
-      position: relative; display: flex;
-      list-style: none; margin: 0; padding: 0;
-      flex-grow: 1;
-    }
-    .subdub-toggle::before {
-      content: ''; position: absolute; top: 0; left: var(--indicator-left);
-      width: var(--indicator-width); height: 100%;
-      background: var(--accent-color);
-      border-radius: 8px;
-      z-index: 1;
-      transition: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
-    }
-    .subdub-btn {
-      position: relative; /* Ensure z-index stacking context */
-      background: none; border: none; color: var(--text-secondary);
-      font-size: 0.9em; font-weight: 600;
-      padding: 8px 16px; /* Add horizontal padding for spacing */
-      border-radius: 8px; cursor: pointer;
-      outline: none; z-index: 2; transition: color 0.3s ease;
-      flex-grow: 1; text-align: center;
-    }
-    .subdub-btn.active { color: var(--text-primary); }
+      .loader-spinner {
+        border: 3px solid rgba(255, 255, 255, 0.1);
+        border-radius: 50%;
+        border-top: 3px solid var(--accent-color);
+        width: 50px;
+        height: 50px;
+        animation: spin 0.8s cubic-bezier(0.5, 0, 0.5, 1) infinite;
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+      }
+      @keyframes spin {
+        100% {
+          transform: translate(-50%, -50%) rotate(360deg);
+        }
+      }
 
-    /* Source Selector */
-    .source-selector-wrapper {
-      position: relative;
-      flex-grow: 1;
-    }
-    #source-changer-select {
-      width: 100%;
-      background-color: transparent;
-      color: var(--text-primary);
-      border: none;
-      border-radius: 8px;
-      padding: 8px 28px 8px 12px;
-      font-size: 0.9em;
-      font-weight: 600;
-      font-family: 'Inter', sans-serif;
-      -webkit-appearance: none;
-      appearance: none;
-      cursor: pointer;
-      text-align: center;
-      text-align-last: center; /* For Firefox */
-    }
-    .source-selector-wrapper::after {
-      content: '';
-      position: absolute;
-      right: 10px;
-      top: 50%;
-      transform: translateY(-50%);
-      width: 0;
-      height: 0;
-      border-left: 5px solid transparent;
-      border-right: 5px solid transparent;
-      border-top: 5px solid var(--text-secondary);
-      pointer-events: none;
-    }
-    #source-changer-select:focus { outline: none; }
+      /* --- Player Section --- */
+      #player-wrapper {
+        position: relative;
+        width: 100%;
+        max-width: 1400px;
+        margin: 0 auto;
+        z-index: 10;
+        padding: 0;
+      }
 
-    /* Next Episode Button */
-    #next-episode-btn {
-      display: block; background: var(--accent-color); color: #fff;
-      font-weight: 600; font-size: 0.95em; border: none; border-radius: 12px;
-      padding: 12px 20px; cursor: pointer; transition: background 0.2s;
-      white-space: nowrap;
-    }
-    #next-episode-btn:hover { background: #e6850a; }
-    #series-over-msg {
-      text-align: center; font-weight: 600; font-size: 0.95em;
-      color: var(--accent-color); opacity: 0.8; padding: 12px 0;
-    }
-
-    /* Synopsis */
-    #synopsis-container {
-      margin-top: 0.5rem;
-    }
-    #synopsis-container h4 {
-      margin: 0 0 0.5rem 0; font-weight: 600; opacity: 0.9;
-    }
-    #synopsis-container p {
-      font-size: 0.9em; line-height: 1.6; color: var(--text-secondary); margin: 0;
-    }
-
-    /* --- Landscape Mode --- */
-    @media (orientation: landscape) and (max-height: 600px) {
-      body { flex-direction: row; }
       #player-container {
-        width: 100vw; height: 100vh;
-        position: fixed; top: 0; left: 0; z-index: 100;
+        width: 100%;
+        aspect-ratio: var(--player-aspect);
+        background: #000;
+        box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+        position: relative;
+        overflow: hidden;
       }
-      #content-container {
-        display: none; /* Hide by default in landscape */
+
+      #player-container iframe {
+        width: 100%;
+        height: 100%;
+        border: none;
+        background: #000;
       }
-      /* Add specific landscape controls if needed, or rely on player's native controls */
-    }
-  </style>
-</head>
-<body>
 
-  <div id="loading-container">
-    <div class="loader-spinner"></div>
-    <div id="loading-info">
-      <h2 id="loading-title">—</h2>
-      <p id="loading-synopsis">—</p>
-    </div>
-  </div>
+      /* --- Content Layout --- */
+      #main-content {
+        flex-grow: 1;
+        width: 100%;
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: 1.5rem;
+        display: flex;
+        flex-direction: column;
+        gap: 2rem;
+      }
 
-  <div id="player-container"></div>
+      /* --- Header & Controls --- */
+      #header-info {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+      }
+      #series-title {
+        font-size: 1.8rem;
+        font-weight: 800;
+        letter-spacing: -0.03em;
+      }
+      #meta-line {
+        font-size: 0.95rem;
+        color: var(--text-secondary);
+        font-weight: 500;
+      }
+      #meta-line span {
+        color: var(--text-primary);
+      }
 
-  <div id="content-container">
-    <div id="header-info">
-      <div id="series-title">—</div>
-      <div id="meta-line">
-        <span>Type: <span id="series-type">—</span></span> |
-        <span>Year: <span id="series-year">—</span></span> |
-        <span>Episode: <span id="episode-number">—</span></span>
+      #controls-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 1rem;
+        align-items: center;
+        justify-content: space-between;
+      }
+
+      #source-controls {
+        display: flex;
+        background-color: var(--surface-color);
+        border-radius: 14px;
+        padding: 4px;
+        border: 1px solid var(--border-color);
+        gap: 4px;
+      }
+
+      /* SUB/DUB Toggle */
+      .subdub-toggle {
+        position: relative;
+        display: flex;
+        list-style: none;
+        margin: 0;
+        padding: 0;
+      }
+      .subdub-toggle::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: var(--indicator-left);
+        width: var(--indicator-width);
+        height: 100%;
+        background: var(--accent-color);
+        border-radius: 10px;
+        z-index: 1;
+        transition: all 0.3s cubic-bezier(0.23, 1, 0.32, 1);
+      }
+      .subdub-btn {
+        position: relative;
+        background: none;
+        border: none;
+        color: var(--text-secondary);
+        font-size: 0.85rem;
+        font-weight: 700;
+        padding: 10px 20px;
+        border-radius: 10px;
+        cursor: pointer;
+        z-index: 2;
+        transition: color 0.2s;
+      }
+      .subdub-btn.active {
+        color: #000;
+      }
+
+      /* Source Selector */
+      .source-selector-wrapper {
+        position: relative;
+        border-left: 1px solid var(--border-color);
+        margin-left: 4px;
+        padding-left: 4px;
+      }
+      #source-changer-select {
+        background: transparent;
+        color: var(--text-primary);
+        border: none;
+        padding: 10px 30px 10px 15px;
+        font-size: 0.85rem;
+        font-weight: 700;
+        cursor: pointer;
+        appearance: none;
+      }
+      .source-selector-wrapper::after {
+        content: "\f078";
+        font-family: "Font Awesome 6 Free";
+        font-weight: 900;
+        position: absolute;
+        right: 12px;
+        top: 50%;
+        transform: translateY(-50%);
+        font-size: 0.7rem;
+        color: var(--text-secondary);
+        pointer-events: none;
+      }
+
+      .icon-btn {
+        background: var(--surface-color);
+        border: 1px solid var(--border-color);
+        color: var(--text-primary);
+        width: 44px;
+        height: 44px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: all 0.2s;
+      }
+      .icon-btn:hover {
+        background: var(--surface-lighter);
+        transform: translateY(-2px);
+      }
+
+      /* --- Phase 5: Episode Scroller --- */
+      .scroller-section {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+        margin-top: 1rem;
+      }
+      .scroller-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+      .scroller-header h3 {
+        margin: 0;
+        font-size: 1.1rem;
+        font-weight: 700;
+        color: var(--text-secondary);
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+      }
+
+      .episode-scroller {
+        display: flex;
+        gap: 12px;
+        overflow-x: auto;
+        padding: 10px 0 20px 0;
+        scroll-behavior: smooth;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none; /* Firefox */
+      }
+      .episode-scroller::-webkit-scrollbar {
+        display: none;
+      } /* Chrome/Safari */
+
+      .ep-card {
+        flex: 0 0 220px;
+        background: var(--surface-color);
+        border-radius: 12px;
+        border: 1px solid var(--border-color);
+        overflow: hidden;
+        cursor: pointer;
+        transition: all 0.3s cubic-bezier(0.23, 1, 0.32, 1);
+        position: relative;
+      }
+      .ep-card:hover {
+        transform: translateY(-5px);
+        border-color: rgba(255, 255, 255, 0.2);
+      }
+
+      .ep-card.active {
+        border-color: var(--accent-color);
+        background: #1a1510;
+        box-shadow: 0 0 20px rgba(255, 149, 0, 0.15);
+      }
+
+      .ep-card-thumb {
+        width: 100%;
+        aspect-ratio: 16/9;
+        background: var(--surface-color);
+        position: relative;
+      }
+      .ep-card-thumb img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        opacity: 0.7;
+        transition: opacity 0.3s;
+      }
+      .ep-card:hover .ep-card-thumb img {
+        opacity: 1;
+      }
+      .ep-card.active .ep-card-thumb img {
+        opacity: 1;
+      }
+
+      .ep-card.active .ep-card-thumb::after {
+        background: var(--accent-color);
+      }
+
+      .ep-card-info {
+        padding: 12px;
+      }
+      .ep-card-number {
+        font-size: 0.7rem;
+        font-weight: 800;
+        color: var(--accent-color);
+        text-transform: uppercase;
+        margin-bottom: 4px;
+      }
+      .ep-card-title {
+        font-size: 0.85rem;
+        font-weight: 600;
+        color: #fff;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+
+      /* Now Playing Badge */
+      .now-playing-badge {
+        position: absolute;
+        top: 8px;
+        right: 8px;
+        background: var(--accent-color);
+        color: #000;
+        font-size: 0.6rem;
+        font-weight: 900;
+        padding: 4px 8px;
+        border-radius: 6px;
+        text-transform: uppercase;
+      }
+
+      /* Phase 5: Cross-Season Boundary Cards */
+      .boundary-card {
+        flex: 0 0 220px;
+        background: linear-gradient(135deg, #1a1a1a 0%, #0d0d0d 100%);
+        border: 1px dashed var(--border-color);
+        border-radius: 12px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+        padding: 20px;
+        gap: 10px;
+        cursor: pointer;
+        transition: all 0.2s;
+      }
+      .boundary-card:hover {
+        border-color: var(--accent-color);
+        background: #141414;
+      }
+      .boundary-card i {
+        font-size: 1.5rem;
+        color: var(--accent-color);
+      }
+      .boundary-label {
+        font-size: 0.7rem;
+        font-weight: 700;
+        color: var(--text-secondary);
+        text-transform: uppercase;
+      }
+      .boundary-title {
+        font-size: 0.85rem;
+        font-weight: 600;
+        color: #fff;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+      }
+
+      /* Synopsis Section */
+      #synopsis-container {
+        background: var(--surface-color);
+        padding: 1.5rem;
+        border-radius: 16px;
+        border: 1px solid var(--border-color);
+      }
+      #synopsis-container h4 {
+        margin: 0 0 0.8rem 0;
+        font-size: 1rem;
+        font-weight: 700;
+      }
+      #synopsis-container p {
+        font-size: 0.95rem;
+        line-height: 1.7;
+        color: var(--text-secondary);
+        margin: 0;
+      }
+
+      @media (max-width: 768px) {
+        #main-content {
+          padding: 1rem;
+        }
+        #series-title {
+          font-size: 1.4rem;
+        }
+        #controls-row {
+          flex-direction: column;
+          align-items: stretch;
+        }
+        .source-selector-wrapper {
+          flex-grow: 1;
+        }
+        #source-changer-select {
+          width: 100%;
+        }
+        .ep-card {
+          flex: 0 0 180px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div id="ambient-glow"></div>
+
+    <div id="loading-container">
+      <div class="loader-spinner"></div>
+      <div id="loading-info">
+        <h2 id="loading-title">Preparing Stream</h2>
+        <p id="loading-synopsis">
+          Hang tight, we're fetching the best available sources for you...
+        </p>
       </div>
     </div>
 
-    <div id="controls-main">
-      <div id="source-controls">
-        <ul class="subdub-toggle" id="subdub-toggle">
-          <li><button class="subdub-btn active" id="sub-option-btn" type="button">SUB</button></li>
-          <li><button class="subdub-btn" id="dub-option-btn" type="button">DUB</button></li>
-        </ul>
-        <div class="source-selector-wrapper">
-          <select id="source-changer-select" name="source-changer"></select>
+    <div id="player-wrapper">
+      <div id="player-container"></div>
+    </div>
+
+    <div id="main-content">
+      <div id="header-info">
+        <div id="series-title">—</div>
+        <div id="meta-line">
+          <span id="series-type">—</span> &bull;
+          <span id="series-year">—</span><span id="episode-meta-part"> &bull; Episode
+          <span id="episode-number">—</span></span>
         </div>
       </div>
-      <button id="reload-iframe-btn" class="control-btn" title="Reload Player">
-        <i class="fas fa-sync-alt"></i>
-      </button>
-      <div id="next-episode-container"></div>
+
+      <div id="controls-row">
+        <div id="source-controls">
+          <ul class="subdub-toggle" id="subdub-toggle">
+            <li>
+              <button class="subdub-btn active" id="sub-option-btn">SUB</button>
+            </li>
+            <li><button class="subdub-btn" id="dub-option-btn">DUB</button></li>
+          </ul>
+          <div class="source-selector-wrapper">
+            <select id="source-changer-select"></select>
+          </div>
+        </div>
+
+        <div style="display: flex; gap: 10px">
+          <button id="reload-btn" class="icon-btn" title="Refresh Source">
+            <i class="fas fa-redo-alt"></i>
+          </button>
+          <button id="fullscreen-player-btn" class="icon-btn">
+            <i class="fas fa-expand"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- Phase 5: Episode Scroller Section -->
+      <div class="scroller-section">
+        <div class="scroller-header">
+          <h3>Episodes</h3>
+          <div
+            id="scroller-count"
+            style="
+              font-size: 0.8rem;
+              font-weight: 700;
+              color: var(--text-secondary);
+            "
+          ></div>
+        </div>
+        <div class="episode-scroller" id="episode-scroller">
+          <!-- Episodes & Boundary cards injected here -->
+        </div>
+      </div>
+
+      <div id="synopsis-container">
+        <h4>Episode Description</h4>
+        <p id="synopsis-text">No description available.</p>
+      </div>
     </div>
 
-    <div id="synopsis-container">
-      <h4>Synopsis</h4>
-      <p id="synopsis-text">—</p>
-    </div>
-  </div>
-
-  <script>
-    document.addEventListener('DOMContentLoaded', async () => {
+    <script>
       const params = new URLSearchParams(window.location.search);
-      const jikanId = params.get('id');
-      const episode = params.get('ep');
+      const jikanId = params.get("id");
+      const currentEp = parseInt(params.get("ep"));
 
-      // DOM Elements
-      const playerContainer = document.getElementById('player-container');
-      const loadingContainer = document.getElementById('loading-container');
-      const subOptionBtn = document.getElementById('sub-option-btn');
-      const dubOptionBtn = document.getElementById('dub-option-btn');
-      const sourceChangerSelect = document.getElementById('source-changer-select');
-      const nextEpisodeContainer = document.getElementById('next-episode-container');
-      const synopsisText = document.getElementById('synopsis-text');
+      const DOM = {
+        player: document.getElementById("player-container"),
+        loading: document.getElementById("loading-container"),
+        subBtn: document.getElementById("sub-option-btn"),
+        dubBtn: document.getElementById("dub-option-btn"),
+        sourceSelect: document.getElementById("source-changer-select"),
+        scroller: document.getElementById("episode-scroller"),
+        title: document.getElementById("series-title"),
+        type: document.getElementById("series-type"),
+        year: document.getElementById("series-year"),
+        epNum: document.getElementById("episode-number"),
+        synopsis: document.getElementById("synopsis-text"),
+        glow: document.getElementById("ambient-glow"),
+      };
 
-      // App State
-      const serverIp = localStorage.getItem('extension_server_ip');
-      const profileId = localStorage.getItem("currentProfileId");
-      let currentProfile = null;
-      let userPref = localStorage.getItem('animeDubPref') || 'sub';
-      let currentModule = 'default';
-      let fetchedAnimeData = null; // Declare here to make it accessible
+      let userPref = localStorage.getItem("animeDubPref") || "sub";
+      let currentModule = "default";
+      let cachedAnimeData = null;
 
-      // --- Main Initialization ---
-      try {
-        // Initial Checks
-        if (!jikanId || !episode) {
-          throw new Error('Missing "id" or "ep" parameter.');
-        }
-        if (!serverIp) {
-          throw new Error('Extension server IP not set. Please configure it.');
-        }
+      document.addEventListener("DOMContentLoaded", async () => {
+        if (!jikanId || !currentEp) return;
 
-        loadingContainer.style.display = 'flex';
+        setupUI();
+        await initialize();
+      });
 
-        await fetchProfile();
-        fetchedAnimeData = await fetchAnimeData(); // Assign to the new variable
-        updateUI(fetchedAnimeData);
-        await logWatchHistory(jikanId, episode, fetchedAnimeData.title);
-        await populateSourceChanger();
-
-        if (userPref === 'dub') {
-          dubOptionBtn.classList.add('active');
-          subOptionBtn.classList.remove('active');
-        } else {
-          subOptionBtn.classList.add('active');
-          dubOptionBtn.classList.remove('active');
-        }
-
-        await loadIframe(userPref === 'dub', currentModule, fetchedAnimeData); // Pass fetchedAnimeData
-        setupEventListeners();
-        setTimeout(moveActiveIndicator, 150);
-
-      } catch (error) {
-        console.error("A critical error occurred during initialization:", error);
-        loadingContainer.style.display = 'none';
-        playerContainer.innerHTML = `<div id="error-message">Failed to load player: ${error.message}</div>`;
-      }
-
-
-      // --- Functions ---
-
-      async function fetchProfile() {
-        if (!profileId) return;
+      async function initialize() {
         try {
-          const response = await fetch(`/profiles/${profileId}`);
-          if (response.ok) currentProfile = await response.json();
-          else console.warn("Could not load active profile.");
+          // 1. Get Core Anime Info (Fast)
+          cachedAnimeData = await fetchAnimeMetadata();
+          renderMetadata(cachedAnimeData);
+
+          // 2. Load Streaming Content
+          await populateSources();
+          await loadPlayer(userPref === "dub", currentModule);
+
+          // 3. Load Scroller (Phase 5)
+          await loadEpisodeScroller();
+
+          // 4. Log progress
+          logProgress();
         } catch (e) {
-          console.error("Error fetching profile:", e);
+          console.error("Init Error:", e);
+          DOM.loading.style.display = "none";
+          DOM.player.innerHTML = `<div style="padding: 40px; text-align: center; color: #ff6b6b;">Failed to load data: ${e.message}</div>`;
         }
       }
 
-      async function logWatchHistory(malId, episodeNumber, seriesTitle) {
-        if (!currentProfile || !seriesTitle || seriesTitle === 'Unknown') return;
-        const query = new URLSearchParams({
-          mal_id: malId,
-          episode_number: episodeNumber,
-          series_title: seriesTitle,
-          season_number: 1,
-        });
+      function setupUI() {
+        // Toggle handling
+        DOM.subBtn.onclick = () => switchPref("sub");
+        DOM.dubBtn.onclick = () => switchPref("dub");
+
+        if (userPref === "dub") {
+          DOM.subBtn.classList.remove("active");
+          DOM.dubBtn.classList.add("active");
+        }
+        updateIndicator();
+
+        DOM.sourceSelect.onchange = () => {
+          currentModule = DOM.sourceSelect.value;
+          loadPlayer(userPref === "dub", currentModule);
+        };
+
+        document.getElementById("reload-btn").onclick = () =>
+          loadPlayer(userPref === "dub", currentModule);
+        document.getElementById("fullscreen-player-btn").onclick = () =>
+          DOM.player.requestFullscreen();
+      }
+
+      function switchPref(p) {
+        if (userPref === p) return;
+        userPref = p;
+        localStorage.setItem("animeDubPref", p);
+        DOM.subBtn.classList.toggle("active");
+        DOM.dubBtn.classList.toggle("active");
+        updateIndicator();
+        loadPlayer(userPref === "dub", currentModule);
+      }
+
+      function updateIndicator() {
+        const active = document.querySelector(".subdub-btn.active");
+        if (active) {
+          const rect = active.getBoundingClientRect();
+          const parentRect = document
+            .getElementById("subdub-toggle")
+            .getBoundingClientRect();
+          document.documentElement.style.setProperty(
+            "--indicator-left",
+            rect.left - parentRect.left + "px",
+          );
+          document.documentElement.style.setProperty(
+            "--indicator-width",
+            rect.width + "px",
+          );
+        }
+      }
+
+      async function fetchAnimeMetadata() {
+        // Fetch from Jikan first for title
+        const res = await fetch(`https://api.jikan.moe/v4/anime/${jikanId}`);
+        const info = (await res.json()).data;
+
+        // Fetch Kitsu for richer assets and synopsis
+        let kitsuData = null;
         try {
-          await fetch(`/profiles/${currentProfile.id}/watch-history?${query.toString()}`, { method: 'POST' });
-          console.log(`Logged watch history for Ep. ${episodeNumber}.`);
-        } catch (error) {
-          console.error("Failed to log watch history:", error);
+          const mapRes = await fetch(`/map/mal/${jikanId}`);
+          const map = await mapRes.json();
+          const kitsuRes = await fetch(
+            `https://kitsu.io/api/edge/anime/${map.kitsu_id}?include=episodes`,
+          );
+          kitsuData = await kitsuRes.json();
+        } catch (e) {}
+
+        return {
+          title: info.title_english || info.title,
+          type: info.type,
+          year: info.year || info.aired?.prop?.from?.year,
+          synopsis: info.synopsis,
+          kitsu: kitsuData,
+          poster: info.images.jpg.large_image_url,
+        };
+      }
+
+      function renderMetadata(data) {
+        const isMovie = data.type === "Movie";
+
+        DOM.title.textContent = data.title;
+        DOM.type.textContent = data.type;
+        DOM.year.textContent = data.year;
+
+        document.getElementById("loading-title").textContent = data.title;
+
+        // For movies, hide the "Episode X" part of the meta line
+        const episodePart = document.getElementById("episode-meta-part");
+        if (episodePart) episodePart.style.display = isMovie ? "none" : "";
+        DOM.epNum.textContent = currentEp;
+
+        // For movies, hide the episode scroller section entirely
+        const scrollerSection = document.querySelector(".scroller-section");
+        if (scrollerSection) scrollerSection.style.display = isMovie ? "none" : "";
+
+        // For movies, rename synopsis heading and default text
+        const synopsisHeading = document.querySelector("#synopsis-container h4");
+        if (synopsisHeading) synopsisHeading.textContent = isMovie ? "Synopsis" : "Episode Description";
+        if (isMovie) {
+          DOM.synopsis.textContent = data.synopsis || "No description available.";
+          document.getElementById("loading-synopsis").textContent = DOM.synopsis.textContent;
+        }
+
+        let episodeThumbnail = data.poster; // Default to series poster
+        if (data.kitsu) {
+          const epAttr = data.kitsu.included?.find(
+            (i) => i.attributes?.number == currentEp,
+          );
+          if (epAttr && epAttr.attributes.thumbnail?.original) {
+            episodeThumbnail = `/proxy-image?url=${encodeURIComponent(epAttr.attributes.thumbnail.original)}`;
+          }
+        }
+        DOM.loading.style.backgroundImage = `url(${episodeThumbnail})`;
+
+        // Try to find specific episode synopsis (only for non-movies)
+        if (!isMovie && data.kitsu) {
+          const epAttr = data.kitsu.included?.find(
+            (i) => i.attributes?.number == currentEp,
+          );
+          if (epAttr) {
+            DOM.synopsis.textContent =
+              epAttr.attributes.synopsis ||
+              epAttr.attributes.description ||
+              data.synopsis;
+            document.getElementById("loading-synopsis").textContent =
+              DOM.synopsis.textContent;
+          }
         }
       }
 
-      function moveActiveIndicator() {
-        const activeButton = document.querySelector('.subdub-btn.active');
-        if (activeButton) {
-          const indicator = document.querySelector('.subdub-toggle');
-          const listRect = indicator.getBoundingClientRect();
-          const buttonRect = activeButton.getBoundingClientRect();
-          const leftPosition = buttonRect.left - listRect.left;
-          indicator.style.setProperty('--indicator-left', `${leftPosition}px`);
-          indicator.style.setProperty('--indicator-width', `${activeButton.offsetWidth}px`);
-        }
-      }
-
-      async function fetchAnimeData() {
-        let title = 'Unknown', type = 'N/A', year = 'N/A', totalEpisodes = null, synopsis = 'No synopsis available.';
-        let episodeSynopsis = 'No episode synopsis available.', episodeThumbnail = null;
-
+      async function populateSources() {
         try {
-          const [jikanInfoResp, jikanEpisodesResp, kitsuMapResp] = await Promise.all([
-            fetch(`https://api.jikan.moe/v4/anime/${jikanId}`),
-            fetch(`https://api.jikan.moe/v4/anime/${jikanId}/episodes`),
-            fetch(`/map/mal/${jikanId}`)
-          ]);
-
-          if (jikanInfoResp.ok) {
-            const data = (await jikanInfoResp.json()).data || {};
-            title = data.title_english || data.title || 'Unknown';
-            type = data.type || 'N/A';
-            year = data.year || data.aired?.prop?.from?.year || 'N/A';
-          }
-
-          if (jikanEpisodesResp.ok) {
-            const data = await jikanEpisodesResp.json();
-            totalEpisodes = data.pagination?.last_visible_page > 1 ? null : data.data?.length;
-          }
-
-          if (kitsuMapResp.ok) {
-            const mapData = await kitsuMapResp.json();
-            const kitsuId = mapData.kitsu_id;
-            const [kitsuAnimeResp, kitsuEpisodeResp] = await Promise.all([
-              fetch(`https://kitsu.io/api/edge/anime/${kitsuId}`),
-              fetch(`https://kitsu.io/api/edge/anime/${kitsuId}/episodes?filter[number]=${episode}`)
-            ]);
-            if (kitsuAnimeResp.ok) {
-              const kitsuData = await kitsuAnimeResp.json();
-              if (kitsuData && kitsuData.data && kitsuData.data.attributes) {
-                  const attributes = kitsuData.data.attributes;
-                  synopsis = attributes.synopsis || synopsis;
-                  if (attributes.posterImage?.original) {
-                      loadingContainer.style.backgroundImage = `url(${attributes.posterImage.original})`;
-                  }
-              }
-            }
-            if (kitsuEpisodeResp.ok) {
-              const episodeData = await kitsuEpisodeResp.json();
-              if (episodeData.data?.length > 0 && episodeData.data[0].attributes) {
-                const episodeAttributes = episodeData.data[0].attributes;
-                episodeSynopsis = episodeAttributes.synopsis || episodeAttributes.description || episodeSynopsis;
-                episodeThumbnail = episodeAttributes.thumbnail?.original;
-              }
-            }
-          }
-        } catch (err) {
-          console.warn('Failed to fetch some anime data:', err);
-          // Return default data, but the main try/catch will handle the UI
-        }
-
-        return { title, type, year, totalEpisodes, synopsis, episodeSynopsis, episodeThumbnail };
-      }
-
-      async function populateSourceChanger() {
-        try {
-          const response = await fetch(`/modules/streaming`);
-          if (!response.ok) throw new Error('Failed to fetch streaming modules');
-          const modules = await response.json();
-
-          sourceChangerSelect.innerHTML = '';
-          const defaultOption = document.createElement('option');
-          defaultOption.textContent = 'Default Source';
-          defaultOption.value = 'default';
-          sourceChangerSelect.appendChild(defaultOption);
-
-          if (modules.length > 0) {
-            modules.forEach(module => {
-              const option = document.createElement('option');
-              option.value = module.id;
-              option.textContent = module.name;
-              sourceChangerSelect.appendChild(option);
-            });
-          }
-        } catch (error) {
-          console.error('Could not populate source changer:', error);
-          const errorOption = document.createElement('option');
-          errorOption.textContent = 'Error loading';
-          errorOption.value = 'default';
-          errorOption.disabled = true;
-          sourceChangerSelect.innerHTML = '';
-          sourceChangerSelect.appendChild(errorOption);
-        }
-      }
-
-      function updateUI(data) {
-        const safeData = data || {};
-        document.getElementById('series-title').textContent = safeData.title || '—';
-        document.getElementById('series-type').textContent = safeData.type || 'N/A';
-        document.getElementById('series-year').textContent = safeData.year || 'N/A';
-        document.getElementById('episode-number').textContent = episode || 'N/A';
-        synopsisText.textContent = safeData.episodeSynopsis || 'No synopsis available.';
-        document.getElementById('loading-title').textContent = safeData.title || 'Loading...';
-        document.getElementById('loading-synopsis').textContent = safeData.episodeSynopsis || '';
-
-        if (safeData.episodeThumbnail) {
-          loadingContainer.style.backgroundImage = `url(${safeData.episodeThumbnail})`;
-        }
-
-        const currentEpNum = parseInt(episode, 10);
-        nextEpisodeContainer.innerHTML = ''; // Clear previous button/message
-        if (safeData.totalEpisodes && currentEpNum < safeData.totalEpisodes) {
-          const nextEpBtn = document.createElement('button');
-          nextEpBtn.id = 'next-episode-btn';
-          nextEpBtn.textContent = `Next →`;
-          nextEpBtn.addEventListener('click', () => {
-            params.set('ep', currentEpNum + 1);
-            window.location.search = params.toString();
+          const res = await fetch("/modules/streaming");
+          const modules = await res.json();
+          DOM.sourceSelect.innerHTML =
+            '<option value="default">Auto-Select Source</option>';
+          modules.forEach((m) => {
+            const opt = document.createElement("option");
+            opt.value = m.id;
+            opt.textContent = m.name;
+            DOM.sourceSelect.appendChild(opt);
           });
-          nextEpisodeContainer.appendChild(nextEpBtn);
-        } else if (safeData.totalEpisodes && currentEpNum >= safeData.totalEpisodes) {
-          const seriesOverMsg = document.createElement('div');
-          seriesOverMsg.id = 'series-over-msg';
-          seriesOverMsg.textContent = 'Series Complete';
-          nextEpisodeContainer.appendChild(seriesOverMsg);
-        }
+        } catch (e) {}
       }
 
-      async function loadIframe(dub, preferModule = 'default', animeData) {
-        playerContainer.innerHTML = '';
-        // Don't show loading screen again if it's already visible
-        if (loadingContainer.style.display !== 'flex') {
-            loadingContainer.style.display = 'flex';
-        }
+      async function loadPlayer(dub, module) {
+        DOM.loading.style.display = "flex";
+        DOM.loading.style.opacity = "1";
 
-        let iframeSrcURL = `/iframe-src?mal_id=${jikanId}&episode=${episode}&dub=${dub}`;
-        if (preferModule && preferModule !== 'default') {
-          iframeSrcURL += `&prefer_module=${encodeURIComponent(preferModule)}`;
-        }
+        let url = `/iframe-src?mal_id=${jikanId}&episode=${currentEp}&dub=${dub}`;
+        if (module !== "default") url += `&prefer_module=${module}`;
 
         try {
-          const res = await fetch(iframeSrcURL);
-          if (!res.ok) {
-            if (res.status === 404 && preferModule !== 'default') {
-              console.warn(`Module '${preferModule}' failed with 404. Retrying with 'default' module.`);
-              // Clear previous error message if any
-              playerContainer.innerHTML = '';
-              // Retry with default module
-              await loadIframe(dub, 'default', animeData);
-              return; // Stop execution here as the retry is handled
-            } else {
-              throw new Error(`Proxy error ${res.status}`);
-            }
-          }
-          const json = await res.json();
-          if (!json.src) throw new Error('No embed source found from any module');
+          const res = await fetch(url);
+          const data = await res.json();
+          if (!data.src) throw new Error("No source found");
 
-          // Append to json.src
-          const playerUrl = new URL(json.src, window.location.origin);
-          playerUrl.searchParams.set('series_title', animeData.title);
-          playerUrl.searchParams.set('episode_num', episode); // Ensure episode is always passed explicitly
-          if (animeData.episodeThumbnail) {
-              playerUrl.searchParams.set('thumbnail_url', animeData.episodeThumbnail);
-          }
-          json.src = playerUrl.toString();
+          DOM.player.innerHTML = `<iframe src="${data.src}" allowfullscreen sandbox="allow-scripts allow-same-origin allow-presentation"></iframe>`;
 
-          if (json.source_module) {
-            sourceChangerSelect.value = json.source_module;
-            currentModule = json.source_module;
-          }
+          if (data.source_module) DOM.sourceSelect.value = data.source_module;
 
-          const iframe = document.createElement('iframe');
-          iframe.setAttribute('sandbox', 'allow-scripts allow-same-origin allow-fullscreen');
-          iframe.setAttribute('src', json.src);
-          iframe.setAttribute('allowfullscreen', 'true');
-          iframe.setAttribute('scrolling', 'no');
-          playerContainer.appendChild(iframe);
+          // Phase 6: Sync glow to accent (or potentially extract color from poster)
+          DOM.glow.style.background = `radial-gradient(circle at center, var(--accent-glow) 0%, transparent 70%)`;
 
-          // Hide the loading screen as soon as the iframe is added to the DOM.
-          // The iframe itself will show its own loading progress.
-          loadingContainer.style.display = 'none';
-        } catch (err) {
-          console.error('Error loading player:', err);
-          loadingContainer.style.display = 'none';
-          playerContainer.innerHTML = `<div id="error-message">Could not load player: ${err.message}. Please try another source or type.</div>`;
+          setTimeout(() => {
+            DOM.loading.style.opacity = "0";
+            setTimeout(() => (DOM.loading.style.display = "none"), 500);
+          }, 1000);
+        } catch (e) {
+          DOM.loading.style.display = "none";
+          DOM.player.innerHTML = `<div style="height:100%; display:flex; align-items:center; justify-content:center; flex-direction:column; gap:15px;">
+            <p style="color:#ff6b6b">Module failed to provide source.</p>
+            <button onclick="window.location.reload()" class="subdub-btn" style="background:var(--accent-color); color:#000">Try Again</button>
+        </div>`;
         }
       }
 
-      function setupEventListeners() {
-        const reloadIframeBtn = document.getElementById('reload-iframe-btn');
+      /* --- PHASE 5: EPISODE SCROLLER & CROSS-SEASON --- */
+      async function loadEpisodeScroller() {
+        // Movies don't have an episode list
+        if (cachedAnimeData && cachedAnimeData.type === "Movie") return;
 
-        subOptionBtn.addEventListener('click', async () => {
-          if (userPref !== 'sub') {
-            userPref = 'sub';
-            localStorage.setItem('animeDubPref', 'sub');
-            subOptionBtn.classList.add('active');
-            dubOptionBtn.classList.remove('active');
-            moveActiveIndicator();
-            // FIX: Pass fetchedAnimeData as the 3rd argument
-            await loadIframe(false, currentModule, fetchedAnimeData);
-          }
-        });
+        DOM.scroller.innerHTML =
+          '<div class="loader-spinner" style="position:relative; transform:none; left:0; top:0; margin: 20px auto;"></div>';
 
-        dubOptionBtn.addEventListener('click', async () => {
-          if (userPref !== 'dub') {
-            userPref = 'dub';
-            localStorage.setItem('animeDubPref', 'dub');
-            dubOptionBtn.classList.add('active');
-            subOptionBtn.classList.remove('active');
-            moveActiveIndicator();
-            // FIX: Pass fetchedAnimeData as the 3rd argument
-            await loadIframe(true, currentModule, fetchedAnimeData);
-          }
-        });
+        try {
+          // 1. Fetch current season episodes (Using the new cached endpoint logic)
+          const mapRes = await fetch(`/map/mal/${jikanId}`);
+          const map = await mapRes.json();
 
-        sourceChangerSelect.addEventListener('change', async () => {
-          const selectedModule = sourceChangerSelect.value;
-          if (selectedModule !== currentModule) {
-            currentModule = selectedModule;
-            // FIX: Pass fetchedAnimeData as the 3rd argument
-            await loadIframe(userPref === 'dub', currentModule, fetchedAnimeData);
-          }
-        });
+          // We fetch the full list of episodes from Kitsu (highly cached on backend)
+          const kitsuEpRes = await fetch(
+            `/proxy?url=https://kitsu.io/api/edge/anime/${map.kitsu_id}/episodes?page[limit]=20&sort=number`,
+          );
+          const kitsuData = await kitsuEpRes.json();
+          const eps = kitsuData.data;
 
-        reloadIframeBtn.addEventListener('click', () => {
-            const iframe = playerContainer.querySelector('iframe');
-            if (iframe) {
-                iframe.src = iframe.src;
+          // 2. Fetch Season Mapping for Boundaries
+          const seasonRes = await fetch(`/anime/${jikanId}/seasons`);
+          const seasonData = await seasonRes.json();
+
+          DOM.scroller.innerHTML = "";
+
+          // -- Add "Previous Season" Card if applicable --
+          const currentGroup = seasonData.season_groups.find((g) =>
+            g.parts.some((p) => p.mal_id == jikanId),
+          );
+          if (currentGroup && currentGroup.season_index > 1) {
+            const prevGroup = seasonData.season_groups.find(
+              (g) => g.season_index == currentGroup.season_index - 1,
+            );
+            if (prevGroup) {
+              const lastPart = prevGroup.parts[prevGroup.parts.length - 1];
+              const card = createBoundaryCard(
+                "PREVIOUS SEASON",
+                lastPart.title,
+                lastPart.mal_id,
+                "fa-backward-step",
+              );
+              DOM.scroller.appendChild(card);
             }
-        });
+          }
 
-        window.addEventListener('resize', () => setTimeout(moveActiveIndicator, 100));
+          // -- Add Current Episodes --
+          eps.forEach((ep) => {
+            const num = ep.attributes.number;
+            const card = document.createElement("div");
+            card.className = `ep-card ${num == currentEp ? "active" : ""}`;
 
-        window.addEventListener('message', (event) => {
-          if (!event.data || event.data.type !== 'animex-next-episode') return;
-          const currentEp = parseInt(episode, 10);
-          if (isNaN(currentEp)) return;
-          params.set('ep', currentEp + 1);
-          window.location.search = params.toString();
-        });
+            const thumb =
+              ep.attributes.thumbnail?.original || cachedAnimeData.poster;
+
+            card.innerHTML = `
+                <div class="ep-card-thumb">
+                    <img src="${thumb}" loading="lazy">
+                    ${num == currentEp ? '<div class="now-playing-badge">Playing</div>' : ""}
+                </div>
+                <div class="ep-card-info">
+                    <div class="ep-card-number">Episode ${num}</div>
+                    <div class="ep-card-title">${ep.attributes.canonicalTitle || `Episode ${num}`}</div>
+                </div>
+            `;
+
+            card.onclick = () => {
+              if (num == currentEp) return;
+              params.set("ep", num);
+              window.location.search = params.toString();
+            };
+
+            DOM.scroller.appendChild(card);
+
+            // Auto-scroll to active
+            if (num == currentEp) {
+              setTimeout(
+                () =>
+                  card.scrollIntoView({
+                    behavior: "smooth",
+                    inline: "center",
+                    block: "nearest",
+                  }),
+                500,
+              );
+            }
+          });
+
+          // -- Add "Next Season" Card if applicable --
+          if (
+            currentGroup &&
+            currentGroup.season_index < seasonData.season_groups.length
+          ) {
+            const nextGroup = seasonData.season_groups.find(
+              (g) => g.season_index == currentGroup.season_index + 1,
+            );
+            if (nextGroup) {
+              const firstPart = nextGroup.parts[0];
+              const card = createBoundaryCard(
+                "NEXT SEASON",
+                firstPart.title,
+                firstPart.mal_id,
+                "fa-forward-step",
+              );
+              DOM.scroller.appendChild(card);
+            }
+          }
+
+          document.getElementById("scroller-count").textContent =
+            `${eps.length} Episodes Total`;
+        } catch (e) {
+          DOM.scroller.innerHTML =
+            '<p style="color:var(--text-secondary); font-size:0.8rem;">Episode list unavailable.</p>';
+        }
       }
-    });
-  </script>
-</body>
+
+      function createBoundaryCard(label, title, id, icon) {
+        const div = document.createElement("div");
+        div.className = "boundary-card";
+        div.innerHTML = `
+            <i class="fas ${icon}"></i>
+            <div class="boundary-label">${label}</div>
+            <div class="boundary-title">${title}</div>
+        `;
+        div.onclick = () => {
+          window.location.href = `view.html?id=${id}&ep=1`;
+        };
+        return div;
+      }
+
+      function logProgress() {
+        // Log to local storage for series-info.html integration
+        let history = JSON.parse(
+          localStorage.getItem("animex_watch_history") || "{}",
+        );
+        if (!history[jikanId]) history[jikanId] = {};
+
+        // Initial state
+        if (!history[jikanId][currentEp]) {
+          history[jikanId][currentEp] = {
+            timestamp: 0,
+            duration: 0,
+            state: "watching",
+          };
+          localStorage.setItem("animex_watch_history", JSON.stringify(history));
+        }
+      }
+
+      // Listen for messages from the player iframe
+      window.addEventListener("message", (event) => {
+        if (event.data && event.data.type === "animex-next-episode") {
+          const newParams = new URLSearchParams(window.location.search);
+          const nextEp = currentEp + 1;
+          newParams.set("ep", nextEp);
+          window.location.search = newParams.toString();
+        }
+      });
+    </script>
+  </body>
 </html>

@@ -1644,7 +1644,7 @@
          }">
         <!-- Added seeked event and preload for caching and smooth seeking -->
         <video x-ref="audioPlayer" 
-               :src="currentTrack.url" 
+               :src="currentTrack.url ? '/proxy?url=' + encodeURIComponent(currentTrack.url) : ''" 
                @timeupdate="onTimeUpdate" 
                @ended="onEnded" 
                @loadedmetadata="onMeta" 
@@ -1861,6 +1861,8 @@
 
     <!-- ALPINE.JS PLAYER LOGIC -->
     <script>
+
+      // Add this helper function where your logic resides
         function musicPlayer() {
             return {
                 queue: [],

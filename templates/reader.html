@@ -2,288 +2,420 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta
-      name="viewport"
-      content="width=device-width, initial-scale=1.0, user-scalable=no"
-    />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
     <title>Animex Reader</title>
-    <link
-      rel="stylesheet"
-      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"
-    />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
     <style>
       :root {
         --background-color: #121212;
         --text-color: #eaeaea;
         --accent-color: #ff9500;
         --accent-hover: #ffaa33;
-        --header-bg: rgba(18, 18, 18, 0.85);
-        --footer-bg: rgba(18, 18, 18, 0.9);
+        --header-bg: rgba(18, 18, 18, 0.88);
+        --footer-bg: rgba(18, 18, 18, 0.92);
         --border-color: rgba(255, 255, 255, 0.1);
+        --panel-bg: #1c1c1e;
+        --zoom: 1;
       }
+
+      *, *::before, *::after { box-sizing: border-box; }
+
       body {
         margin: 0;
         background-color: var(--background-color);
         color: var(--text-color);
-        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
-          Helvetica, Arial, sans-serif;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
         overflow: hidden;
       }
 
-      /* Scrollbar Styling */
-      ::-webkit-scrollbar {
-        width: 8px;
-        height: 8px;
-      }
-      ::-webkit-scrollbar-track {
-        background: #1a1a1a;
-      }
-      ::-webkit-scrollbar-thumb {
-        background: #444;
-        border-radius: 4px;
-      }
-      ::-webkit-scrollbar-thumb:hover {
-        background: #666;
-      }
+      /* ── Scrollbar ── */
+      ::-webkit-scrollbar { width: 6px; height: 6px; }
+      ::-webkit-scrollbar-track { background: #111; }
+      ::-webkit-scrollbar-thumb { background: #3a3a3a; border-radius: 3px; }
+      ::-webkit-scrollbar-thumb:hover { background: #555; }
 
-      /* Header */
+      /* ── Header ── */
       #reader-header {
         position: fixed;
-        top: 0;
-        left: 0;
-        right: 0;
+        top: 0; left: 0; right: 0;
         z-index: 100;
         background-color: var(--header-bg);
-        backdrop-filter: blur(12px);
-        -webkit-backdrop-filter: blur(12px);
+        backdrop-filter: blur(14px);
+        -webkit-backdrop-filter: blur(14px);
         border-bottom: 1px solid var(--border-color);
         display: flex;
         justify-content: space-between;
         align-items: center;
         height: 60px;
-        padding: 0 20px;
+        padding: 0 16px;
+        gap: 12px;
         transition: transform 0.3s ease-in-out;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+        box-shadow: 0 4px 16px rgba(0,0,0,0.35);
       }
-      #reader-header.hidden {
-        transform: translateY(-100%);
-      }
+      #reader-header.hidden { transform: translateY(-100%); }
 
-      .header-left,
-      .header-center,
+      .header-left {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        min-width: 0;
+        flex: 1;
+      }
       .header-right {
         display: flex;
         align-items: center;
-        gap: 15px;
+        gap: 8px;
+        flex-shrink: 0;
       }
-      
-      .header-center {
+
+      /* Title block */
+      .header-titles {
+        display: flex;
         flex-direction: column;
-        align-items: flex-start;
         justify-content: center;
-        max-width: 40vw;
+        min-width: 0;
+        gap: 0;
       }
-      
-      .header-center h1 {
-        font-size: 16px;
+      .header-titles h1 {
+        font-size: 15px;
         margin: 0;
         font-weight: 600;
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
-        width: 100%;
+        line-height: 1.25;
       }
-      .header-center p {
+      .header-titles p {
         font-size: 12px;
-        margin: 2px 0 0 0;
-        color: #aaa;
+        margin: 0;
+        color: #999;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        line-height: 1.25;
       }
 
-      /* Controls */
-      button {
-        transition: all 0.2s ease;
-      }
-      #back-btn {
+      /* ── Icon Buttons (back, chapters) ── */
+      .icon-circle-btn {
         background: none;
         border: none;
         color: var(--text-color);
-        font-size: 20px;
+        font-size: 18px;
         cursor: pointer;
         padding: 8px;
         border-radius: 50%;
-      }
-      #back-btn:hover {
-        background: rgba(255,255,255,0.1);
-      }
-
-      #next-chapter-btn {
-        background: var(--accent-color);
-        color: white;
-        border: none;
-        padding: 8px 16px;
-        border-radius: 6px;
-        font-weight: 600;
-        font-size: 13px;
-        cursor: pointer;
-        display: none;
-        box-shadow: 0 2px 8px rgba(255, 149, 0, 0.3);
-      }
-      #next-chapter-btn:hover {
-        background: var(--accent-hover);
-        transform: translateY(-1px);
-      }
-
-      .mode-switcher {
-        background: rgba(255, 255, 255, 0.08);
-        border-radius: 8px;
-        padding: 4px;
         display: flex;
-        border: 1px solid rgba(255,255,255,0.05);
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+        transition: background 0.2s;
+      }
+      .icon-circle-btn:hover { background: rgba(255,255,255,0.1); }
+
+      /* ── Segmented switcher ── */
+      .mode-switcher {
+        background: rgba(255,255,255,0.07);
+        border-radius: 8px;
+        padding: 3px;
+        display: flex;
+        border: 1px solid rgba(255,255,255,0.08);
+        gap: 2px;
       }
       .mode-switcher button {
         background: transparent;
         border: none;
-        color: #bbb;
-        padding: 6px 12px;
+        color: #999;
+        padding: 5px 10px;
         border-radius: 6px;
         cursor: pointer;
-        font-size: 13px;
+        font-size: 12px;
         font-weight: 500;
+        transition: all 0.18s;
+        white-space: nowrap;
+        display: flex;
+        align-items: center;
+        gap: 5px;
       }
-      .mode-switcher button:hover {
-        color: #fff;
-      }
+      .mode-switcher button:hover { color: #fff; background: rgba(255,255,255,0.08); }
       .mode-switcher button.active {
-        background: rgba(255,255,255,0.15);
-        color: white;
+        background: rgba(255,255,255,0.16);
+        color: #fff;
         font-weight: 600;
-        box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+        box-shadow: 0 1px 3px rgba(0,0,0,0.25);
       }
 
-      /* Loader */
+      /* Fit switcher — icon-only, smaller */
+      #fit-switcher button { padding: 5px 9px; font-size: 13px; }
+
+      /* ── Direction button ── */
+      #direction-btn {
+        background: rgba(255,255,255,0.07);
+        border: 1px solid rgba(255,255,255,0.1);
+        color: #aaa;
+        padding: 5px 9px;
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: 0.8px;
+        transition: all 0.2s;
+        flex-shrink: 0;
+      }
+      #direction-btn:hover { color: #fff; background: rgba(255,255,255,0.14); }
+      /* Hide direction btn in scroll mode */
+      .view-scroll #direction-btn { display: none !important; }
+
+      /* ── Next Chapter btn ── */
+      #next-chapter-btn {
+        background: var(--accent-color);
+        color: #fff;
+        border: none;
+        padding: 7px 13px;
+        border-radius: 6px;
+        font-weight: 600;
+        font-size: 12px;
+        cursor: pointer;
+        display: none;
+        align-items: center;
+        gap: 5px;
+        box-shadow: 0 2px 8px rgba(255,149,0,0.3);
+        transition: all 0.2s;
+        flex-shrink: 0;
+      }
+      #next-chapter-btn:hover { background: var(--accent-hover); transform: translateY(-1px); }
+
+      /* ── Central Loader ── */
       #loader {
         position: fixed;
-        top: 50%;
-        left: 50%;
+        top: 50%; left: 50%;
         transform: translate(-50%, -50%);
-        width: 40px;
-        height: 40px;
-        border: 4px solid #333;
+        width: 40px; height: 40px;
+        border: 4px solid #2a2a2a;
         border-top-color: var(--accent-color);
         border-radius: 50%;
-        animation: spin 0.8s linear infinite;
-        z-index: 50;
+        animation: spin-center 0.8s linear infinite;
+        z-index: 60;
       }
-      @keyframes spin {
+      @keyframes spin-center {
         to { transform: translate(-50%, -50%) rotate(360deg); }
       }
 
-      /* Main Viewer */
+      /* ── Main Image Container ── */
       #image-container {
         height: 100vh;
         width: 100vw;
-        overflow: hidden;
-        scroll-behavior: auto; /* Managed by JS for precision */
         background-color: #000;
+        position: relative;
       }
 
-      /* Webtoon Mode */
-      .view-webtoon #image-container {
+      /* ── SCROLL LAYOUT ── */
+      .view-scroll #image-container {
         overflow-y: scroll;
+        overflow-x: hidden;
         -webkit-overflow-scrolling: touch;
       }
-      .view-webtoon img {
+      /* Scroll + fit-both (default) */
+      .view-scroll img {
         display: block;
-        width: 100%;
-        max-width: 900px; /* Wider max-width for Desktop */
         margin: 0 auto;
         height: auto;
       }
+      .view-scroll.fit-both img {
+        width: calc(min(900px, 100%) * var(--zoom));
+        max-width: none;
+      }
+      .view-scroll.fit-width img {
+        width: calc(100% * var(--zoom));
+        max-width: none;
+      }
+      .view-scroll.fit-height img {
+        height: calc(100vh * var(--zoom));
+        width: auto;
+        max-width: none;
+      }
 
-      /* Pagination Mode */
-      .view-pagination #image-container {
+      /* ── SINGLE LAYOUT ── */
+      .view-single #image-container {
         display: flex;
         overflow-x: hidden;
+        overflow-y: hidden;
       }
-      .view-pagination img {
+      .view-single img {
+        flex-shrink: 0;
+        user-select: none;
+        -webkit-user-drag: none;
+      }
+      .view-single.fit-both img {
         width: 100vw;
         height: 100vh;
         object-fit: contain;
-        flex-shrink: 0;
-        user-select: none;
+        transform: scale(var(--zoom));
+        transform-origin: center center;
+      }
+      .view-single.fit-width img {
+        width: 100vw;
+        height: auto;
+        object-fit: unset;
+        transform: scale(var(--zoom));
+        transform-origin: top center;
+      }
+      .view-single.fit-height img {
+        height: 100vh;
+        width: auto;
+        object-fit: unset;
+        transform: scale(var(--zoom));
+        transform-origin: center center;
       }
 
-      /* Navigation Overlay (Click Zones) */
+      /* ── DOUBLE LAYOUT ── */
+      .view-double #image-container {
+        display: flex;
+        overflow-x: hidden;
+        overflow-y: hidden;
+      }
+      .view-double .spread {
+        display: flex;
+        width: 100vw;
+        height: 100vh;
+        flex-shrink: 0;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden;
+        gap: 0;
+      }
+      .view-double.dir-rtl .spread { flex-direction: row-reverse; }
+      .view-double .spread img {
+        display: block;
+        flex: 0 0 auto;
+        min-width: 0;
+        user-select: none;
+        -webkit-user-drag: none;
+      }
+      /* fit-both: each page fills its half by height, capped at 50vw wide */
+      .view-double.fit-both .spread img {
+        width: auto;
+        height: calc(100vh * var(--zoom));
+        max-width: 50vw;
+        object-fit: contain;
+      }
+      .view-double.fit-width .spread img {
+        width: calc(50vw * var(--zoom));
+        height: auto;
+        max-width: none;
+        object-fit: unset;
+      }
+      .view-double.fit-height .spread img {
+        height: calc(100vh * var(--zoom));
+        width: auto;
+        max-width: 50vw;
+        object-fit: unset;
+      }
+
+      /* ── Navigation Overlay (Click Zones) ── */
       .nav-overlay {
         position: fixed;
-        top: 0;
-        left: 0;
-        height: 100%;
-        width: 100%;
+        top: 0; left: 0;
+        height: 100%; width: 100%;
         z-index: 50;
         display: none;
+        pointer-events: none;
       }
-      .view-pagination .nav-overlay {
-        display: block;
-      }
-      #nav-left {
+      .view-single .nav-overlay,
+      .view-double .nav-overlay { display: block; }
+      #nav-left, #nav-right, #nav-center {
         position: absolute;
-        left: 0;
-        top: 0;
-        width: 30%;
-        height: 100%;
-        cursor: w-resize;
+        top: 0; height: 100%;
+        pointer-events: all;
       }
-      #nav-right {
-        position: absolute;
-        right: 0;
-        top: 0;
-        width: 30%;
-        height: 100%;
-        cursor: e-resize;
-      }
-      #nav-center {
-        position: absolute;
-        left: 30%;
-        top: 0;
-        width: 40%;
-        height: 100%;
-        cursor: pointer;
-      }
+      #nav-left { left: 0; width: 30%; cursor: w-resize; }
+      #nav-right { right: 0; width: 30%; cursor: e-resize; }
+      #nav-center { left: 30%; width: 40%; cursor: pointer; }
 
-      /* Footer */
+      /* ── Footer ── */
       #reader-footer {
         position: fixed;
-        bottom: 0;
-        left: 0;
-        right: 0;
+        bottom: 0; left: 0; right: 0;
         z-index: 100;
         background-color: var(--footer-bg);
-        backdrop-filter: blur(12px);
-        -webkit-backdrop-filter: blur(12px);
+        backdrop-filter: blur(14px);
+        -webkit-backdrop-filter: blur(14px);
         border-top: 1px solid var(--border-color);
         height: 50px;
         display: flex;
         align-items: center;
-        justify-content: center;
-        padding: 0 20px;
-        gap: 20px;
+        padding: 0 14px;
+        gap: 10px;
         transition: transform 0.3s ease-in-out;
       }
-      #reader-footer.hidden {
-        transform: translateY(100%);
+      #reader-footer.hidden { transform: translateY(100%); }
+
+      .footer-left {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        flex-shrink: 0;
+      }
+      .footer-center {
+        flex: 1;
+        display: flex;
+        align-items: center;
+      }
+      .footer-right {
+        flex-shrink: 0;
       }
 
+      /* Footer spinner */
+      #footer-loader {
+        width: 16px; height: 16px;
+        border: 2px solid #333;
+        border-top-color: var(--accent-color);
+        border-radius: 50%;
+        animation: spin-simple 0.8s linear infinite;
+        flex-shrink: 0;
+      }
+      #footer-loader.hidden { display: none; }
+      @keyframes spin-simple { to { transform: rotate(360deg); } }
+
+      /* Zoom controls */
+      .zoom-btn {
+        background: rgba(255,255,255,0.07);
+        border: 1px solid rgba(255,255,255,0.1);
+        color: var(--text-color);
+        width: 26px; height: 26px;
+        border-radius: 5px;
+        cursor: pointer;
+        font-size: 15px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        line-height: 1;
+        transition: background 0.2s;
+        padding: 0;
+        flex-shrink: 0;
+      }
+      .zoom-btn:hover { background: rgba(255,255,255,0.15); }
+      .zoom-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+      #zoom-label {
+        font-size: 11px;
+        color: #999;
+        min-width: 36px;
+        text-align: center;
+        font-variant-numeric: tabular-nums;
+        font-weight: 500;
+        flex-shrink: 0;
+      }
+
+      /* Progress bar */
       #page-progress {
-        flex-grow: 1;
-        max-width: 600px;
+        width: 100%;
         height: 6px;
         border-radius: 3px;
         cursor: pointer;
         -webkit-appearance: none;
+        appearance: none;
       }
       #page-progress::-webkit-progress-bar {
-        background-color: rgba(255, 255, 255, 0.15);
+        background-color: rgba(255,255,255,0.12);
         border-radius: 3px;
       }
       #page-progress::-webkit-progress-value {
@@ -292,117 +424,376 @@
         transition: width 0.1s linear;
       }
 
+      /* Page indicator */
       #page-indicator {
-        font-size: 14px;
-        color: #ddd;
+        font-size: 12px;
+        color: #ccc;
         font-variant-numeric: tabular-nums;
         font-weight: 500;
-        min-width: 70px;
-        text-align: center;
+        min-width: 64px;
+        text-align: right;
+        white-space: nowrap;
       }
 
-      /* Desktop Specific Tweaks */
+      /* ── Chapter Panel ── */
+      #chapter-panel-backdrop {
+        position: fixed;
+        inset: 0;
+        background: rgba(0,0,0,0.55);
+        z-index: 200;
+        backdrop-filter: blur(3px);
+        -webkit-backdrop-filter: blur(3px);
+        opacity: 1;
+        transition: opacity 0.28s ease;
+      }
+      #chapter-panel-backdrop.hidden {
+        opacity: 0;
+        pointer-events: none;
+      }
+
+      #chapter-panel {
+        position: fixed;
+        top: 0; right: 0;
+        width: min(360px, 92vw);
+        height: 100vh;
+        background: var(--panel-bg);
+        border-left: 1px solid rgba(255,255,255,0.1);
+        z-index: 201;
+        display: flex;
+        flex-direction: column;
+        transform: translateX(0);
+        transition: transform 0.28s cubic-bezier(0.4,0,0.2,1);
+        box-shadow: -8px 0 32px rgba(0,0,0,0.6);
+      }
+      #chapter-panel.hidden { transform: translateX(100%); }
+
+      .panel-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0 18px;
+        height: 60px;
+        border-bottom: 1px solid rgba(255,255,255,0.08);
+        flex-shrink: 0;
+      }
+      .panel-header-title {
+        font-size: 15px;
+        font-weight: 700;
+        letter-spacing: 0.2px;
+      }
+      #close-panel-btn {
+        background: none;
+        border: none;
+        color: #888;
+        font-size: 20px;
+        cursor: pointer;
+        padding: 6px 8px;
+        border-radius: 6px;
+        line-height: 1;
+        transition: all 0.2s;
+      }
+      #close-panel-btn:hover { background: rgba(255,255,255,0.08); color: #fff; }
+
+      #chapter-list {
+        overflow-y: auto;
+        flex: 1;
+        padding: 6px 0;
+      }
+      .chapter-item {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 11px 18px;
+        cursor: pointer;
+        transition: background 0.15s;
+        border-left: 3px solid transparent;
+      }
+      .chapter-item:hover { background: rgba(255,255,255,0.05); }
+      .chapter-item.active {
+        background: rgba(255,149,0,0.1);
+        border-left-color: var(--accent-color);
+      }
+      .ch-number {
+        font-weight: 600;
+        font-size: 13px;
+        color: var(--text-color);
+        white-space: nowrap;
+        flex-shrink: 0;
+      }
+      .ch-title {
+        font-size: 12px;
+        color: #777;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        flex: 1;
+      }
+      .ch-check {
+        font-size: 10px;
+        flex-shrink: 0;
+        opacity: 0;
+        color: var(--accent-color);
+        transition: opacity 0.2s;
+      }
+      .chapter-item.finished .ch-number { color: #666; }
+      .chapter-item.finished .ch-title { color: #555; }
+      .chapter-item.finished .ch-check { opacity: 1; }
+      /* Progress badge */
+      .ch-badge {
+        flex-shrink: 0;
+        font-size: 10px;
+        font-weight: 600;
+        padding: 2px 7px;
+        border-radius: 10px;
+        white-space: nowrap;
+        letter-spacing: 0.3px;
+      }
+      .ch-badge.badge-read {
+        background: rgba(80,200,120,0.15);
+        color: #50c878;
+      }
+      .ch-badge.badge-reading {
+        background: rgba(255,149,0,0.15);
+        color: var(--accent-color);
+      }
+
+      /* ── Toast ── */
+      #toast {
+        position: fixed;
+        bottom: 68px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: rgba(28,28,30,0.96);
+        color: var(--text-color);
+        padding: 9px 18px;
+        border-radius: 8px;
+        font-size: 13px;
+        z-index: 400;
+        pointer-events: none;
+        border: 1px solid rgba(255,255,255,0.1);
+        box-shadow: 0 6px 20px rgba(0,0,0,0.5);
+        opacity: 1;
+        transition: opacity 0.3s ease;
+        white-space: nowrap;
+      }
+      #toast.hidden { opacity: 0; }
+
+      /* ── Responsive ── */
       @media (min-width: 768px) {
-        .header-center h1 { font-size: 18px; }
-        .header-center p { font-size: 13px; }
+        .header-titles h1 { font-size: 16px; }
+        .header-titles p { font-size: 13px; }
         #page-progress { height: 8px; }
+      }
+      @media (max-width: 600px) {
+        .mode-switcher button { padding: 5px 7px; font-size: 11px; gap: 3px; }
+        #next-chapter-btn { padding: 6px 10px; font-size: 11px; }
+        #direction-btn { padding: 5px 7px; font-size: 10px; }
       }
     </style>
   </head>
-  <body class="view-pagination">
+  <body class="view-single fit-both dir-ltr">
+
+    <!-- ══ HEADER ══ -->
     <header id="reader-header">
       <div class="header-left">
-        <button id="back-btn" aria-label="Go back">
+        <button id="back-btn" class="icon-circle-btn" aria-label="Go back">
           <i class="fa fa-arrow-left"></i>
         </button>
-        <div class="header-center">
-          <h1 id="manga-title">Loading Series...</h1>
-          <p id="chapter-details">Loading Chapter...</p>
+        <button id="chapters-btn" class="icon-circle-btn" aria-label="Chapter list" title="Chapter List">
+          <i class="fa fa-list"></i>
+        </button>
+        <div class="header-titles">
+          <h1 id="manga-title">Loading Series…</h1>
+          <p id="chapter-details">Loading Chapter…</p>
         </div>
       </div>
+
       <div class="header-right">
-        <div class="mode-switcher">
-          <button id="mode-pagination" class="active"><i class="fa fa-book-open"></i> Paged</button>
-          <button id="mode-webtoon"><i class="fa fa-scroll"></i> Scroll</button>
+        <!-- Layout: Scroll | Single | Double -->
+        <div class="mode-switcher" id="layout-switcher">
+          <button id="layout-scroll" title="Scroll (Webtoon)"><i class="fa fa-scroll"></i> Scroll</button>
+          <button id="layout-single" class="active" title="Single Page"><i class="fa fa-book-open"></i> Single</button>
+          <button id="layout-double" title="Double Page"><i class="fa fa-book"></i> Double</button>
         </div>
+
+        <!-- Fit: Width | Height | Both -->
+        <div class="mode-switcher" id="fit-switcher">
+          <button id="fit-width" title="Fit Width"><i class="fa fa-arrows-left-right"></i></button>
+          <button id="fit-height" title="Fit Height"><i class="fa fa-arrows-up-down"></i></button>
+          <button id="fit-both" class="active" title="Fit Both (Contain)"><i class="fa fa-compress"></i></button>
+        </div>
+
+        <!-- Direction (hidden in scroll mode) -->
+        <button id="direction-btn" title="Toggle Reading Direction">LTR</button>
+
+        <!-- Next Chapter -->
         <button id="next-chapter-btn">
-          Next <i class="fa fa-chevron-right" style="margin-left:5px;"></i>
+          Next <i class="fa fa-chevron-right"></i>
         </button>
       </div>
     </header>
 
+    <!-- ══ CENTERED LOADER ══ -->
     <div id="loader"></div>
 
+    <!-- ══ IMAGE CONTAINER ══ -->
     <main id="image-container"></main>
 
+    <!-- ══ NAV OVERLAY (paged modes) ══ -->
     <div class="nav-overlay">
       <div id="nav-left" title="Previous Page"></div>
-      <div id="nav-center" title="Toggle Menu"></div>
+      <div id="nav-center" title="Toggle UI"></div>
       <div id="nav-right" title="Next Page"></div>
     </div>
 
+    <!-- ══ FOOTER ══ -->
     <footer id="reader-footer">
-      <span id="page-indicator">0 / 0</span>
-      <progress id="page-progress" value="0" max="100"></progress>
+      <div class="footer-left">
+        <div id="footer-loader" class="hidden"></div>
+        <button id="zoom-out" class="zoom-btn" title="Zoom Out">−</button>
+        <span id="zoom-label">100%</span>
+        <button id="zoom-in" class="zoom-btn" title="Zoom In">+</button>
+      </div>
+      <div class="footer-center">
+        <progress id="page-progress" value="0" max="100"></progress>
+      </div>
+      <div class="footer-right">
+        <span id="page-indicator">0 / 0</span>
+      </div>
     </footer>
+
+    <!-- ══ CHAPTER PANEL ══ -->
+    <div id="chapter-panel-backdrop" class="hidden"></div>
+    <div id="chapter-panel" class="hidden">
+      <div class="panel-header">
+        <span class="panel-header-title">Chapters</span>
+        <button id="close-panel-btn" aria-label="Close chapter list">✕</button>
+      </div>
+      <div id="chapter-list"></div>
+    </div>
+
+    <!-- ══ TOAST ══ -->
+    <div id="toast" class="hidden"></div>
 
     <script>
       document.addEventListener("DOMContentLoaded", () => {
-        // --- Elements ---
-        const container = document.getElementById("image-container");
-        const loader = document.getElementById("loader");
-        const header = document.getElementById("reader-header");
-        const footer = document.getElementById("reader-footer");
-        const mangaTitleEl = document.getElementById("manga-title");
-        const chapterDetailsEl = document.getElementById("chapter-details");
-        const modePaginationBtn = document.getElementById("mode-pagination");
-        const modeWebtoonBtn = document.getElementById("mode-webtoon");
-        const backBtn = document.getElementById("back-btn");
-        const nextChapterBtn = document.getElementById("next-chapter-btn");
-        const pageProgress = document.getElementById("page-progress");
-        const pageIndicator = document.getElementById("page-indicator");
 
-        // --- State ---
-        let imageLinks = [];
-        let currentPage = 0;
+        // ═══════════════════════════════════════════════════════════
+        // ELEMENTS
+        // ═══════════════════════════════════════════════════════════
+        const container       = document.getElementById("image-container");
+        const loader          = document.getElementById("loader");
+        const footerLoader    = document.getElementById("footer-loader");
+        const header          = document.getElementById("reader-header");
+        const footer          = document.getElementById("reader-footer");
+        const mangaTitleEl    = document.getElementById("manga-title");
+        const chapterDetailsEl= document.getElementById("chapter-details");
+        const backBtn         = document.getElementById("back-btn");
+        const chaptersBtn     = document.getElementById("chapters-btn");
+        const nextChapterBtn  = document.getElementById("next-chapter-btn");
+        const pageProgress    = document.getElementById("page-progress");
+        const pageIndicator   = document.getElementById("page-indicator");
+        const zoomOutBtn      = document.getElementById("zoom-out");
+        const zoomInBtn       = document.getElementById("zoom-in");
+        const zoomLabel       = document.getElementById("zoom-label");
+        const directionBtn    = document.getElementById("direction-btn");
+        const chapterPanel    = document.getElementById("chapter-panel");
+        const panelBackdrop   = document.getElementById("chapter-panel-backdrop");
+        const chapterListEl   = document.getElementById("chapter-list");
+        const closePanelBtn   = document.getElementById("close-panel-btn");
+        const toast           = document.getElementById("toast");
+        const navLeft         = document.getElementById("nav-left");
+        const navRight        = document.getElementById("nav-right");
+        const navCenter       = document.getElementById("nav-center");
+        const layoutScrollBtn = document.getElementById("layout-scroll");
+        const layoutSingleBtn = document.getElementById("layout-single");
+        const layoutDoubleBtn = document.getElementById("layout-double");
+        const fitWidthBtn     = document.getElementById("fit-width");
+        const fitHeightBtn    = document.getElementById("fit-height");
+        const fitBothBtn      = document.getElementById("fit-both");
+
+        // ═══════════════════════════════════════════════════════════
+        // CONSTANTS / KEYS
+        // ═══════════════════════════════════════════════════════════
+        const serverUrl      = ``;
+        const LAYOUT_KEY     = "reader_layout_mode";   // "scroll"|"single"|"double"
+        const FIT_KEY        = "reader_fit_mode";       // "fit-width"|"fit-height"|"fit-both"
+        const DIRECTION_KEY  = "reader_direction";      // "ltr"|"rtl"
+        const ZOOM_KEY       = "reader_zoom_level";     // number 0.5–3.0
+        const HISTORY_KEY    = "reading_history";
+
+        const ZOOM_MIN  = 0.5;
+        const ZOOM_MAX  = 3.0;
+        const ZOOM_STEP = 0.1;
+
+        // ═══════════════════════════════════════════════════════════
+        // STATE
+        // ═══════════════════════════════════════════════════════════
+        let imageLinks         = [];
+        let currentPage        = 0;     // always an image index (0-based)
         let source, mangaId, chapterId;
-        let chapterData = null; 
-        const serverIp = localStorage.getItem("extension_server_ip") || "localhost";
-        const serverUrl = ``;
-        const READER_MODE_KEY = "reader_view_mode";
-        const HISTORY_KEY = "reading_history";
+        let chapterData        = null;
+        let allChapters        = [];    // [{id, number, title}, ...]
+        let currentChapterIndex= -1;
+        let layoutMode         = "single";
+        let fitMode            = "fit-both";
+        let direction          = "ltr";
+        let zoomLevel          = 1.0;
+        let toastTimeout       = null;
+        let panelOpen          = false;
 
-        
-
-        // --- Initialization ---
+        // ═══════════════════════════════════════════════════════════
+        // INIT
+        // ═══════════════════════════════════════════════════════════
         function init() {
           const pathParts = window.location.pathname.split("/");
-          // URL Structure expected: /read/{source}/{mangaId}/{chapterId}
+          // Expected: /read/{source}/{mangaId}/{chapterId}
           if (pathParts.length >= 5) {
-            source = pathParts[2];
-            mangaId = pathParts[3];
+            source    = pathParts[2];
+            mangaId   = pathParts[3];
             chapterId = pathParts[4];
           } else {
             console.error("Invalid URL structure");
             return;
           }
 
-          // Load View Preference
-          const savedMode = localStorage.getItem(READER_MODE_KEY);
-          if (savedMode) {
-            setMode(savedMode, true);
-          }
+          // Load preferences
+          layoutMode = localStorage.getItem(LAYOUT_KEY) || "single";
+          fitMode    = localStorage.getItem(FIT_KEY)    || "fit-both";
+          direction  = localStorage.getItem(DIRECTION_KEY) || "ltr";
+          zoomLevel  = parseFloat(localStorage.getItem(ZOOM_KEY)) || 1.0;
+          zoomLevel  = Math.min(ZOOM_MAX, Math.max(ZOOM_MIN, zoomLevel));
 
+          // Apply body classes immediately
+          document.body.className = `view-${layoutMode} ${fitMode} dir-${direction}`;
+          applyZoom(zoomLevel, false);
+          updateLayoutButtons();
+          updateFitButtons();
+          updateDirectionButton();
+
+          // Fetch
           fetchMangaTitle();
-          fetchImages(); // This triggers history restore after loading
-          fetchChapterDetails();
+          fetchAllChapters().then(() => fetchChapterDetails());
+          fetchImages();
           setupControls();
+
+          // popstate (browser back/forward within reader)
+          window.addEventListener("popstate", (e) => {
+            if (e.state && e.state.chapterId && e.state.chapterId !== chapterId) {
+              loadChapter(e.state.chapterId, true /* isPop */);
+            }
+          });
+
+          // Replace current history entry with state so popstate works
+          history.replaceState({ source, mangaId, chapterId }, "", window.location.href);
         }
 
-        // --- History Management ---
+        // ═══════════════════════════════════════════════════════════
+        // HISTORY MANAGEMENT
+        // ═══════════════════════════════════════════════════════════
 
         /**
-         * Structure of Reading History (LocalStorage):
+         * History structure in localStorage:
          * [
          *   {
          *     mangaId: "123",
@@ -420,125 +811,282 @@
          */
 
         function getHistory() {
-          try {
-            return JSON.parse(localStorage.getItem(HISTORY_KEY)) || [];
-          } catch (e) {
-            return [];
-          }
+          try { return JSON.parse(localStorage.getItem(HISTORY_KEY)) || []; }
+          catch (e) { return []; }
         }
 
         function saveHistory(history) {
           localStorage.setItem(HISTORY_KEY, JSON.stringify(history));
         }
 
-        function restoreReadingProgress() {
-          const history = getHistory();
-          const seriesEntry = history.find(h => h.mangaId === mangaId && h.source === source);
-
-          if (seriesEntry && seriesEntry.chapters && seriesEntry.chapters[chapterId]) {
-            const record = seriesEntry.chapters[chapterId];
-            if (record.page && record.page < imageLinks.length) {
-              console.log("Restoring to page:", record.page);
-              currentPage = record.page;
-              
-              // Apply UI updates immediately
-              if (document.body.classList.contains("view-pagination")) {
-                 updatePagination();
-              } else {
-                 // For webtoon, we need to wait until images render to scroll accurately
-                 // This is handled in setMode or post-load logic
-                 setTimeout(() => {
-                   const imgs = container.getElementsByTagName("img");
-                   if(imgs[currentPage]) imgs[currentPage].scrollIntoView({ block: "start" });
-                 }, 200);
-              }
-              updateFooter();
-            }
-          }
-        }
-
         function updateHistory() {
           if (imageLinks.length === 0) return;
+          let hist = getHistory();
 
-          let history = getHistory();
-          
-          // 1. Find or Create Series Entry
-          let seriesEntry = history.find(h => h.mangaId === mangaId && h.source === source);
+          let seriesEntry = hist.find(h => h.mangaId === mangaId && h.source === source);
           if (!seriesEntry) {
-            seriesEntry = {
-              mangaId: mangaId,
-              source: source,
-              chapters: {}
-            };
-            history.push(seriesEntry);
+            seriesEntry = { mangaId, source, chapters: {} };
+            hist.push(seriesEntry);
           }
 
-          // 2. Determine State
-          // If we are on the last page (or close to end in scroll), mark finished
           const isFinished = currentPage >= imageLinks.length - 1;
-
-          // 3. Create/Update Chapter Object
           seriesEntry.chapters[chapterId] = {
             state: isFinished ? "finished" : "ongoing",
             page: currentPage,
             timestamp: Date.now(),
-            source: source
+            source
           };
 
-          // 4. Save
-          saveHistory(history);
+          saveHistory(hist);
         }
 
-        // --- Fetching Logic ---
+        function restoreReadingProgress() {
+          const hist        = getHistory();
+          const seriesEntry = hist.find(h => h.mangaId === mangaId && h.source === source);
 
-        async function fetchChapterDetails() {
-           // (Logic unchanged from provided example, but ensured robust error handling)
-           if (source !== "mangadex") {
-            chapterDetailsEl.textContent = `Chapter ${chapterId}`;
-            fetchLegacyChapterNav();
+          if (seriesEntry?.chapters?.[chapterId]) {
+            const record = seriesEntry.chapters[chapterId];
+
+            if (record.state === "finished") {
+              // Chapter already finished → start fresh from page 0
+              currentPage = 0;
+            } else if (record.page > 0 && record.page < imageLinks.length) {
+              currentPage = record.page;
+              // In double mode, snap currentPage to even (start of spread)
+              if (layoutMode === "double" && currentPage % 2 !== 0) {
+                currentPage = Math.max(0, currentPage - 1);
+              }
+            }
+          }
+
+          // Apply position
+          if (layoutMode !== "scroll") {
+            updatePagination();
+          } else {
+            setTimeout(() => {
+              const imgs = getAllImages();
+              if (imgs[currentPage]) {
+                imgs[currentPage].scrollIntoView({ behavior: "auto", block: "start" });
+              }
+            }, 100);
+          }
+          updateFooter();
+        }
+
+        // ═══════════════════════════════════════════════════════════
+        // CHAPTER MANAGEMENT
+        // ═══════════════════════════════════════════════════════════
+
+        async function fetchAllChapters() {
+          const url = source === "mangadex"
+            ? `${serverUrl}/mangadex/manga/${mangaId}/chapters`
+            : `${serverUrl}/chapters/${mangaId}`;
+          try {
+            const resp = await fetch(url);
+            if (!resp.ok) return;
+            const data = await resp.json();
+            // Support both flat `data.chapters` and `data.modules` (keyed by source)
+            let rawChapters = [];
+            if (Array.isArray(data.chapters)) {
+              rawChapters = data.chapters;
+            } else if (data.modules && typeof data.modules === "object") {
+              const preferred = data.modules[source];
+              if (Array.isArray(preferred) && preferred.length > 0) {
+                rawChapters = preferred;
+              } else {
+                const firstKey = Object.keys(data.modules)[0];
+                rawChapters = Array.isArray(data.modules[firstKey]) ? data.modules[firstKey] : [];
+              }
+            }
+
+            allChapters = rawChapters.map(c => {
+              if (source === "mangadex") {
+                return {
+                  id: c.id,
+                  number: c.attributes?.chapter ?? "?",
+                  title:  c.attributes?.title  || ""
+                };
+              } else {
+                return {
+                  id:     c.id ?? c.chapter_number,
+                  number: c.chapter_number ?? c.id,
+                  title:  c.title || ""
+                };
+              }
+            });
+
+            allChapters.reverse();
+
+            currentChapterIndex = allChapters.findIndex(c => String(c.id) === String(chapterId));
+            renderChapterPanel();
+          } catch (e) {
+            console.error("fetchAllChapters failed:", e);
+          }
+        }
+
+        /**
+         * In-page chapter switch — no redirect.
+         * isPop = true when called from popstate (skip pushState).
+         */
+        async function loadChapter(newChapterId, isPop = false) {
+          if (String(newChapterId) === String(chapterId)) return;
+
+          // Save progress for the chapter we're leaving
+          updateHistory();
+
+          showToast("Loading chapter…");
+
+          // Reset state
+          imageLinks          = [];
+          currentPage         = 0;
+          chapterId           = String(newChapterId);
+          currentChapterIndex = allChapters.findIndex(c => String(c.id) === String(newChapterId));
+          chapterData         = null;
+
+          // Reset UI
+          container.innerHTML = "";
+          pageIndicator.textContent = "0 / 0";
+          pageProgress.value  = 0;
+          pageProgress.max    = 100;
+          nextChapterBtn.style.display = "none";
+          footerLoader.classList.add("hidden");
+
+          // Show centered loader again
+          loader.style.display = "";
+
+          // Update URL (unless triggered by browser nav)
+          if (!isPop) {
+            history.pushState(
+              { source, mangaId, chapterId },
+              "",
+              `/read/${source}/${mangaId}/${newChapterId}`
+            );
+          }
+
+          // Re-highlight panel (if open)
+          updatePanelHighlight();
+
+          // Fetch new chapter data (non-blocking title re-fetch not needed — stays same manga)
+          fetchChapterDetails();
+          await fetchImages();
+        }
+
+        function openPanel() {
+          renderChapterPanel();
+          chapterPanel.classList.remove("hidden");
+          panelBackdrop.classList.remove("hidden");
+          panelOpen = true;
+        }
+
+        function closePanel() {
+          chapterPanel.classList.add("hidden");
+          panelBackdrop.classList.add("hidden");
+          panelOpen = false;
+        }
+
+        function renderChapterPanel() {
+          chapterListEl.innerHTML = "";
+          if (allChapters.length === 0) {
+            const empty = document.createElement("div");
+            empty.style.cssText = "padding:24px 18px;color:#666;font-size:13px;";
+            empty.textContent = "No chapters available.";
+            chapterListEl.appendChild(empty);
             return;
           }
 
-          try {
-            const url = `${serverUrl}/mangadex/manga/${mangaId}/chapter-nav-details/${chapterId}`;
-            const response = await fetch(url);
-            if (!response.ok) throw new Error("Nav fetch failed");
+          const hist        = getHistory();
+          const seriesEntry = hist.find(h => h.mangaId === mangaId && h.source === source);
 
-            const navData = await response.json();
-            chapterData = navData.current_chapter;
+          allChapters.forEach(ch => {
+            const item = document.createElement("div");
+            item.className    = "chapter-item";
+            item.dataset.chId = String(ch.id);
 
-            if (chapterData?.attributes) {
-              const chNum = chapterData.attributes.chapter;
-              const title = chapterData.attributes.title;
-              chapterDetailsEl.textContent = `Chapter ${chNum}${title ? ': ' + title : ''}`;
-            } else {
-              chapterDetailsEl.textContent = `Chapter ${chapterId}`;
+            if (String(ch.id) === String(chapterId)) item.classList.add("active");
+
+            // Look up history by string AND number key for safety
+            const chRecord = seriesEntry?.chapters?.[ch.id]
+                          ?? seriesEntry?.chapters?.[String(ch.id)];
+
+            if (chRecord?.state === "finished") item.classList.add("finished");
+
+            const numSpan = document.createElement("span");
+            numSpan.className   = "ch-number";
+            numSpan.textContent = `Ch. ${ch.number}`;
+
+            const titleSpan = document.createElement("span");
+            titleSpan.className   = "ch-title";
+            titleSpan.textContent = ch.title || "";
+
+            const check = document.createElement("i");
+            check.className = "fa fa-check ch-check";
+
+            item.appendChild(numSpan);
+            item.appendChild(titleSpan);
+
+            // ── Progress badge ──
+            if (chRecord) {
+              const badge = document.createElement("span");
+              badge.className = "ch-badge";
+              if (chRecord.state === "finished") {
+                badge.classList.add("badge-read");
+                badge.textContent = "Read";
+              } else if (chRecord.state === "ongoing") {
+                badge.classList.add("badge-reading");
+                // Show page progress if we know the total (only available for current chapter)
+                const total = (String(ch.id) === String(chapterId)) ? imageLinks.length : 0;
+                if (total > 0) {
+                  badge.textContent = `Pg ${chRecord.page + 1}/${total}`;
+                } else {
+                  badge.textContent = chRecord.page > 0 ? `Pg ${chRecord.page + 1}` : "Reading";
+                }
+              }
+              item.appendChild(badge);
             }
 
-            if (navData.next_chapter_id) {
-              nextChapterBtn.style.display = "block";
-              nextChapterBtn.onclick = () => {
-                window.location.href = `/read/${source}/${mangaId}/${navData.next_chapter_id}`;
-              };
-            }
-          } catch (error) {
-            console.warn("Nav details error:", error);
-            chapterDetailsEl.textContent = `Chapter ${chapterId}`;
-            fetchLegacyChapterNav();
-          }
+            item.appendChild(check);
+
+            item.addEventListener("click", () => {
+              if (String(ch.id) !== String(chapterId)) {
+                loadChapter(ch.id);
+              }
+            });
+
+            chapterListEl.appendChild(item);
+          });
+
+          // Scroll active item into view
+          requestAnimationFrame(() => {
+            const active = chapterListEl.querySelector(".chapter-item.active");
+            if (active) active.scrollIntoView({ block: "nearest" });
+          });
         }
 
+        function updatePanelHighlight() {
+          const items = chapterListEl.querySelectorAll(".chapter-item");
+          items.forEach(item => {
+            item.classList.toggle("active", item.dataset.chId === String(chapterId));
+          });
+          const active = chapterListEl.querySelector(".chapter-item.active");
+          if (active) active.scrollIntoView({ block: "nearest" });
+        }
+
+        // ═══════════════════════════════════════════════════════════
+        // FETCHING LOGIC
+        // ═══════════════════════════════════════════════════════════
+
         async function fetchMangaTitle() {
-          // (Logic unchanged)
-          let url = source === "mangadex" 
+          const url = source === "mangadex"
             ? `${serverUrl}/mangadex/manga/${mangaId}`
             : `https://api.jikan.moe/v4/manga/${mangaId}`;
-
           try {
-            const res = await fetch(url);
+            const res  = await fetch(url);
             const data = await res.json();
             if (source === "mangadex") {
-              mangaTitleEl.textContent = data.attributes.title.en || Object.values(data.attributes.title)[0];
+              mangaTitleEl.textContent =
+                data.attributes?.title?.en ||
+                Object.values(data.attributes?.title || {})[0] ||
+                "Unknown Title";
             } else {
               mangaTitleEl.textContent = data.data?.title || "Unknown Title";
             }
@@ -547,169 +1095,419 @@
           }
         }
 
-        async function fetchLegacyChapterNav() {
-          const url = source === "mangadex" 
-             ? `${serverUrl}/mangadex/manga/${mangaId}/chapters`
-             : `${serverUrl}/chapters/${mangaId}`;
-          
+        async function fetchChapterDetails() {
+          // ── Legacy (non-mangadex) ──
+          if (source !== "mangadex") {
+            const ch = allChapters[currentChapterIndex];
+            if (ch) {
+              const title = ch.title ? ` · ${ch.title}` : "";
+              chapterDetailsEl.textContent = `Ch. ${ch.number}${title}`;
+            } else {
+              chapterDetailsEl.textContent = `Ch. ${chapterId}`;
+            }
+            // Wire next chapter button via allChapters
+            const nextCh = allChapters[currentChapterIndex + 1];
+            if (nextCh) {
+              nextChapterBtn.style.display = "flex";
+              nextChapterBtn.onclick = () => loadChapter(nextCh.id);
+            } else {
+              nextChapterBtn.style.display = "none";
+            }
+            return;
+          }
+
+          // ── MangaDex ──
           try {
-             const resp = await fetch(url);
-             if(!resp.ok) return;
-             const data = await resp.json();
-             const chapters = data.chapters;
-             const idx = chapters.findIndex(c => c.id == chapterId || c.chapter_number == chapterId);
-             
-             if(idx !== -1 && idx + 1 < chapters.length) {
-               const next = chapters[idx+1];
-               nextChapterBtn.style.display = "block";
-               nextChapterBtn.onclick = () => {
-                  window.location.href = `/read/${source}/${mangaId}/${next.id || next.chapter_number}`;
-               };
-             }
-          } catch(e) { console.error(e); }
+            const url      = `${serverUrl}/mangadex/manga/${mangaId}/chapter-nav-details/${chapterId}`;
+            const response = await fetch(url);
+            if (!response.ok) throw new Error("Nav fetch failed");
+            const navData = await response.json();
+            chapterData   = navData.current_chapter;
+
+            if (chapterData?.attributes) {
+              const chNum = chapterData.attributes.chapter;
+              const title = chapterData.attributes.title;
+              chapterDetailsEl.textContent =
+                `Ch. ${chNum}${title ? " · " + title : ""}`;
+            } else {
+              chapterDetailsEl.textContent = `Ch. ${chapterId}`;
+            }
+
+            if (navData.next_chapter_id) {
+              nextChapterBtn.style.display = "flex";
+              nextChapterBtn.onclick = () => loadChapter(navData.next_chapter_id);
+            } else {
+              nextChapterBtn.style.display = "none";
+            }
+          } catch (error) {
+            console.warn("Nav details error:", error);
+            chapterDetailsEl.textContent = `Ch. ${chapterId}`;
+            // Fallback: use allChapters for next btn
+            const nextCh = allChapters[currentChapterIndex + 1];
+            if (nextCh) {
+              nextChapterBtn.style.display = "flex";
+              nextChapterBtn.onclick = () => loadChapter(nextCh.id);
+            }
+          }
         }
 
         async function fetchImages() {
-          let url = source === "mangadex" 
+          const url = source === "mangadex"
             ? `${serverUrl}/mangadex/chapter/${chapterId}`
             : `${serverUrl}/retrieve/${mangaId}/${chapterId}`;
-
           try {
             const response = await fetch(url);
             if (!response.ok) throw new Error("Image fetch failed");
             imageLinks = await response.json();
-
             if (!imageLinks || imageLinks.length === 0) throw new Error("No images found");
-
             await preloadInitialImages();
           } catch (error) {
             console.error(error);
-            loader.style.borderColor = "red";
+            loader.style.borderTopColor = "red";
             chapterDetailsEl.textContent = "Error loading images.";
           }
         }
 
-        // Add this helper right above preloadInitialImages()
-function proxyUrl(src) {
-  if (!src || src.startsWith("/")) return src; // already relative/proxied
-  return `${serverUrl}/proxy-image?url=${encodeURIComponent(src)}`;
-}
+        function proxyUrl(src) {
+          if (!src || src.startsWith("/")) return src;
+          return `${serverUrl}/proxy-image?url=${encodeURIComponent(src)}`;
+        }
+
+        /** Build the DOM skeleton for images (flat or spread-based). */
+        function buildImageDOM() {
+          container.innerHTML = "";
+          if (layoutMode === "double") {
+            for (let i = 0; i < imageLinks.length; i += 2) {
+              const spread = document.createElement("div");
+              spread.className = "spread";
+              const img1 = document.createElement("img");
+              img1.loading = "lazy";
+              spread.appendChild(img1);
+              if (i + 1 < imageLinks.length) {
+                const img2 = document.createElement("img");
+                img2.loading = "lazy";
+                spread.appendChild(img2);
+              }
+              container.appendChild(spread);
+            }
+          } else {
+            imageLinks.forEach(() => {
+              const img = document.createElement("img");
+              img.loading = "lazy";
+              container.appendChild(img);
+            });
+          }
+        }
+
+        /** Returns ALL img elements regardless of spread wrapper depth. */
+        function getAllImages() {
+          return Array.from(container.querySelectorAll("img"));
+        }
 
         async function preloadInitialImages() {
-          // Create all IMG elements first (lazy loading structure)
-          imageLinks.forEach((src) => {
-            const img = document.createElement("img");
-            // Set a dummy transparent pixel or nothing initially to prevent broken icons
-            img.loading = "lazy"; // Native lazy loading
-            container.appendChild(img);
-          });
+          buildImageDOM();
 
-          // Preload first few
-          const images = container.getElementsByTagName("img");
-          const toPreload = Array.from(images).slice(0, 4);
+          const allImgs  = getAllImages();
+          const toPreload = allImgs.slice(0, 4);
 
-          // Detect Aspect Ratio on first image for Auto-Webtoon Mode
-          if (toPreload[0]) {
-             const tempImg = new Image();
-             tempImg.src = proxyUrl(imageLinks[0]);
-             await new Promise(r => {
-                tempImg.onload = () => {
-                   // If height is significantly larger than width (2x), assume Webtoon
-                   const isTall = tempImg.height > tempImg.width * 2;
-                   const userHasSetMode = localStorage.getItem(READER_MODE_KEY);
-                   
-                   if (isTall && !userHasSetMode) {
-                      setMode("webtoon", true);
-                   }
-                   r();
-                };
-                tempImg.onerror = r;
-             });
+          // ── Auto-guesser: detect tall (webtoon-style) images ──
+          if (toPreload[0] && imageLinks[0]) {
+            const tempImg = new Image();
+            tempImg.src   = proxyUrl(imageLinks[0]);
+            await new Promise(r => {
+              tempImg.onload = () => {
+                const isTall         = tempImg.height > tempImg.width * 2;
+                const userSetLayout  = localStorage.getItem(LAYOUT_KEY);
+                // Guesser only overrides layout to scroll (never changes single↔double)
+                // And is suppressed entirely if user has set a preference
+                if (isTall && !userSetLayout) {
+                  setLayout("scroll", true /* isAutoGuess */);
+                  // Rebuild DOM since layout changed
+                  buildImageDOM();
+                }
+                r();
+              };
+              tempImg.onerror = r;
+            });
           }
 
-          // Actually load sources for first few
-          const promises = toPreload.map((img, index) => {
-            return new Promise((resolve) => {
-              img.onload = resolve;
+          // Re-query after potential DOM rebuild
+          const imgs      = getAllImages();
+          const firstFour = imgs.slice(0, 4);
+
+          // Preload first 4 images
+          const promises = firstFour.map((img, idx) =>
+            new Promise(resolve => {
+              img.onload  = resolve;
               img.onerror = resolve;
-              img.src = proxyUrl(imageLinks[index]);
-            });
-          });
+              img.src     = proxyUrl(imageLinks[idx]);
+            })
+          );
 
           await Promise.all(promises);
-          
+
+          // ── First images ready: move loader to footer ──
           loader.style.display = "none";
-          
-          // Restore progress AFTER images exist
+          if (imageLinks.length > 4) {
+            footerLoader.classList.remove("hidden");
+          }
+
+          // Restore reading position
           restoreReadingProgress();
-          
-          // Load the rest in background
+
+          // Load the rest in the background
           loadRemainingImages();
         }
 
         function loadRemainingImages() {
-          const images = container.getElementsByTagName("img");
-          Array.from(images).slice(4).forEach((img, index) => {
-              img.src = proxyUrl(imageLinks[index + 4]);
+          const imgs      = getAllImages();
+          const remaining = imgs.slice(4);
+
+          if (remaining.length === 0) {
+            footerLoader.classList.add("hidden");
+            return;
+          }
+
+          let loadedCount = 0;
+          remaining.forEach((img, idx) => {
+            const done = () => {
+              loadedCount++;
+              if (loadedCount >= remaining.length) {
+                footerLoader.classList.add("hidden");
+              }
+            };
+            img.onload  = done;
+            img.onerror = done;
+            img.src     = proxyUrl(imageLinks[idx + 4]);
           });
         }
 
-        // --- View & Navigation Logic ---
+        /**
+         * Rebuild the image container DOM when switching between
+         * double ↔ single/scroll (where spread wrappers are needed).
+         * Reuses already-loaded image srcs to avoid re-fetching.
+         */
+        function rebuildImageContainer() {
+          if (imageLinks.length === 0) return;
+
+          const existingSrcs = getAllImages().map(img => img.src || "");
+          buildImageDOM();
+
+          const newImgs = getAllImages();
+          newImgs.forEach((img, i) => {
+            if (existingSrcs[i]) img.src = existingSrcs[i];
+          });
+
+          // Restore scroll position after rebuild
+          if (layoutMode === "scroll") {
+            setTimeout(() => {
+              const imgs = getAllImages();
+              if (imgs[currentPage]) {
+                imgs[currentPage].scrollIntoView({ behavior: "auto", block: "start" });
+              }
+            }, 50);
+          } else {
+            // Snap currentPage to even in double mode
+            if (layoutMode === "double" && currentPage % 2 !== 0) {
+              currentPage = Math.max(0, currentPage - 1);
+            }
+            updatePagination();
+          }
+          updateFooter();
+        }
+
+        // ═══════════════════════════════════════════════════════════
+        // LAYOUT & APPEARANCE
+        // ═══════════════════════════════════════════════════════════
+
+        function setLayout(mode, isAutoGuess = false) {
+          const prevMode    = layoutMode;
+          const needRebuild = (mode === "double" || prevMode === "double") && mode !== prevMode;
+          layoutMode = mode;
+
+          document.body.classList.remove("view-scroll", "view-single", "view-double");
+          document.body.classList.add(`view-${mode}`);
+
+          updateLayoutButtons();
+          updateDirectionButton(); // show/hide based on scroll vs paged
+
+          if (!isAutoGuess) {
+            localStorage.setItem(LAYOUT_KEY, mode);
+          }
+
+          if (imageLinks.length > 0) {
+            if (needRebuild) {
+              rebuildImageContainer();
+            } else if (mode === "scroll") {
+              const imgs = getAllImages();
+              if (imgs[currentPage]) {
+                imgs[currentPage].scrollIntoView({ behavior: "auto", block: "start" });
+              }
+            } else {
+              if (mode === "double" && currentPage % 2 !== 0) {
+                currentPage = Math.max(0, currentPage - 1);
+              }
+              updatePagination();
+            }
+          }
+          updateFooter();
+        }
+
+        function setFit(mode) {
+          document.body.classList.remove("fit-width", "fit-height", "fit-both");
+          document.body.classList.add(mode);
+          fitMode = mode;
+          localStorage.setItem(FIT_KEY, mode);
+          updateFitButtons();
+        }
+
+        function setDirection(dir) {
+          document.body.classList.remove("dir-ltr", "dir-rtl");
+          document.body.classList.add(`dir-${dir}`);
+          direction = dir;
+          localStorage.setItem(DIRECTION_KEY, dir);
+          updateDirectionButton();
+        }
+
+        function applyZoom(level, save = true) {
+          zoomLevel = Math.min(ZOOM_MAX, Math.max(ZOOM_MIN, level));
+          document.documentElement.style.setProperty("--zoom", zoomLevel);
+          zoomLabel.textContent = `${Math.round(zoomLevel * 100)}%`;
+          zoomOutBtn.disabled = zoomLevel <= ZOOM_MIN;
+          zoomInBtn.disabled  = zoomLevel >= ZOOM_MAX;
+          if (save) localStorage.setItem(ZOOM_KEY, zoomLevel);
+        }
+
+        function updateLayoutButtons() {
+          layoutScrollBtn.classList.toggle("active", layoutMode === "scroll");
+          layoutSingleBtn.classList.toggle("active", layoutMode === "single");
+          layoutDoubleBtn.classList.toggle("active", layoutMode === "double");
+        }
+
+        function updateFitButtons() {
+          fitWidthBtn.classList.toggle("active", fitMode === "fit-width");
+          fitHeightBtn.classList.toggle("active", fitMode === "fit-height");
+          fitBothBtn.classList.toggle("active",  fitMode === "fit-both");
+        }
+
+        function updateDirectionButton() {
+          if (layoutMode === "scroll") {
+            directionBtn.style.display = "none";
+          } else {
+            directionBtn.style.display = "";
+            directionBtn.textContent   = direction.toUpperCase();
+          }
+        }
+
+        // ═══════════════════════════════════════════════════════════
+        // NAVIGATION
+        // ═══════════════════════════════════════════════════════════
 
         function updatePagination() {
-          // Horizontal translate for pagination
-          container.scrollLeft = currentPage * window.innerWidth;
-          updateHistory(); // Save progress
+          if (layoutMode === "double") {
+            const spreadIndex = Math.floor(currentPage / 2);
+            container.scrollLeft = spreadIndex * window.innerWidth;
+          } else {
+            container.scrollLeft = currentPage * window.innerWidth;
+          }
+          updateHistory();
         }
 
         function updateFooter() {
-          if (imageLinks.length > 0) {
-            if (document.body.classList.contains("view-pagination")) {
-              pageIndicator.textContent = `${currentPage + 1} / ${imageLinks.length}`;
-              pageProgress.value = currentPage + 1;
-              pageProgress.max = imageLinks.length;
-            } else {
-              // Webtoon logic is handled in scroll listener
-            }
+          if (imageLinks.length === 0) {
+            pageIndicator.textContent = "0 / 0";
+            pageProgress.value = 0;
+            pageProgress.max   = 100;
+            return;
+          }
+
+          if (layoutMode === "scroll") {
+            // Handled by scroll listener (updateScrollProgress)
+          } else if (layoutMode === "double") {
+            const pg2     = Math.min(currentPage + 2, imageLinks.length);
+            const display = currentPage + 1 === pg2
+              ? `${pg2} / ${imageLinks.length}`
+              : `${currentPage + 1}–${pg2} / ${imageLinks.length}`;
+            pageIndicator.textContent = display;
+            const spreadIndex  = Math.floor(currentPage / 2);
+            const totalSpreads = Math.ceil(imageLinks.length / 2);
+            pageProgress.value = spreadIndex + 1;
+            pageProgress.max   = totalSpreads;
+          } else {
+            pageIndicator.textContent = `${currentPage + 1} / ${imageLinks.length}`;
+            pageProgress.value = currentPage + 1;
+            pageProgress.max   = imageLinks.length;
           }
         }
 
-        function updateWebtoonProgress() {
+        function updateScrollProgress() {
           if (imageLinks.length === 0) return;
 
-          // Update Progress Bar
-          const scrollableHeight = container.scrollHeight - container.clientHeight;
-          const progress = scrollableHeight > 0 ? (container.scrollTop / scrollableHeight) * 100 : 0;
-          pageProgress.value = progress;
-          pageProgress.max = 100;
+          const scrollableH = container.scrollHeight - container.clientHeight;
+          const pct = scrollableH > 0 ? (container.scrollTop / scrollableH) * 100 : 0;
+          pageProgress.value = pct;
+          pageProgress.max   = 100;
 
-          // Determine Current Page Index based on visibility
-          const images = container.getElementsByTagName("img");
-          let visiblePage = currentPage; // default to current
-          
-          // Scan images to find which one is mostly visible
-          for (let i = 0; i < images.length; i++) {
-            const rect = images[i].getBoundingClientRect();
-            // If the top of the image is within the viewport (with some buffer)
-            // Or if the image takes up the whole screen
+          // Detect current page by visibility
+          const imgs = getAllImages();
+          let visible = currentPage;
+          for (let i = 0; i < imgs.length; i++) {
+            const rect = imgs[i].getBoundingClientRect();
             if (rect.bottom > 0 && rect.top < window.innerHeight / 2) {
-              visiblePage = i;
+              visible = i;
             }
           }
-          
-          if (visiblePage !== currentPage) {
-             currentPage = visiblePage;
-             pageIndicator.textContent = `${currentPage + 1} / ${imageLinks.length}`;
-             updateHistory(); // Save progress on page change
+          if (visible !== currentPage) {
+            currentPage = visible;
+            pageIndicator.textContent = `${currentPage + 1} / ${imageLinks.length}`;
+            updateHistory();
           }
         }
 
-        function changePage(direction) {
-          const newPage = currentPage + direction;
-          if (newPage >= 0 && newPage < imageLinks.length) {
-            currentPage = newPage;
-            updatePagination();
-            updateFooter();
+        /**
+         * direction: +1 = story-forward, -1 = story-backward
+         * (caller already accounts for RTL when mapping clicks/keys)
+         */
+        function changePage(direction_) {
+          if (layoutMode === "scroll") {
+            // In scroll mode, arrow keys scroll by one viewport height
+            container.scrollBy({ top: direction_ * window.innerHeight * 0.9, behavior: "smooth" });
+            return;
+          }
+
+          const step    = layoutMode === "double" ? 2 : 1;
+          const newPage = currentPage + direction_ * step;
+
+          if (newPage < 0) {
+            handleChapterEdge(-1);
+            return;
+          }
+          if (newPage >= imageLinks.length) {
+            handleChapterEdge(1);
+            return;
+          }
+
+          currentPage = newPage;
+          updatePagination();
+          updateFooter();
+        }
+
+        function handleChapterEdge(storyDir) {
+          // storyDir: +1 = next chapter, -1 = prev chapter
+          if (storyDir > 0) {
+            const next = allChapters[currentChapterIndex + 1];
+            if (next) {
+              loadChapter(next.id);
+            } else {
+              showToast("You've reached the last chapter!");
+            }
+          } else {
+            const prev = allChapters[currentChapterIndex - 1];
+            if (prev) {
+              loadChapter(prev.id);
+            } else {
+              showToast("This is the first chapter!");
+            }
           }
         }
 
@@ -718,74 +1516,143 @@ function proxyUrl(src) {
           footer.classList.toggle("hidden");
         }
 
-        function setMode(mode, isInitial = false) {
-          if (mode === "pagination") {
-            document.body.classList.remove("view-webtoon");
-            document.body.classList.add("view-pagination");
-            modePaginationBtn.classList.add("active");
-            modeWebtoonBtn.classList.remove("active");
-            
-            // Fix layout
-            container.scrollLeft = currentPage * window.innerWidth;
-            updatePagination();
-          } else {
-            document.body.classList.remove("view-pagination");
-            document.body.classList.add("view-webtoon");
-            modeWebtoonBtn.classList.add("active");
-            modePaginationBtn.classList.remove("active");
-            
-            // Scroll to current page in vertical mode
-            if (!isInitial) {
-              const imgs = container.getElementsByTagName("img");
-              if (imgs[currentPage]) {
-                imgs[currentPage].scrollIntoView({ behavior: "auto", block: "start" });
-              }
-            }
-          }
-          
-          if (!isInitial) {
-             localStorage.setItem(READER_MODE_KEY, mode);
-          }
-          updateFooter();
+        // ═══════════════════════════════════════════════════════════
+        // TOAST
+        // ═══════════════════════════════════════════════════════════
+        function showToast(msg, duration = 2800) {
+          toast.textContent = msg;
+          toast.classList.remove("hidden");
+          clearTimeout(toastTimeout);
+          toastTimeout = setTimeout(() => toast.classList.add("hidden"), duration);
         }
 
-        // --- Controls Setup ---
-
+        // ═══════════════════════════════════════════════════════════
+        // CONTROLS SETUP (called once)
+        // ═══════════════════════════════════════════════════════════
         function setupControls() {
-          modePaginationBtn.addEventListener("click", () => setMode("pagination"));
-          modeWebtoonBtn.addEventListener("click", () => setMode("webtoon"));
 
-          // Scroll Listener (Throttled slightly for performance if needed, but modern browsers handle this okay)
+          // ── Layout switcher ──
+          layoutScrollBtn.addEventListener("click", () => setLayout("scroll"));
+          layoutSingleBtn.addEventListener("click", () => setLayout("single"));
+          layoutDoubleBtn.addEventListener("click", () => setLayout("double"));
+
+          // ── Fit switcher ──
+          fitWidthBtn.addEventListener("click",  () => setFit("fit-width"));
+          fitHeightBtn.addEventListener("click", () => setFit("fit-height"));
+          fitBothBtn.addEventListener("click",   () => setFit("fit-both"));
+
+          // ── Direction ──
+          directionBtn.addEventListener("click", () => {
+            setDirection(direction === "ltr" ? "rtl" : "ltr");
+          });
+
+          // ── Zoom buttons ──
+          zoomOutBtn.addEventListener("click", () => applyZoom(zoomLevel - ZOOM_STEP));
+          zoomInBtn.addEventListener("click",  () => applyZoom(zoomLevel + ZOOM_STEP));
+
+          // ── Ctrl+Scroll / Pinch zoom ──
+          container.addEventListener("wheel", (e) => {
+            if (e.ctrlKey) {
+              e.preventDefault();
+              const delta = e.deltaY > 0 ? -ZOOM_STEP : ZOOM_STEP;
+              applyZoom(zoomLevel + delta);
+            }
+          }, { passive: false });
+
+          // ── Scroll listener (scroll mode progress) ──
           container.addEventListener("scroll", () => {
-            if (document.body.classList.contains("view-webtoon")) {
-              updateWebtoonProgress();
+            if (layoutMode === "scroll") updateScrollProgress();
+          });
+
+          // ── Chapter panel ──
+          chaptersBtn.addEventListener("click",   openPanel);
+          closePanelBtn.addEventListener("click", closePanel);
+          panelBackdrop.addEventListener("click", closePanel);
+
+          // ── Nav overlay (paged modes) ──
+          // In RTL mode, the visual left/right clicks are swapped in story direction
+          navLeft.addEventListener("click", () => {
+            const storyDir = direction === "rtl" ? 1 : -1;
+            changePage(storyDir);
+          });
+          navRight.addEventListener("click", () => {
+            const storyDir = direction === "rtl" ? -1 : 1;
+            changePage(storyDir);
+          });
+          navCenter.addEventListener("click", toggleUI);
+
+          // ── Progress bar click (paged modes) ──
+          pageProgress.addEventListener("click", (e) => {
+            if (imageLinks.length === 0) return;
+            if (layoutMode === "scroll") {
+              const ratio = e.offsetX / pageProgress.offsetWidth;
+              const scrollableH = container.scrollHeight - container.clientHeight;
+              container.scrollTo({ top: ratio * scrollableH, behavior: "smooth" });
+            } else {
+              const ratio   = e.offsetX / pageProgress.offsetWidth;
+              const target  = Math.floor(ratio * imageLinks.length);
+              const snapped = layoutMode === "double" ? target - (target % 2) : target;
+              currentPage   = Math.max(0, Math.min(snapped, imageLinks.length - 1));
+              updatePagination();
+              updateFooter();
             }
           });
 
-          // Keyboard Support
+          // ── Keyboard ──
           document.addEventListener("keydown", (e) => {
-            if(document.body.classList.contains("view-pagination")) {
-               if(e.key === "ArrowRight") changePage(1);
-               if(e.key === "ArrowLeft") changePage(-1);
+            // Don't fire if user is typing somewhere
+            if (e.target.tagName === "INPUT" || e.target.tagName === "TEXTAREA") return;
+
+            const rtl = direction === "rtl" && layoutMode !== "scroll";
+
+            if (e.key === "ArrowRight" || e.key === "ArrowDown") {
+              e.preventDefault();
+              changePage(rtl ? -1 : 1);
+            }
+            if (e.key === "ArrowLeft" || e.key === "ArrowUp") {
+              e.preventDefault();
+              changePage(rtl ? 1 : -1);
+            }
+            if (e.key === " " && !e.shiftKey) {
+              e.preventDefault();
+              changePage(1);
+            }
+            if (e.key === " " && e.shiftKey) {
+              e.preventDefault();
+              changePage(-1);
+            }
+            if (e.key === "Escape" && panelOpen) {
+              closePanel();
+            }
+            if (e.key === "f" || e.key === "F") {
+              toggleUI();
             }
           });
 
-          document.getElementById("nav-left").addEventListener("click", () => changePage(-1));
-          document.getElementById("nav-right").addEventListener("click", () => changePage(1));
-          document.getElementById("nav-center").addEventListener("click", toggleUI);
+          // ── Resize: re-snap scroll position so paged modes stay aligned ──
+          let resizeTimer = null;
+          window.addEventListener("resize", () => {
+            clearTimeout(resizeTimer);
+            resizeTimer = setTimeout(() => {
+              if (layoutMode !== "scroll" && imageLinks.length > 0) {
+                updatePagination();
+              }
+            }, 50);
+          });
 
+          // ── Back button ──
           backBtn.addEventListener("click", () => {
-            // Try to communicate with parent if iframe, else go back
             if (window.parent && window.parent !== window) {
               window.parent.postMessage("close-reader-modal", "*");
             } else if (window.history.length > 1) {
               window.history.back();
             } else {
-               window.location.href = "/"; // Fallback home
+              window.location.href = "/";
             }
           });
         }
 
+        // ── Kick it off ──
         init();
       });
     </script>
