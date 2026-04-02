@@ -74,9 +74,9 @@
       #desktop-hero {
         display: none;
         position: relative;
-        width: 100%;
+        width: 90vw; /* Hero div now spans 90% of the viewport width */
         height: 580px;
-        margin: 24px 0 56px;
+        margin: 24px auto 56px; /* Centered horizontally with auto margins */
         border-radius: 20px;
         overflow: hidden;
         background-color: #000;
@@ -538,29 +538,29 @@
       </svg>
     </nav>
 
-    <div class="app-container">
-
-      <!-- Desktop Hero (shown on 1024px+) -->
-      <div id="desktop-hero">
-        <img class="hero-bg-image" id="hero-bg" src="" alt="" />
-        <div class="hero-overlay"></div>
-        <div class="hero-content" id="hero-content">
-          <span class="hero-label"><i class="fas fa-fire"></i> Trending Manga</span>
-          <div class="hero-tags" id="hero-tags"></div>
-          <h1 class="hero-title" id="hero-title">Loading...</h1>
-          <h2 class="hero-subtitle" id="hero-subtitle"></h2>
-          <p class="hero-synopsis" id="hero-desc"></p>
-          <div class="hero-actions">
-            <button class="btn-hero btn-primary" id="hero-read-btn">
-              Read Now <i class="fas fa-arrow-right"></i>
-            </button>
-            <button class="btn-hero btn-outline">
-              <i class="far fa-bookmark"></i>
-            </button>
-          </div>
+    <!-- Desktop Hero (shown on 1024px+) -->
+    <div id="desktop-hero">
+      <img class="hero-bg-image" id="hero-bg" src="" alt="" />
+      <div class="hero-overlay"></div>
+      <div class="hero-content" id="hero-content">
+        <span class="hero-label"><i class="fas fa-fire"></i> Trending Manga</span>
+        <div class="hero-tags" id="hero-tags"></div>
+        <h1 class="hero-title" id="hero-title">Loading...</h1>
+        <h2 class="hero-subtitle" id="hero-subtitle"></h2>
+        <p class="hero-synopsis" id="hero-desc"></p>
+        <div class="hero-actions">
+          <button class="btn-hero btn-primary" id="hero-read-btn">
+            Read Now <i class="fas fa-arrow-right"></i>
+          </button>
+          <button class="btn-hero btn-outline">
+            <i class="far fa-bookmark"></i>
+          </button>
         </div>
-        <div class="hero-indicators" id="hero-indicators"></div>
       </div>
+      <div class="hero-indicators" id="hero-indicators"></div>
+    </div>
+
+    <div class="app-container">
 
       <!-- Jikan Content (carousel on mobile, hero replaces on desktop) -->
       <section class="content-section" id="jikan-content">

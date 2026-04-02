@@ -1767,10 +1767,23 @@ iframe { width: 100%; height: 100%; border: none; }
       for (let i = 1; i <= epCount; i++) {
         episodes.push({ attributes: { number: i, canonicalTitle: `Episode ${i}`, thumbnail: null } });
       }
-      hideThumbnails = true; // Force hide broken placeholders
+      // hideThumbnails = true; // Force hide broken placeholders - Removed for new auto-toggle logic
     }
 
     episodesData = episodes.sort((a, b) => a.attributes.number - b.attributes.number);
+
+    // Auto-toggle thumbnail view (unless user prefers it off)
+    const userPrefSet = localStorage.getItem("hideThumbnails");
+    const hasThumbnails = episodesData.some(ep => ep.attributes.thumbnail?.original);
+
+    if (userPrefSet === null) { // User hasn't set a preference yet
+      hideThumbnails = !hasThumbnails; // If no thumbnails, hide them by default
+      localStorage.setItem("hideThumbnails", hideThumbnails); // Save this initial auto-toggle state
+    } else if (!hasThumbnails && hideThumbnails === false) { // User prefers thumbnails ON, but none are available
+      hideThumbnails = true; // Force hide if no thumbnails exist
+      localStorage.setItem("hideThumbnails", true); // Persist this force-hide state
+    }
+
     renderEpisodes();
     setupLocateButton();
   }
@@ -2011,6 +2024,8 @@ iframe { width: 100%; height: 100%; border: none; }
     const url = `view.html?id=${currentMalId}&ep=${ep}`;
     document.getElementById("episode-popup-iframe").src = url;
     document.getElementById("episode-popup-overlay").classList.add("active");
+    document.body.style.overflow = "hidden"; // Disable body scrolling when modal is open
+
   }
 
   function closePlayerPopup() {
@@ -2020,6 +2035,7 @@ iframe { width: 100%; height: 100%; border: none; }
     localWatchHistory = JSON.parse(localStorage.getItem("animex_watch_history") || "{}");
     renderEpisodes();
     setupLocateButton();
+    document.body.style.overflow = ""; // Re-enable body scrolling when modal is closed
   }
 
   // --- PHASE 1: MODERNIZED RX GATE ---

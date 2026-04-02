@@ -771,6 +771,38 @@
         } catch (e) {}
       }
 
+      // ─── Source connectivity probe ────────────────────────────────
+      // Attempt to reach the player/source URL directly once.
+      // If it's reachable → load as-is.  If blocked → wrap in proxy.
+      let _srcProbeCache = {}; // keyed by origin, value: true (direct) | false (proxy)
+
+      async function probeSourceUrl(src) {
+        try {
+          const origin = new URL(src).origin;
+          if (_srcProbeCache[origin] !== undefined) return _srcProbeCache[origin];
+
+          const ok = await new Promise(resolve => {
+            const img   = new Image();
+            const timer = setTimeout(() => { img.src = ""; resolve(false); }, 6000);
+            // Use a tiny pixel endpoint at the same origin if it exists, else probe the src itself
+            img.onload  = () => { clearTimeout(timer); resolve(true);  };
+            img.onerror = () => { clearTimeout(timer); resolve(false); };
+            img.src     = src + (src.includes("?") ? "&" : "?") + "_probe=" + Date.now();
+          });
+
+          _srcProbeCache[origin] = ok;
+          console.log(`[view] source probe for ${origin}: ${ok ? "✓ direct" : "✗ using proxy"}`);
+          return ok;
+        } catch (e) {
+          return true; // can't parse URL — just try direct
+        }
+      }
+
+      function proxySrc(src) {
+        return `/proxy-image?url=${encodeURIComponent(src)}`;
+      }
+      // ─────────────────────────────────────────────────────────────
+
       async function loadPlayer(dub, module) {
         DOM.loading.style.display = "flex";
         DOM.loading.style.opacity = "1";
@@ -783,7 +815,11 @@
           const data = await res.json();
           if (!data.src) throw new Error("No source found");
 
-          DOM.player.innerHTML = `<iframe src="${data.src}" allowfullscreen sandbox="allow-scripts allow-same-origin allow-presentation"></iframe>`;
+          // ── Probe once: can we reach the source directly? ──
+          const directOk = await probeSourceUrl(data.src);
+          const finalSrc = directOk ? data.src : proxySrc(data.src);
+
+          DOM.player.innerHTML = `<iframe src="${finalSrc}" allowfullscreen sandbox="allow-scripts allow-same-origin allow-presentation"></iframe>`;
 
           if (data.source_module) DOM.sourceSelect.value = data.source_module;
 

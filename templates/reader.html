@@ -1168,9 +1168,80 @@
           }
         }
 
+        // ═══════════════════════════════════════════════════════════
+        // PROXY DETECTION — probe once, then route all images
+        // ═══════════════════════════════════════════════════════════
+
+        // null = unknown (probe pending), true = direct works, false = must proxy
+        let _directAccessOk = null;
+        // Queue of callbacks waiting on the probe result
+        let _probeCallbacks  = [];
+
+        /**
+         * Run (or await) the one-time connectivity probe.
+         * Resolves with true (direct) or false (proxy fallback).
+         */
+        async function probeDirectAccess(sampleUrl) {
+          if (_directAccessOk !== null) return _directAccessOk;
+
+          return new Promise(resolve => {
+            _probeCallbacks.push(resolve);
+
+            // Only the first caller kicks off the real probe
+            if (_probeCallbacks.length > 1) return;
+
+            const probe = new Image();
+            const timer = setTimeout(() => settle(false), 8000); // 8 s timeout
+
+            function settle(ok) {
+              clearTimeout(timer);
+              _directAccessOk = ok;
+              console.log(`[reader] direct-access probe: ${ok ? "✓ direct" : "✗ using proxy"}`);
+              _probeCallbacks.forEach(cb => cb(ok));
+              _probeCallbacks = [];
+            }
+
+            probe.onload  = () => settle(true);
+            probe.onerror = () => settle(false);
+            // Cache-bust so the browser actually fires a network request
+            probe.src = sampleUrl + (sampleUrl.includes("?") ? "&" : "?") + "_probe=" + Date.now();
+          });
+        }
+
         function proxyUrl(src) {
           if (!src || src.startsWith("/")) return src;
           return `${serverUrl}/proxy-image?url=${encodeURIComponent(src)}`;
+        }
+
+        /**
+         * Return the URL to use for an image.
+         * Uses cached probe result — call after probeDirectAccess() has settled.
+         */
+        function resolvedUrl(src) {
+          if (!src || src.startsWith("/")) return src;
+          return _directAccessOk ? src : proxyUrl(src);
+        }
+
+        /**
+         * Attach src to an img element with automatic proxy retry on error.
+         * @param {HTMLImageElement} img
+         * @param {string} rawSrc  — the original (un-proxied) URL
+         */
+        function setImgSrc(img, rawSrc) {
+          if (!rawSrc) return;
+          const direct = _directAccessOk !== false; // use direct if probe passed or still unknown
+          img.src = direct && !rawSrc.startsWith("/") ? rawSrc : proxyUrl(rawSrc);
+          img.dataset.rawSrc = rawSrc; // store original for retry
+
+          img.onerror = function retryWithProxy() {
+            img.onerror = null; // prevent infinite loop
+            const proxied = proxyUrl(rawSrc);
+            if (img.src !== proxied) {
+              console.warn("[reader] direct load failed, retrying via proxy:", rawSrc);
+              _directAccessOk = false; // cache result for future images
+              img.src = proxied;
+            }
+          };
         }
 
         /** Build the DOM skeleton for images (flat or spread-based). */
@@ -1210,10 +1281,16 @@
           const allImgs  = getAllImages();
           const toPreload = allImgs.slice(0, 4);
 
+          // ── ONE-TIME CONNECTIVITY PROBE ──
+          // Try the first raw image URL directly; fall back to proxy for everything if it fails.
+          if (imageLinks[0]) {
+            await probeDirectAccess(imageLinks[0]);
+          }
+
           // ── Auto-guesser: detect tall (webtoon-style) images ──
           if (toPreload[0] && imageLinks[0]) {
             const tempImg = new Image();
-            tempImg.src   = proxyUrl(imageLinks[0]);
+            tempImg.src   = resolvedUrl(imageLinks[0]);
             await new Promise(r => {
               tempImg.onload = () => {
                 const isTall         = tempImg.height > tempImg.width * 2;
@@ -1235,12 +1312,15 @@
           const imgs      = getAllImages();
           const firstFour = imgs.slice(0, 4);
 
-          // Preload first 4 images
+          // Preload first 4 images (probe already settled, so setImgSrc picks the right path)
           const promises = firstFour.map((img, idx) =>
             new Promise(resolve => {
               img.onload  = resolve;
-              img.onerror = resolve;
-              img.src     = proxyUrl(imageLinks[idx]);
+              // onerror handled inside setImgSrc (proxy retry); resolve after that too
+              const origOnerror = null;
+              img.addEventListener("load",  resolve, { once: true });
+              img.addEventListener("error", resolve, { once: true });
+              setImgSrc(img, imageLinks[idx]);
             })
           );
 
@@ -1276,9 +1356,10 @@
                 footerLoader.classList.add("hidden");
               }
             };
-            img.onload  = done;
-            img.onerror = done;
-            img.src     = proxyUrl(imageLinks[idx + 4]);
+            // Use resolved URL with automatic proxy-retry on individual failures
+            img.addEventListener("load",  done, { once: true });
+            img.addEventListener("error", done, { once: true });
+            setImgSrc(img, imageLinks[idx + 4]);
           });
         }
 
@@ -1290,12 +1371,13 @@
         function rebuildImageContainer() {
           if (imageLinks.length === 0) return;
 
-          const existingSrcs = getAllImages().map(img => img.src || "");
+          // Preserve original (raw) srcs so we don't double-proxy
+          const existingRawSrcs = getAllImages().map(img => img.dataset.rawSrc || img.src || "");
           buildImageDOM();
 
           const newImgs = getAllImages();
           newImgs.forEach((img, i) => {
-            if (existingSrcs[i]) img.src = existingSrcs[i];
+            if (existingRawSrcs[i]) setImgSrc(img, existingRawSrcs[i]);
           });
 
           // Restore scroll position after rebuild

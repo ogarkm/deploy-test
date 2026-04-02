@@ -2406,10 +2406,14 @@
 
       const delay = (ms) => new Promise((res) => setTimeout(res, ms));
 
+      // --- TUNNEL / BACKEND STATE ---
+      let backendDown = false;
+      let tunnelPollTimer = null;
+
       async function checkServerStatus(ip, isDeployed = false) {
         statusIndicator.textContent = "Connecting...";
         statusIndicator.className = "status-indicator connecting";
-        const url = isDeployed ? "/identify" : `https://{ip}:7275/identify`;
+        const url = isDeployed ? "/identify" : `https://${ip}:7275/identify`;
 
         try {
           const response = await fetch(url, {
@@ -2430,11 +2434,8 @@
               setTimeout(() => {
                 serverModal.classList.remove("active");
               }, 1000);
-              // Check tunnel health
-              if (data.tunnel_active === false) {
-                setTimeout(() => showTunnelWarning(), 1200);
-              }
-              return true;
+              // Return tunnel state alongside connected flag
+              return { connected: true, tunnelActive: data.tunnel_active !== false };
             }
           }
           throw new Error("Not a valid Animex server.");
@@ -2444,15 +2445,18 @@
             ? "Connection to server failed. Please refresh."
             : "Connection failed. Check IP and ensure server is running.";
           statusIndicator.className = "status-indicator error";
-          return false;
+          return { connected: false, tunnelActive: false };
         }
       }
 
       connectBtn.addEventListener("click", async () => {
         const ip = ipInput.value.trim();
         if (ip) {
-          const connected = await checkServerStatus(ip, false);
-          if (connected) {
+          const result = await checkServerStatus(ip, false);
+          if (result.connected) {
+            if (!result.tunnelActive) {
+              setTimeout(() => showTunnelWarning(), 1200);
+            }
             proceedToApp();
           }
         }
@@ -2462,12 +2466,83 @@
         const modal = document.getElementById("tunnel-warning-modal");
         if (!modal) return;
         modal.classList.add("active");
-        document.getElementById("tunnel-refresh-btn").addEventListener("click", () => {
+
+        const refreshBtn = document.getElementById("tunnel-refresh-btn");
+        const dismissBtn = document.getElementById("tunnel-dismiss-btn");
+
+        // Use { once: true } to avoid stacking listeners on repeated calls
+        refreshBtn.addEventListener("click", () => {
           window.location.reload();
-        });
-        document.getElementById("tunnel-dismiss-btn").addEventListener("click", () => {
+        }, { once: true });
+
+        dismissBtn.addEventListener("click", () => {
           modal.classList.remove("active");
-        });
+          // User acknowledged the backend is down — set state and begin polling
+          backendDown = true;
+          startTunnelPolling();
+        }, { once: true });
+      }
+
+      // --- TUNNEL POLLING ---
+      function startTunnelPolling() {
+        if (tunnelPollTimer) return; // already running
+        const POLL_INTERVAL = 7000; // 7 seconds
+        const isDeployed = window.location.protocol.startsWith("http");
+
+        async function poll() {
+          try {
+            const url = isDeployed
+              ? "/identify"
+              : `https://${localStorage.getItem("extension_server_ip")}:7275/identify`;
+            const response = await fetch(url, {
+              method: "GET",
+              mode: isDeployed ? "same-origin" : "cors",
+              signal: AbortSignal.timeout(5000),
+            });
+            if (response.ok) {
+              const data = await response.json();
+              const tunnelNowActive = data.tunnel_active !== false;
+
+              if (backendDown && tunnelNowActive) {
+                // Tunnel came back up
+                backendDown = false;
+                stopTunnelPolling();
+                showToast("Backend connection restored. All features are available.", "success", 5000);
+              } else if (!backendDown && !tunnelNowActive) {
+                // Tunnel went down while we were healthy
+                backendDown = true;
+                showToast("Backend connection lost. Some features may be unavailable.", "error", 6000);
+                // Keep polling so we catch recovery
+              }
+            } else {
+              // Non-OK response — treat as still down, no toast spam
+              if (!backendDown) {
+                backendDown = true;
+                showToast("Backend connection lost. Some features may be unavailable.", "error", 6000);
+              }
+            }
+          } catch {
+            // Fetch failed — treat as down
+            if (!backendDown) {
+              backendDown = true;
+              showToast("Backend connection lost. Some features may be unavailable.", "error", 6000);
+            }
+          }
+
+          // Schedule next poll only if still needed
+          if (tunnelPollTimer !== null) {
+            tunnelPollTimer = setTimeout(poll, POLL_INTERVAL);
+          }
+        }
+
+        tunnelPollTimer = setTimeout(poll, POLL_INTERVAL);
+      }
+
+      function stopTunnelPolling() {
+        if (tunnelPollTimer) {
+          clearTimeout(tunnelPollTimer);
+          tunnelPollTimer = null;
+        }
       }
 
       async function initApp() {
@@ -2476,23 +2551,32 @@
         startupStatus.classList.add("visible");
         await delay(1000);
 
-        let connected = false;
+        // Reset tunnel state fresh on every page load
+        backendDown = false;
+        stopTunnelPolling();
+
+        let result = { connected: false, tunnelActive: false };
         if (isDeployed) {
-          connected = await checkServerStatus(null, true);
+          result = await checkServerStatus(null, true);
         } else {
           const savedIp = localStorage.getItem("extension_server_ip");
           if (savedIp) {
-            connected = await checkServerStatus(savedIp, false);
-          } else {
-            connected = false;
+            result = await checkServerStatus(savedIp, false);
           }
         }
 
-        if (connected) {
+        if (result.connected) {
           startupStatusText.textContent = "Connection Found";
           startupStatusDot.classList.remove("active");
           startupStatusDot.classList.add("success");
           await delay(500);
+
+          if (!result.tunnelActive) {
+            // Tunnel is down on initial load — show warning; polling starts when user dismisses
+            setTimeout(() => showTunnelWarning(), 1200);
+          }
+          // backendDown stays false until user clicks "Continue Anyway"
+
           proceedToApp();
         } else {
           startupStatusText.textContent = "Connection Failed";
