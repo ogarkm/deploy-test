@@ -837,104 +837,171 @@ async def mal_to_kitsu(mal_id: int):
                 
     raise HTTPException(status_code=404, detail="Mapping not found for this MAL ID.")
 
+async def get_jikan_anime_status(mal_id: int) -> str:
+    """
+    Returns the airing status string from Jikan (e.g. 'Finished Airing',
+    'Currently Airing', 'Not yet aired').  Uses the existing Jikan disk cache
+    so we never make redundant network requests.
+    """
+    url = f"https://api.jikan.moe/v4/anime/{mal_id}"
+    cached = load_cache(url)
+    if cached:
+        return cached.get("data", {}).get("status", "unknown")
+    try:
+        r = await hybrid_client.get(url, timeout=12)
+        if r.status_code == 200:
+            data = r.json()
+            save_cache(url, data)
+            return data.get("data", {}).get("status", "unknown")
+    except Exception:
+        pass
+    return "unknown"
+
 async def refresh_kitsu_episodes_cache(mal_id: int, kitsu_id: int):
     """
     Background task to crawl Kitsu and update the local JSON cache.
-    Optimized for 1000+ episode series.
+    Optimized for 1000+ episode series (One Piece, Naruto, etc.).
+
+    Strategy:
+    - Finished shows  → full cache is permanent, never re-fetched.
+    - Currently Airing → overlap the last 20 episodes so new ones are caught.
+    - Unknown          → same overlap strategy as airing.
     """
     cache_path = get_episodes_cache_path(mal_id)
-    existing_data = {"episodes": [], "last_updated": 0, "status": "unknown"}
-    
+    existing_data = {"episodes": [], "last_updated": 0, "airing_status": "unknown"}
+
     if os.path.exists(cache_path):
         try:
             with open(cache_path, 'r', encoding='utf-8') as f:
                 existing_data = json.load(f)
-        except: pass
+        except Exception:
+            pass
 
-    # Get the latest episode count we currently have
-    # We'll start fetching from a point that ensures we don't miss anything 
-    # but don't re-download the whole show.
+    # --- Resolve airing status (Jikan) ---
+    airing_status = await get_jikan_anime_status(mal_id)
+
+    # Finished shows: cache is already complete — nothing to do
+    if airing_status in ("Finished Airing", "Finished") and existing_data.get("episodes"):
+        print(f"MAL:{mal_id} is finished airing — skipping Kitsu refresh (cache complete)")
+        # Ensure the cached file carries the resolved status
+        if existing_data.get("airing_status") != airing_status:
+            existing_data["airing_status"] = airing_status
+            with open(cache_path, 'w', encoding='utf-8') as f:
+                json.dump(existing_data, f)
+        return
+
+    # --- Determine fetch start offset ---
     current_count = len(existing_data.get("episodes", []))
-    offset = max(0, current_count - 20) # Overlap by 20 to catch updates
-    
-    new_episodes = []
+    # Overlap by 20 to catch any last-minute title/thumbnail updates
+    offset = max(0, current_count - 20)
+
+    new_episodes: list = []
     base_url = f"https://kitsu.io/api/edge/anime/{kitsu_id}/episodes"
-    
+
     try:
         current_url = f"{base_url}?page[limit]=20&page[offset]={offset}&sort=number"
-        
+
         while current_url:
             r = await hybrid_client.get(current_url, timeout=15)
-            if r.status_code != 200: break
-            
+            if r.status_code != 200:
+                break
+
             resp_json = r.json()
             batch = resp_json.get("data", [])
-            if not batch: break
-            
+            if not batch:
+                break
+
             new_episodes.extend(batch)
             current_url = resp_json.get("links", {}).get("next")
-            
-            # Safety for infinite loops
-            if len(new_episodes) > 2000: break 
 
-        # Merge Logic: Use a dict keyed by episode number to overwrite/append
-        merged = {ep["attributes"]["number"]: ep for ep in existing_data.get("episodes", [])}
+            # Hard safety cap — Kitsu pagination should never exceed this
+            if len(new_episodes) > 5000:
+                break
+
+        # --- Merge: keyed by episode number so updates overwrite stale entries ---
+        merged: dict = {ep["attributes"]["number"]: ep for ep in existing_data.get("episodes", [])}
         for ep in new_episodes:
-            merged[ep["attributes"]["number"]] = ep
-            
-        # Sort and save
+            num = ep.get("attributes", {}).get("number")
+            if num is not None:
+                merged[num] = ep
+
         sorted_episodes = [merged[k] for k in sorted(merged.keys())]
-        
+
         updated_cache = {
             "episodes": sorted_episodes,
             "last_updated": time.time(),
-            "kitsu_id": kitsu_id
+            "kitsu_id": kitsu_id,
+            "airing_status": airing_status,
         }
-        
+
         with open(cache_path, 'w', encoding='utf-8') as f:
             json.dump(updated_cache, f)
-            
-        print(f"Successfully cached {len(sorted_episodes)} episodes for MAL:{mal_id}")
+
+        print(f"Cached {len(sorted_episodes)} episodes for MAL:{mal_id} (status: {airing_status})")
     except Exception as e:
         print(f"Background refresh failed for MAL:{mal_id}: {e}")
 
 @app.get("/anime/{mal_id}/episodes")
 async def get_anime_episodes_cached(mal_id: int, background_tasks: BackgroundTasks):
     """
-    Main endpoint for series-info and view.html scroller.
-    Returns cached data instantly, triggers background refresh if stale.
+    Main episode list endpoint used by both view.html and series-info.html.
+
+    Returns the full cached episode list instantly, then triggers a background
+    refresh when the data is considered stale.  Staleness thresholds are driven
+    by the show's Jikan airing status so we never waste bandwidth on a series
+    that finished airing years ago:
+
+      - Finished Airing / Finished → permanent (never stale once cached)
+      - Currently Airing            → 6-hour TTL  (weekly episodes)
+      - Not yet aired / unknown     → 12-hour TTL (default)
+
+    Response shape (same Kitsu episode objects the frontends already consume):
+      {
+        "episodes":       [ <kitsu episode objects> ],
+        "kitsu_id":       <int>,
+        "airing_status":  "Currently Airing" | "Finished Airing" | ...,
+        "last_updated":   <unix timestamp>
+      }
     """
     cache_path = get_episodes_cache_path(mal_id)
-    
-    # 1. Check mapping
+
+    # 1. Resolve Kitsu mapping (fast — uses its own disk cache)
     map_data = await mal_to_kitsu(mal_id)
     kitsu_id = map_data["kitsu_id"]
-    
-    # 2. Check if cache exists
+
+    # 2. Load disk cache
     cache_exists = os.path.exists(cache_path)
-    cached_data = None
-    
+    cached_data: Optional[dict] = None
+
     if cache_exists:
         try:
             with open(cache_path, 'r', encoding='utf-8') as f:
                 cached_data = json.load(f)
-        except: cache_exists = False
+        except Exception:
+            cache_exists = False
 
-    # 3. Decision Logic
-    now = time.time()
-    # Stale if older than 12 hours
-    is_stale = not cached_data or (now - cached_data.get("last_updated", 0) > 43200)
-
-    if not cache_exists:
-        # First time loading: Must wait for at least one batch
+    # 3. Cold start — block until we have at least one full fetch
+    if not cache_exists or not cached_data:
         await refresh_kitsu_episodes_cache(mal_id, kitsu_id)
         with open(cache_path, 'r', encoding='utf-8') as f:
             return json.load(f)
-    
+
+    # 4. Determine staleness based on airing status
+    airing_status = cached_data.get("airing_status", "unknown")
+    now = time.time()
+    last_updated = cached_data.get("last_updated", 0)
+
+    if airing_status in ("Finished Airing", "Finished"):
+        is_stale = False                                  # permanent — never re-fetch
+    elif airing_status == "Currently Airing":
+        is_stale = (now - last_updated) > 21600          # 6 hours
+    else:
+        is_stale = (now - last_updated) > 43200          # 12 hours (default)
+
+    # 5. Kick off a background refresh if stale, but serve cached data right away
     if is_stale:
-        # Return stale data immediately, but update in background
         background_tasks.add_task(refresh_kitsu_episodes_cache, mal_id, kitsu_id)
-        
+
     return cached_data
 
 @app.get("/map/file/animekai")

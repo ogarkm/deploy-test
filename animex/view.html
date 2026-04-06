@@ -331,14 +331,40 @@
         display: flex;
         gap: 12px;
         overflow-x: auto;
-        padding: 10px 0 20px 0;
+        padding: 10px 0 16px 0;
         scroll-behavior: smooth;
         -webkit-overflow-scrolling: touch;
-        scrollbar-width: none; /* Firefox */
+        /* Touch devices: hide scrollbar (they use native swipe) */
+        scrollbar-width: none;
+        cursor: grab;
+        user-select: none;
       }
-      .episode-scroller::-webkit-scrollbar {
-        display: none;
-      } /* Chrome/Safari */
+      .episode-scroller::-webkit-scrollbar { display: none; }
+      .episode-scroller.is-dragging { cursor: grabbing; scroll-behavior: auto; }
+
+      /* Desktop (pointer device): show a thin styled scrollbar */
+      @media (hover: hover) and (pointer: fine) {
+        .episode-scroller {
+          scrollbar-width: thin;
+          scrollbar-color: rgba(255,149,0,0.5) rgba(255,255,255,0.05);
+          padding-bottom: 20px;
+        }
+        .episode-scroller::-webkit-scrollbar {
+          display: block;
+          height: 4px;
+        }
+        .episode-scroller::-webkit-scrollbar-track {
+          background: rgba(255,255,255,0.05);
+          border-radius: 2px;
+        }
+        .episode-scroller::-webkit-scrollbar-thumb {
+          background: rgba(255,149,0,0.5);
+          border-radius: 2px;
+        }
+        .episode-scroller::-webkit-scrollbar-thumb:hover {
+          background: var(--accent-color);
+        }
+      }
 
       .ep-card {
         flex: 0 0 220px;
@@ -458,6 +484,42 @@
         overflow: hidden;
       }
 
+      /* Locate (crosshairs) button in scroller header */
+      .locate-btn {
+        background: var(--surface-color);
+        border: 1px solid var(--border-color);
+        color: var(--text-secondary);
+        width: 30px;
+        height: 30px;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        font-size: 0.75rem;
+        transition: all 0.2s;
+        flex-shrink: 0;
+      }
+      .locate-btn:hover {
+        border-color: var(--accent-color);
+        color: var(--accent-color);
+        background: rgba(255,149,0,0.08);
+        transform: translateY(-1px);
+      }
+      .locate-btn:active {
+        transform: scale(0.92);
+      }
+
+      /* Highlight pulse — applied briefly when the card is focused */
+      @keyframes ep-highlight-pulse {
+        0%   { box-shadow: 0 0 0 0   rgba(255,149,0,0.7), 0 0 20px rgba(255,149,0,0.15); }
+        40%  { box-shadow: 0 0 0 6px rgba(255,149,0,0),   0 0 30px rgba(255,149,0,0.3);  }
+        100% { box-shadow: 0 0 0 0   rgba(255,149,0,0),   0 0 20px rgba(255,149,0,0.15); }
+      }
+      .ep-card.active.ep-highlight {
+        animation: ep-highlight-pulse 0.75s cubic-bezier(0.23, 1, 0.32, 1) forwards;
+      }
+
       /* Synopsis Section */
       #synopsis-container {
         background: var(--surface-color);
@@ -554,14 +616,12 @@
       <div class="scroller-section">
         <div class="scroller-header">
           <h3>Episodes</h3>
-          <div
-            id="scroller-count"
-            style="
-              font-size: 0.8rem;
-              font-weight: 700;
-              color: var(--text-secondary);
-            "
-          ></div>
+          <div style="display:flex; align-items:center; gap:10px;">
+            <div id="scroller-count" style="font-size:0.8rem; font-weight:700; color:var(--text-secondary);"></div>
+            <button id="locate-ep-btn" class="locate-btn" title="Jump to current episode">
+              <i class="fas fa-location-crosshairs"></i>
+            </button>
+          </div>
         </div>
         <div class="episode-scroller" id="episode-scroller">
           <!-- Episodes & Boundary cards injected here -->
@@ -577,7 +637,11 @@
     <script>
       const params = new URLSearchParams(window.location.search);
       const jikanId = params.get("id");
-      const currentEp = parseInt(params.get("ep"));
+      let currentEp = parseInt(params.get("ep"));
+
+      // Episode list cache — populated once by loadEpisodeScroller()
+      let allEpsData = [];       // flat array of Kitsu episode objects
+      const epCards  = {};       // { epNumber: <DOM card element> } for O(1) active-state updates
 
       const DOM = {
         player: document.getElementById("player-container"),
@@ -600,6 +664,37 @@
 
       document.addEventListener("DOMContentLoaded", async () => {
         if (!jikanId || !currentEp) return;
+
+        // ── Desktop scroller: wheel → horizontal scroll, mouse drag ──────
+        const scroller = document.getElementById("episode-scroller");
+
+        scroller.addEventListener("wheel", (e) => {
+          // Only hijack pure vertical wheel events (not touchpad horizontal swipes)
+          if (Math.abs(e.deltaX) > Math.abs(e.deltaY)) return;
+          e.preventDefault();
+          scroller.scrollLeft += e.deltaY * 1.5;
+        }, { passive: false });
+
+        let drag = { active: false, startX: 0, scrollLeft: 0 };
+        scroller.addEventListener("mousedown", (e) => {
+          drag.active     = true;
+          drag.startX     = e.pageX - scroller.offsetLeft;
+          drag.scrollLeft = scroller.scrollLeft;
+          scroller.classList.add("is-dragging");
+        });
+        const endDrag = () => { drag.active = false; scroller.classList.remove("is-dragging"); };
+        scroller.addEventListener("mouseleave", endDrag);
+        scroller.addEventListener("mouseup",    endDrag);
+        scroller.addEventListener("mousemove",  (e) => {
+          if (!drag.active) return;
+          e.preventDefault();
+          const x    = e.pageX - scroller.offsetLeft;
+          const walk = (x - drag.startX) * 1.2;
+          scroller.scrollLeft = drag.scrollLeft - walk;
+        });
+        // ── Locate button: scroll to & flash the active episode card ─────
+        document.getElementById("locate-ep-btn").addEventListener("click", locateCurrentEpisode);
+        // ─────────────────────────────────────────────────────────────────
 
         setupUI();
         await initialize();
@@ -839,7 +934,110 @@
         }
       }
 
-      /* --- PHASE 5: EPISODE SCROLLER & CROSS-SEASON --- */
+      /* ─── Locate current episode ─────────────────────────────────────
+         Scrolls the active card into view and fires a brief glow pulse
+         so the user's eye is drawn to it.                               */
+      function locateCurrentEpisode() {
+        const card = epCards[currentEp];
+        if (!card) return;
+
+        card.scrollIntoView({ behavior: "smooth", inline: "center", block: "nearest" });
+
+        // Re-trigger the animation by removing + re-adding the class
+        card.classList.remove("ep-highlight");
+        // Force reflow so removing the class is visible before re-adding
+        void card.offsetWidth;
+        card.classList.add("ep-highlight");
+        card.addEventListener("animationend", () => card.classList.remove("ep-highlight"), { once: true });
+      }
+
+      /* ─── In-page episode switching ─────────────────────────────────
+         Called from: episode card clicks, animex-next-episode messages,
+         and the browser back/forward buttons (popstate).
+         Never does a full page reload — everything is updated in place.   */
+      async function switchEpisode(num) {
+        num = parseInt(num);
+        if (isNaN(num) || num === currentEp) return;
+
+        // 0. Kill the current iframe immediately so audio/video stops now,
+        //    not after the loading overlay finishes fading in.
+        const liveIframe = DOM.player.querySelector("iframe");
+        if (liveIframe) liveIframe.src = "about:blank";
+
+        const prevEp = currentEp;
+        currentEp   = num;
+
+        // 1. Update URL (no reload)
+        params.set("ep", num);
+        history.pushState({ ep: num }, "", "?" + params.toString());
+
+        // 2. Update the meta line episode number
+        DOM.epNum.textContent = num;
+
+        // 3. Swap active state on scroller cards
+        const prevCard = epCards[prevEp];
+        const nextCard = epCards[num];
+
+        if (prevCard) {
+          prevCard.classList.remove("active");
+          prevCard.querySelector(".now-playing-badge")?.remove();
+        }
+        if (nextCard) {
+          nextCard.classList.add("active");
+          const thumbEl = nextCard.querySelector(".ep-card-thumb");
+          if (thumbEl && !thumbEl.querySelector(".now-playing-badge")) {
+            const badge = document.createElement("div");
+            badge.className = "now-playing-badge";
+            badge.textContent = "Playing";
+            thumbEl.appendChild(badge);
+          }
+          setTimeout(() =>
+            nextCard.scrollIntoView({ behavior: "smooth", inline: "center", block: "nearest" }),
+            100
+          );
+        }
+
+        // 4. Update per-episode metadata (synopsis, loading backdrop)
+        updateEpisodeMeta(num);
+
+        // 5. Reload the player for the new episode
+        await loadPlayer(userPref === "dub", currentModule);
+
+        // 6. Persist progress
+        logProgress();
+      }
+
+      /* Updates synopsis and loading-screen thumbnail for a given episode
+         using the already-fetched allEpsData array — no extra network call. */
+      function updateEpisodeMeta(num) {
+        const ep = allEpsData.find(e => e.attributes?.number == num);
+        if (!ep) return;
+
+        const attrs = ep.attributes || {};
+
+        // Loading screen backdrop
+        const thumb = attrs.thumbnail?.original;
+        if (thumb) {
+          DOM.loading.style.backgroundImage =
+            `url(/proxy-image?url=${encodeURIComponent(thumb)})`;
+        } else if (cachedAnimeData?.poster) {
+          DOM.loading.style.backgroundImage = `url(${cachedAnimeData.poster})`;
+        }
+
+        // Episode synopsis
+        const desc = attrs.synopsis || attrs.description || cachedAnimeData?.synopsis || "";
+        DOM.synopsis.textContent = desc || "No description available.";
+
+        // Loading screen synopsis mirror
+        const loadSyn = document.getElementById("loading-synopsis");
+        if (loadSyn) loadSyn.textContent = DOM.synopsis.textContent;
+      }
+
+      /* Browser back/forward: re-sync state to what's in the URL */
+      window.addEventListener("popstate", (event) => {
+        const ep = event.state?.ep ?? parseInt(new URLSearchParams(window.location.search).get("ep"));
+        if (ep && ep !== currentEp) switchEpisode(ep);
+      });
       async function loadEpisodeScroller() {
         // Movies don't have an episode list
         if (cachedAnimeData && cachedAnimeData.type === "Movie") return;
@@ -848,16 +1046,16 @@
           '<div class="loader-spinner" style="position:relative; transform:none; left:0; top:0; margin: 20px auto;"></div>';
 
         try {
-          // 1. Fetch current season episodes (Using the new cached endpoint logic)
-          const mapRes = await fetch(`/map/mal/${jikanId}`);
-          const map = await mapRes.json();
+          // 1. Fetch ALL episodes from the backend cache endpoint.
+          //    The server handles Kitsu pagination, smart TTLs per airing status,
+          //    and background refreshes — so we always get the complete list instantly.
+          const epRes = await fetch(`/anime/${jikanId}/episodes`);
+          if (!epRes.ok) throw new Error("Episode cache unavailable");
+          const epData = await epRes.json();
+          const eps = epData.episodes || [];
 
-          // We fetch the full list of episodes from Kitsu (highly cached on backend)
-          const kitsuEpRes = await fetch(
-            `/proxy?url=https://kitsu.io/api/edge/anime/${map.kitsu_id}/episodes?page[limit]=20&sort=number`,
-          );
-          const kitsuData = await kitsuEpRes.json();
-          const eps = kitsuData.data;
+          // Keep a module-level copy for updateEpisodeMeta() lookups
+          allEpsData = eps;
 
           // 2. Fetch Season Mapping for Boundaries
           const seasonRes = await fetch(`/anime/${jikanId}/seasons`);
@@ -905,11 +1103,10 @@
                 </div>
             `;
 
-            card.onclick = () => {
-              if (num == currentEp) return;
-              params.set("ep", num);
-              window.location.search = params.toString();
-            };
+            card.onclick = () => switchEpisode(num);
+
+            // Register in lookup map so switchEpisode() can find this card in O(1)
+            epCards[num] = card;
 
             DOM.scroller.appendChild(card);
 
@@ -948,7 +1145,10 @@
           }
 
           document.getElementById("scroller-count").textContent =
-            `${eps.length} Episodes Total`;
+            `${eps.length} Episodes`;
+
+          // Auto-locate on initial load so the active card is visible + highlighted
+          setTimeout(locateCurrentEpisode, 400);
         } catch (e) {
           DOM.scroller.innerHTML =
             '<p style="color:var(--text-secondary); font-size:0.8rem;">Episode list unavailable.</p>';
@@ -987,13 +1187,10 @@
         }
       }
 
-      // Listen for messages from the player iframe
+      // Listen for messages from the player iframe (e.g. "next episode" button inside player)
       window.addEventListener("message", (event) => {
         if (event.data && event.data.type === "animex-next-episode") {
-          const newParams = new URLSearchParams(window.location.search);
-          const nextEp = currentEp + 1;
-          newParams.set("ep", nextEp);
-          window.location.search = newParams.toString();
+          switchEpisode(currentEp + 1);
         }
       });
     </script>

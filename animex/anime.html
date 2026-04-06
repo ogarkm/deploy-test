@@ -870,6 +870,75 @@
 
       loadHeroProxyCache();
 
+        // --- POSTER IMAGE BLOB CACHE (IndexedDB + in-memory) ---
+        const _posterBlobCache = new Map(); // url -> blobURL, lives for session
+        const _IMAGE_DB_NAME = 'animex-poster-cache';
+        const _IMAGE_DB_STORE = 'posters';
+        let _imageDb = null;
+
+        (function initImageDb() {
+          try {
+            const req = indexedDB.open(_IMAGE_DB_NAME, 1);
+            req.onupgradeneeded = (e) => {
+              e.target.result.createObjectStore(_IMAGE_DB_STORE, { keyPath: 'url' });
+            };
+            req.onsuccess = (e) => { _imageDb = e.target.result; };
+            req.onerror = () => {};
+          } catch (e) {}
+        })();
+
+        function _getImageBlob(url) {
+          return new Promise((resolve) => {
+            if (!_imageDb) return resolve(null);
+            try {
+              const tx = _imageDb.transaction(_IMAGE_DB_STORE, 'readonly');
+              const req = tx.objectStore(_IMAGE_DB_STORE).get(url);
+              req.onsuccess = () => resolve(req.result?.blob || null);
+              req.onerror = () => resolve(null);
+            } catch (e) { resolve(null); }
+          });
+        }
+
+        function _saveImageBlob(url, blob) {
+          if (!_imageDb) return;
+          try {
+            const tx = _imageDb.transaction(_IMAGE_DB_STORE, 'readwrite');
+            tx.objectStore(_IMAGE_DB_STORE).put({ url, blob });
+          } catch (e) {}
+        }
+
+        async function loadPosterImage(imgEl, proxyUrl) {
+          if (!proxyUrl || !imgEl) return;
+
+          // 1. In-memory hit — instant
+          if (_posterBlobCache.has(proxyUrl)) {
+            imgEl.src = _posterBlobCache.get(proxyUrl);
+            return;
+          }
+
+          // 2. IndexedDB hit — fast, no network
+          const cachedBlob = await _getImageBlob(proxyUrl);
+          if (cachedBlob) {
+            const blobUrl = URL.createObjectURL(cachedBlob);
+            _posterBlobCache.set(proxyUrl, blobUrl);
+            imgEl.src = blobUrl;
+            return;
+          }
+
+          // 3. Network fetch — display immediately, then cache the response
+          imgEl.src = proxyUrl;
+          try {
+            const res = await fetch(proxyUrl);
+            if (res.ok) {
+              const blob = await res.blob();
+              const blobUrl = URL.createObjectURL(blob);
+              _posterBlobCache.set(proxyUrl, blobUrl);
+              imgEl.src = blobUrl; // swap to blob URL
+              _saveImageBlob(proxyUrl, blob); // persist for next visit
+            }
+          } catch (e) { /* keep original src on failure */ }
+        }
+
         // --- ELEMENT SELECTORS ---
         const mainContentArea = document.getElementById("main-content-area");
 
@@ -1256,16 +1325,20 @@
                 <div class="poster-image-wrapper">
                     <div class="episode-indicator">EP ${lastWatchedEp} • ${indicatorText}</div>
                     <button class="poster-info-btn" title="Series Info"><i class="fas fa-info-circle"></i></button>
-                    <img src="${getProxyImageUrl(
-                      animeData.images?.jpg?.large_image_url ||
-                      animeData.images?.jpg?.image_url)
-                    }" alt="${title}" loading="lazy">
+                    <img alt="${title}" loading="lazy">
                     <div class="progress-bar">
                         <div class="progress-bar-inner" style="width: ${progressPercent}%;"></div>
                     </div>
                 </div>
                 <p class="poster-title" title="${title}">${title}</p>
               `;
+              loadPosterImage(
+                posterContainer.querySelector('img'),
+                getProxyImageUrl(
+                  animeData.images?.jpg?.large_image_url ||
+                  animeData.images?.jpg?.image_url
+                )
+              );
               posterContainer.addEventListener("click", () =>
                 openSeriesOverlay(animeData.mal_id, episodeToOpen, true)
               );
@@ -1310,10 +1383,11 @@
                 posterContainer.dataset.malId = anime.id;
                 posterContainer.innerHTML = `
                   <div class="poster-image-wrapper">
-                    <img src="${getProxyImageUrl(anime.image)}" alt="${anime.name}" loading="lazy">
+                    <img alt="${anime.name}" loading="lazy">
                   </div>
                   <p class="poster-title" title="${anime.name}">${anime.name}</p>
                 `;
+                loadPosterImage(posterContainer.querySelector('img'), getProxyImageUrl(anime.image));
                 posterContainer.addEventListener("click", () =>
                   openSeriesOverlay(anime.id)
                 );

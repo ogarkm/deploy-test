@@ -1,8 +1,8 @@
 {
     "name": "Comix Reader",
-    "version": "1.0.6",
+    "version": "1.0.7",
     "author": "Animex",
-    "description": "Comix.to Manga Reader - Double-Safe Nested Data Parsing.",
+    "description": "Comix.to Manga Reader - Fixed WAF validation, URL encoding, and Anti-Leech headers.",
     "type": "MANGA_READER",
     "requirements": ["httpx", "re", "json"]
 }
@@ -13,12 +13,14 @@ import urllib.parse
 import inspect
 import httpx
 
-# Exact headers from your working test client
+# Extended headers to satisfy WAF & Anti-Leech checks
 HEADERS = {
     'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
     'Accept': 'application/json, text/plain, */*',
-    'Referer': 'https://comix.to/'
+    'Referer': 'https://comix.to/',
+    'X-Requested-With': 'XMLHttpRequest'
 }
+
 async def _smart_fetch(method: str, url: str, **kwargs):
     """Uses injected HybridClient if available, otherwise falls back to real httpx."""
     client_or_lib = globals().get('httpx')
@@ -26,20 +28,13 @@ async def _smart_fetch(method: str, url: str, **kwargs):
     func = getattr(client_or_lib, method.lower(), None)
     if func and inspect.iscoroutinefunction(func):
         resp = await func(url, **kwargs)
-        
-        # Debug: dump raw response to see what we're actually getting
-        raw = getattr(resp, 'text', '') or ''
-        print(f"[Comix] _smart_fetch response preview: {raw[:300]}")
-        
         return resp
     
     # Fallback: real httpx.AsyncClient
     import httpx as _real_httpx
     async with _real_httpx.AsyncClient(follow_redirects=True) as client:
         resp = await getattr(client, method.lower())(url, **kwargs)
-        print(f"[Comix] _smart_fetch (direct) response preview: {resp.text[:300]}")
         return resp
-
 
 def get_nested(data, *keys, default=None):
     """Helper to safely traverse deeply nested dictionaries even if keys are None."""
@@ -65,15 +60,19 @@ async def get_title_from_mal(mal_id: int):
         return None
 
 async def search_manga(query: str):
-    """Searches Comix.to and returns (hash_id, slug)."""
+    """Searches Comix.to and returns (manga_id, hash_id, slug)."""
     if not query: return None
-    url = f"https://comix.to/api/v2/manga?keyword={urllib.parse.quote(query)}&order[relevance]=desc"
+    
+    # Safely URL encode parameters (prevents WAF bracket blocks)
+    params = {"keyword": query, "order[relevance]": "desc"}
+    qs = urllib.parse.urlencode(params)
+    url = f"https://comix.to/api/v2/manga?{qs}"
+    
     try:
         resp = await _smart_fetch("GET", url, headers=HEADERS)
-        print(f"[Comix] Search status: {resp.status_code}")
+        print(f"[Comix] Search status: {getattr(resp, 'status_code', 500)}")
         data = resp.json() if hasattr(resp, "json") else None
         if data is None:
-            print(f"[Comix] Search response was not JSON. Raw: {resp.text[:200]}")
             return None
         
         # Safely get first item from result -> items
@@ -81,7 +80,8 @@ async def search_manga(query: str):
         if items and isinstance(items, list) and len(items) > 0:
             first = items[0]
             if isinstance(first, dict):
-                return first.get('hash_id'), first.get('slug')
+                # Return manga_id too for WAF API fallback purposes
+                return first.get('manga_id'), first.get('hash_id'), first.get('slug')
     except Exception as e:
         print(f"[Comix] Search Error: {e}")
     return None
@@ -91,30 +91,47 @@ async def get_chapters(mal_id: int):
         print(f"[Comix] get_chapters called for MAL ID: {mal_id}")
         
         title = await get_title_from_mal(mal_id)
-        print(f"[Comix] Resolved title: {title}")
         if not title: return None
         
         manga_info = await search_manga(title)
-        print(f"[Comix] Search result: {manga_info}")
         if not manga_info: return None
         
-        hash_id, slug = manga_info
+        manga_id, hash_id, slug = manga_info
         
         # Paginate since API caps at 100 per request
-        all_items = []
-        offset = 0
-        seen_ids = set()
-
         all_items = []
         page = 1
 
         while True:
-            url = f"https://comix.to/api/v2/manga/{hash_id}/chapters?order[number]=asc&limit=100&page={page}"
-            resp = await _smart_fetch("GET", url, headers=HEADERS)
+            # Dynamically spoof the Referer for the specific manga to bypass Anti-Leech
+            req_headers = HEADERS.copy()
+            req_headers["Referer"] = f"https://comix.to/title/{hash_id}-{slug}"
+            
+            # Safely encode the query string to prevent 403 Bracket Rejection
+            params = {
+                "order[number]": "asc",
+                "limit": 100,
+                "page": page
+            }
+            qs = urllib.parse.urlencode(params)
+            
+            # Primary Try: Try requesting chapters using the Hash ID
+            url = f"https://comix.to/api/v2/manga/{hash_id}/chapters?{qs}&_=xQm9tJfLwGhz_0Eq8S_YAHYkwp-q1PLfm50W5QJnyd1NnNYpAjXjyCoAzoOLRgUaJOoxWS0NeDGz_rNrbqBjLLP1H9qi"
+            resp = await _smart_fetch("GET", url, headers=req_headers)
             
             data = resp.json() if hasattr(resp, "json") else None
+            
+            # Fallback: If framework validation fails (400, 403, 404), it might be strictly 
+            # expecting the internal integer primary key instead of the string hash.
+            if data and data.get("status") in [400, 403, 404]:
+                print(f"[Comix] Hash ID rejected ({data.get('status')}). Falling back to Integer Manga ID...")
+                url_fallback = f"https://comix.to/api/v2/manga/{manga_id}/chapters?{qs}&_=xQm9tJfLwGhz_0Eq8S_YAHYkwp-q1PLfm50W5QJnyd1NnNYpAjXjyCoAzoOLRgUaJOoxWS0NeDGz_rNrbqBjLLP1H9qi"
+                resp = await _smart_fetch("GET", url_fallback, headers=req_headers)
+                data = resp.json() if hasattr(resp, "json") else None
+
             if data is None or data.get("status") != 200:
-                print(f"[Comix] Bad response on page {page}: {data.get('message') if data else resp.text[:200]}")
+                error_msg = data.get('message') if data else getattr(resp, 'text', '')[:200]
+                print(f"[Comix] Bad response on page {page}: {error_msg}")
                 break
 
             items = get_nested(data, 'result', 'items', default=[])
@@ -137,11 +154,15 @@ async def get_chapters(mal_id: int):
         for item in all_items:
             if not isinstance(item, dict): continue
             num = str(item.get('number', '0'))
+            
+            # Safely fallback to any available ID key
+            c_id = item.get('chapter_id') or item.get('id') or item.get('hash_id')
+            
             if num not in seen_numbers:
                 seen_numbers[num] = True
                 formatted.append({
                     "title": item.get('name') or f"Chapter {num}",
-                    "url": f"{hash_id}:{slug}:{item.get('chapter_id')}",
+                    "url": f"{hash_id}:{slug}:{c_id}",
                     "chapter_number": num,
                     "is_external": False
                 })
@@ -185,7 +206,11 @@ async def get_chapter_images(mal_id: int, chapter_num: str):
         hash_id, slug, chapter_id = target_chapter["url"].split(":")
         url = f"https://comix.to/title/{hash_id}-{slug}/{chapter_id}-chapter-{chapter_num}"
         
-        resp = await _smart_fetch("GET", url, headers=HEADERS)
+        # Mirror the Referer just as we do for chapters
+        req_headers = HEADERS.copy()
+        req_headers["Referer"] = f"https://comix.to/title/{hash_id}-{slug}"
+        
+        resp = await _smart_fetch("GET", url, headers=req_headers)
         if not resp or not hasattr(resp, "text"): return None
         
         regex = r'["\\]*images["\\]*\s*:\s*(\[[^\]]*\])'

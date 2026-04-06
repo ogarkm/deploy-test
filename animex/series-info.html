@@ -1743,21 +1743,14 @@ iframe { width: 100%; height: 100%; border: none; }
   async function fetchAndRenderEpisodes() {
     let episodes = [];
     try {
-      const mapRes = await fetch(`${serverUrl}/map/mal/${currentMalId}`);
-      if (mapRes.ok) {
-        const mapData = await mapRes.json();
-        if (mapData.kitsu_id) {
-          // Optimized paging for kitsu (Handles 1000+ eps)
-          let url = `/proxy?url=https://kitsu.io/api/edge/anime/${mapData.kitsu_id}/episodes?page[limit]=20`;
-          let count = 0;
-          while (url && count < 60) { // Safety cap for non-cached sessions
-            const r = await fetch(url);
-            const d = await r.json();
-            episodes = [...episodes, ...d.data];
-            url = d.links?.next;
-            count++;
-          }
-        }
+      // Single request to the backend cache endpoint — returns the complete episode
+      // list for the whole series, regardless of episode count.  The server handles
+      // Kitsu pagination, smart staleness TTLs based on airing status, and incremental
+      // background refreshes so currently-airing shows always stay up to date.
+      const epRes = await fetch(`${serverUrl}/anime/${currentMalId}/episodes`);
+      if (epRes.ok) {
+        const epData = await epRes.json();
+        episodes = epData.episodes || [];
       }
     } catch (e) {}
 

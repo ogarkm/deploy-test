@@ -1,0 +1,338 @@
+{
+    "name": "WeebCentral",
+    "version": "1.0.0",
+    "author": "Animex",
+    "description": "WeebCentral.com Manga Reader — uses HTMX scraping endpoints for chapters and pages.",
+    "type": "MANGA_READER",
+    "requirements": ["httpx", "beautifulsoup4", "re"]
+}
+---
+import re
+import inspect
+import httpx as _httpx_lib
+
+try:
+    from bs4 import BeautifulSoup
+except ImportError:
+    BeautifulSoup = None
+
+BASE_URL = "https://weebcentral.com"
+
+BROWSER_HEADERS = {
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+    "Accept": "text/html, */*",
+}
+
+# ---------------------------------------------------------------------------
+# Internal HTTP helpers
+# ---------------------------------------------------------------------------
+
+def _get_hybrid():
+    """Returns the injected HybridClient if present, else None."""
+    candidate = globals().get("httpx")
+    if candidate is not None and candidate is not _httpx_lib:
+        return candidate
+    return None
+
+
+async def _get(url, headers=None, timeout=20):
+    """GET via HybridClient tunnel when available, real httpx otherwise."""
+    hybrid = _get_hybrid()
+    if hybrid is not None:
+        func = getattr(hybrid, "get", None)
+        if func and inspect.iscoroutinefunction(func):
+            return await func(url, headers=headers, timeout=timeout)
+
+    async with _httpx_lib.AsyncClient(follow_redirects=True) as c:
+        return await c.get(url, headers=headers, timeout=timeout)
+
+
+async def _post_form(url, data: dict, extra_headers: dict = None, timeout=20):
+    """
+    Form-encoded POST.  The HybridClient tunnel only speaks JSON bodies, so
+    form POSTs always go through real httpx directly — this is intentional.
+    """
+    merged = {**BROWSER_HEADERS, **(extra_headers or {})}
+    merged["Content-Type"] = "application/x-www-form-urlencoded"
+    async with _httpx_lib.AsyncClient(follow_redirects=True) as c:
+        return await c.post(url, data=data, headers=merged, timeout=timeout)
+
+
+def _parse_html(text: str):
+    if BeautifulSoup is None:
+        raise RuntimeError("[WeebCentral] beautifulsoup4 is not installed.")
+    return BeautifulSoup(text, "html.parser")
+
+
+# ---------------------------------------------------------------------------
+# MAL title lookup
+# ---------------------------------------------------------------------------
+
+async def _get_mal_titles(mal_id: int):
+    """Returns (romaji_title, english_title) from Jikan, or (None, None)."""
+    url = f"https://api.jikan.moe/v4/manga/{mal_id}"
+    try:
+        resp = await _get(url)
+        if getattr(resp, "status_code", 500) != 200:
+            return None, None
+        data = resp.json() if hasattr(resp, "json") else None
+        if not data:
+            return None, None
+        d = data.get("data", {})
+        return d.get("title"), d.get("title_english")
+    except Exception as e:
+        print(f"[WeebCentral] MAL fetch error: {e}")
+        return None, None
+
+
+# ---------------------------------------------------------------------------
+# WeebCentral search
+# ---------------------------------------------------------------------------
+
+async def _search(query: str):
+    """
+    Searches WeebCentral via its HTMX quick-search endpoint.
+    Returns a list of {"id", "title", "url"} dicts.
+    """
+    if not query:
+        return []
+
+    search_url = f"{BASE_URL}/search/simple?location=main"
+    htmx_headers = {
+        "HX-Request": "true",
+        "HX-Trigger": "quick-search-input",
+        "HX-Trigger-Name": "text",
+        "HX-Target": "quick-search-result",
+        "HX-Current-URL": f"{BASE_URL}/",
+    }
+
+    try:
+        resp = await _post_form(search_url, data={"text": query}, extra_headers=htmx_headers)
+        if getattr(resp, "status_code", 500) != 200:
+            print(f"[WeebCentral] Search returned status {resp.status_code}")
+            return []
+
+        soup = _parse_html(resp.text)
+        results = []
+
+        for a in soup.select("a"):
+            href = a.get("href", "")
+            if "/series/" not in href:
+                continue
+
+            title_el = a.select_one(".flex-1")
+            title = title_el.get_text(strip=True) if title_el else "Unknown"
+
+            id_match = re.search(r"/series/([^/]+)", href)
+            if not id_match:
+                continue
+            manga_id = id_match.group(1)
+
+            # Accept if either string is a substring of the other (case-insensitive)
+            q_lower, t_lower = query.lower(), title.lower()
+            if q_lower in t_lower or t_lower in q_lower:
+                results.append({"id": manga_id, "title": title, "url": href})
+
+        return results
+    except Exception as e:
+        print(f"[WeebCentral] Search error: {e}")
+        return []
+
+
+# ---------------------------------------------------------------------------
+# Chapter list
+# ---------------------------------------------------------------------------
+
+async def _get_chapters_for_series(manga_id: str):
+    """
+    Returns a sorted list of chapter dicts:
+        {"id", "title", "chapter_number"}
+    Ordered ascending by chapter number.
+    """
+    url = f"{BASE_URL}/series/{manga_id}/full-chapter-list"
+    htmx_headers = {
+        "HX-Request": "true",
+        "HX-Target": "chapter-list",
+        "HX-Current-URL": f"{BASE_URL}/series/{manga_id}",
+        "Referer": f"{BASE_URL}/series/{manga_id}",
+    }
+
+    try:
+        resp = await _get(url, headers={**BROWSER_HEADERS, **htmx_headers})
+        if getattr(resp, "status_code", 500) != 200:
+            return []
+
+        soup = _parse_html(resp.text)
+        chapters = []
+
+        for row in soup.select("div.flex.items-center"):
+            a = row.find("a")
+            if not a:
+                continue
+            href = a.get("href", "")
+
+            title_span = a.select_one("span.grow > span")
+            title = title_span.get_text(strip=True) if title_span else ""
+
+            id_match = re.search(r"/chapters/([^/]+)", href)
+            if not id_match:
+                continue
+            chapter_id = id_match.group(1)
+
+            num_match = re.search(r"(\d+(?:\.\d+)?)", title)
+            chapter_num = num_match.group(1) if num_match else "0"
+
+            chapters.append({
+                "id": chapter_id,
+                "title": title,
+                "chapter_number": chapter_num,
+            })
+
+        # Chapters come in descending order from the site — reverse to ascending
+        chapters.reverse()
+        return chapters
+    except Exception as e:
+        print(f"[WeebCentral] Chapter list error: {e}")
+        return []
+
+
+# ---------------------------------------------------------------------------
+# Page images
+# ---------------------------------------------------------------------------
+
+async def _get_pages(chapter_id: str):
+    """Returns a list of image URLs for the given chapter ID."""
+    url = f"{BASE_URL}/chapters/{chapter_id}/images?is_prev=False&reading_style=long_strip"
+    htmx_headers = {
+        "HX-Request": "true",
+        "HX-Current-URL": f"{BASE_URL}/chapters/{chapter_id}",
+        "Referer": f"{BASE_URL}/chapters/{chapter_id}",
+    }
+
+    try:
+        resp = await _get(url, headers={**BROWSER_HEADERS, **htmx_headers})
+        if getattr(resp, "status_code", 500) != 200:
+            return []
+
+        soup = _parse_html(resp.text)
+        imgs = soup.select("section.flex-1 img") or soup.find_all("img")
+        pages = [img.get("src") for img in imgs if img.get("src")]
+        return pages
+    except Exception as e:
+        print(f"[WeebCentral] Page fetch error: {e}")
+        return []
+
+
+# ---------------------------------------------------------------------------
+# Public API — called by app.py
+# ---------------------------------------------------------------------------
+
+async def _resolve_series_id(mal_id: int):
+    """Shared helper: MAL ID → WeebCentral series ID, or None."""
+    romaji, english = await _get_mal_titles(mal_id)
+    if not romaji and not english:
+        print("[WeebCentral] Could not resolve titles from MAL.")
+        return None
+
+    for title in filter(None, [english, romaji]):
+        results = await _search(title)
+        if results:
+            sid = results[0]["id"]
+            print(f"[WeebCentral] Matched series '{results[0]['title']}' (id={sid})")
+            return sid
+        print(f"[WeebCentral] No results for '{title}', trying next…")
+
+    print(f"[WeebCentral] No series found for MAL ID {mal_id}.")
+    return None
+
+
+async def get_chapters(mal_id: int):
+    """
+    Called by app.py /chapters/{mal_id}.
+    Returns a list of chapter dicts compatible with the app's module interface:
+        [{"title", "url", "chapter_number", "is_external"}, ...]
+    Sorted descending (newest first), or None on failure.
+    """
+    print(f"[WeebCentral] get_chapters called — MAL {mal_id}")
+
+    series_id = await _resolve_series_id(mal_id)
+    if not series_id:
+        return None
+
+    raw = await _get_chapters_for_series(series_id)
+    if not raw:
+        return None
+
+    # Expose the chapter_id inside `url` so get_chapter_images can re-use it
+    # without a second search round-trip (format: "wc:{series_id}:{chapter_id}")
+    formatted = []
+    for ch in raw:
+        formatted.append({
+            "title": ch["title"],
+            "url": f"wc:{series_id}:{ch['id']}",
+            "chapter_number": ch["chapter_number"],
+            "is_external": False,
+        })
+
+    # Return descending (newest first) — matches convention used by comix
+    formatted.sort(key=lambda x: _safe_float(x["chapter_number"]), reverse=True)
+    return formatted
+
+
+def _safe_float(v):
+    try:
+        return float(v)
+    except (ValueError, TypeError):
+        return 0.0
+
+
+async def get_chapter_images(mal_id: int, chapter_num: str):
+    """
+    Called by app.py /retrieve/{mal_id}/{chapter_num}.
+    Reuses get_chapters() so the MAL -> search round-trip is not repeated.
+    Returns a list of image URL strings, or None on failure.
+    """
+    print(f"[WeebCentral] get_chapter_images called -- MAL {mal_id}, chapter {chapter_num}")
+
+    # 1. Get full chapter list (handles MAL lookup + search internally)
+    chapters = await get_chapters(mal_id)
+    if not chapters:
+        print("[WeebCentral] Chapter list is empty.")
+        return None
+
+    # 2. Find the target chapter by number
+    target = None
+    try:
+        target_f = float(chapter_num)
+    except (ValueError, TypeError):
+        target_f = None
+
+    for ch in chapters:
+        if target_f is not None:
+            try:
+                if float(ch["chapter_number"]) == target_f:
+                    target = ch
+                    break
+            except (ValueError, TypeError):
+                pass
+        if ch["chapter_number"] == str(chapter_num):
+            target = ch
+            break
+
+    if not target:
+        print(f"[WeebCentral] Chapter {chapter_num} not found.")
+        return None
+
+    # 3. Unpack chapter ID from url field ("wc:{series_id}:{chapter_id}")
+    try:
+        _, _series_id, chapter_id = target["url"].split(":")
+    except ValueError:
+        print(f"[WeebCentral] Malformed url field: {target['url']}")
+        return None
+
+    print(f"[WeebCentral] Fetching pages for: {target['title']} (id={chapter_id})")
+
+    # 4. Fetch page images
+    pages = await _get_pages(chapter_id)
+    print(f"[WeebCentral] Found {len(pages)} pages." if pages else "[WeebCentral] No pages extracted.")
+    return pages if pages else None
