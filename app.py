@@ -809,32 +809,57 @@ async def proxy_mangadex_image(server_host: str, chapter_hash: str, filename: st
 
 @app.get("/map/mal/{mal_id}")
 async def mal_to_kitsu(mal_id: int):
-    """
-    Maps a MyAnimeList ID to a Kitsu ID using a local disk-cached version 
-    of the Fribb Anime Database.
-    """
     url = "https://raw.githubusercontent.com/Fribb/anime-lists/refs/heads/master/anime-offline-database-reduced.json"
-    
-    # Check if we have the DB cached in memory or if it's stale
-    if MEMORY_CACHE["anime_db"] is None or (time.time() - MEMORY_CACHE["anime_db_timestamp"] > 86400):
-        try:
-            r = await hybrid_client.get(url)
-            MEMORY_CACHE["anime_db"] = r.json()
-            MEMORY_CACHE["anime_db_timestamp"] = time.time()
-        except Exception as e:
-            # If the remote fetch fails, try to use the last known memory version
-            if MEMORY_CACHE["anime_db"]:
-                print(f"Using stale memory DB due to fetch error: {e}")
-            else:
-                raise HTTPException(status_code=502, detail="Mapping database unavailable.")
+    DISK_CACHE_PATH = os.path.join(DATA_DIR, "cache", "anime_db.json")
 
-    # Search for the MAL ID
+    # 1. Populate in-memory cache if missing or stale
+    if MEMORY_CACHE["anime_db"] is None or (time.time() - MEMORY_CACHE["anime_db_timestamp"] > 86400):
+        
+        # Try disk cache first (survives restarts, works across workers)
+        if MEMORY_CACHE["anime_db"] is None and os.path.exists(DISK_CACHE_PATH):
+            try:
+                with open(DISK_CACHE_PATH, "r", encoding="utf-8") as f:
+                    disk_data = json.load(f)
+                if isinstance(disk_data, list) and disk_data:
+                    MEMORY_CACHE["anime_db"] = disk_data
+                    MEMORY_CACHE["anime_db_timestamp"] = os.path.getmtime(DISK_CACHE_PATH)
+                    print(f"Loaded anime_db from disk cache ({len(disk_data)} entries)")
+            except Exception as e:
+                print(f"Disk cache load failed: {e}")
+
+        # Fetch from remote if still missing or stale
+        if MEMORY_CACHE["anime_db"] is None or (time.time() - MEMORY_CACHE["anime_db_timestamp"] > 86400):
+            try:
+                r = await hybrid_client.get(url, timeout=60)  # large file — give it time
+                fetched = r.json()
+                
+                # Validate before caching — r.json() returns None on parse failure
+                if not isinstance(fetched, list) or not fetched:
+                    raise ValueError(f"Unexpected DB format: {type(fetched)}")
+                
+                MEMORY_CACHE["anime_db"] = fetched
+                MEMORY_CACHE["anime_db_timestamp"] = time.time()
+                
+                # Persist to disk so next worker/restart doesn't re-fetch
+                try:
+                    with open(DISK_CACHE_PATH, "w", encoding="utf-8") as f:
+                        json.dump(fetched, f)
+                except Exception as e:
+                    print(f"Warning: could not write anime_db disk cache: {e}")
+
+            except Exception as e:
+                if MEMORY_CACHE["anime_db"]:
+                    print(f"Using stale memory DB due to fetch error: {e}")
+                else:
+                    raise HTTPException(status_code=502, detail=f"Mapping database unavailable: {e}")
+
+    # 2. Search
     for anime in MEMORY_CACHE["anime_db"]:
         if anime.get("mal_id") == mal_id:
             k_id = anime.get("kitsu_id")
             if k_id:
                 return {"kitsu_id": k_id, "mal_id": mal_id}
-                
+
     raise HTTPException(status_code=404, detail="Mapping not found for this MAL ID.")
 
 async def get_jikan_anime_status(mal_id: int) -> str:
